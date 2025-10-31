@@ -60,9 +60,16 @@ jobs:
       - name: Build frontend
         run: npm run build
 
+      - name: Verify DMG tools
+        run: |
+          echo "Checking DMG creation prerequisites..."
+          which hdiutil && echo "✓ hdiutil found" || echo "✗ hdiutil not found"
+          xcode-select -p && echo "✓ Xcode Command Line Tools found" || echo "✗ Xcode Command Line Tools not found"
+
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUST_BACKTRACE: 1
         with:
           projectPath: ./
           tagName: ${{ github.ref }}
