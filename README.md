@@ -73,6 +73,21 @@ The project includes a GitHub Actions workflow for automated releases. To create
 
 3. Review and publish the draft release on GitHub
 
+### Installing the App
+
+**Important:** The app is currently unsigned (not code-signed). macOS may show a warning when you first open it. To run an unsigned app:
+
+1. **Right-click** (or Control+Click) on `Mermalaid.app` in the DMG
+2. Select **"Open"** from the context menu
+3. Click **"Open"** in the security dialog that appears
+
+Alternatively, you can remove the quarantine attribute:
+```bash
+xattr -cr /path/to/Mermalaid.app
+```
+
+**Note:** For distribution, code signing and notarization are recommended. This requires an Apple Developer account ($99/year).
+
 ### Other Commands
 
 ```bash
