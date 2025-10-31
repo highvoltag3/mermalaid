@@ -13,3 +13,7 @@ src-tauri/target
 # Historical reference document
 MermaidChart_PRD.md
 
+# SSH keys
+*.pub
+github_*.pub
+
