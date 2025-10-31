@@ -1,0 +1,12 @@
+node_modules
+dist
+release
+src-tauri/target
+.DS_Store
+*.log
+.env
+.env.local
+*.app
+*.dmg
+*.zip
+

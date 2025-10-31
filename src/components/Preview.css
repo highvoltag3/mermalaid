@@ -1,0 +1,58 @@
+.preview-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.preview-header {
+  padding: 8px 16px;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.app.dark .preview-header {
+  border-bottom-color: #404040;
+}
+
+.preview-content {
+  flex: 1;
+  overflow: auto;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preview-content svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.empty-preview {
+  color: #999;
+  font-size: 14px;
+  text-align: center;
+}
+
+.app.dark .empty-preview {
+  color: #666;
+}
+
+.error-preview {
+  color: #d32f2f;
+  font-size: 12px;
+  padding: 16px;
+  background-color: #ffebee;
+  border-radius: 4px;
+  max-width: 500px;
+}
+
+.app.dark .error-preview {
+  color: #ef5350;
+  background-color: #3d1f1f;
+}
+
