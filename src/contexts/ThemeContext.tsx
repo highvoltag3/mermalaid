@@ -14,21 +14,21 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(() => {
-    const saved = localStorage.getItem('mermaidchart-theme')
+    const saved = localStorage.getItem('mermalaid-theme')
     return (saved as Theme) || 'light'
   })
   const [mermaidTheme, setMermaidThemeState] = useState<MermaidTheme>(() => {
-    const saved = localStorage.getItem('mermaidchart-mermaid-theme')
+    const saved = localStorage.getItem('mermalaid-mermaid-theme')
     return (saved as MermaidTheme) || 'default'
   })
 
   useEffect(() => {
-    localStorage.setItem('mermaidchart-theme', theme)
+    localStorage.setItem('mermalaid-theme', theme)
     document.documentElement.setAttribute('data-theme', theme)
   }, [theme])
 
   useEffect(() => {
-    localStorage.setItem('mermaidchart-mermaid-theme', mermaidTheme)
+    localStorage.setItem('mermalaid-mermaid-theme', mermaidTheme)
   }, [mermaidTheme])
 
   const toggleTheme = () => {

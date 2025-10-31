@@ -10,3 +10,6 @@ src-tauri/target
 *.dmg
 *.zip
 
+# Historical reference document
+MermaidChart_PRD.md
+

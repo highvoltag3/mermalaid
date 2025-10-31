@@ -1,4 +1,4 @@
-# MermaidChart
+# Mermalaid
 
 A native macOS Mermaid diagram editor built with **Tauri**, React, and TypeScript.
 
@@ -72,7 +72,7 @@ npm run tauri [command]
 ## Project Structure
 
 ```
-mermaidchart-macos/
+mermalaid/
 ├── src/                 # React app
 │   ├── components/      # React components
 │   ├── contexts/         # React contexts

@@ -18,7 +18,7 @@ export default function Editor({ code, setCode, error }: EditorProps) {
       clearTimeout(debounceTimer.current)
     }
     debounceTimer.current = setTimeout(() => {
-      localStorage.setItem('mermaidcode-draft', code)
+      localStorage.setItem('mermalaid-draft', code)
     }, 500)
     return () => {
       if (debounceTimer.current) {

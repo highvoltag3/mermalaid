@@ -1,8 +1,8 @@
 [package]
-name = "mermaidchart"
+name = "mermalaid"
 version = "1.0.0"
-description = "MermaidChart - A native macOS Mermaid diagram editor"
-authors = ["MermaidChart Contributors"]
+description = "Mermalaid - A native macOS Mermaid diagram editor"
+authors = ["Mermalaid Contributors"]
 license = "MIT"
 edition = "2021"
 rust-version = "1.77.2"

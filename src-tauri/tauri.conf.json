@@ -1,8 +1,8 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "MermaidChart",
+  "productName": "Mermalaid",
   "version": "1.0.0",
-  "identifier": "com.mermaidchart.app",
+  "identifier": "com.mermalaid.app",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:5173",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "MermaidChart",
+        "title": "Mermalaid",
         "width": 1400,
         "height": 900,
         "minWidth": 800,

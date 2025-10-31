@@ -12,7 +12,7 @@ function AppContent() {
   const toolbarRef = useRef<{ handleNew: () => void; handleOpen: () => void; handleSave: () => void }>(null)
 
   useEffect(() => {
-    const saved = localStorage.getItem('mermaidcode-draft')
+    const saved = localStorage.getItem('mermalaid-draft')
     if (saved) {
       setCode(saved)
     }
