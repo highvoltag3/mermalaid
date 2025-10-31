@@ -17,14 +17,19 @@ jobs:
       
       - name: Create Release
         id: create-release
-        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: true
-          prerelease: false
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          RELEASE_ID=$(gh api repos/$GITHUB_REPOSITORY/releases \
+            -X POST \
+            -f tag_name="$TAG_NAME" \
+            -f name="Release $TAG_NAME" \
+            -f body="Release $TAG_NAME" \
+            -f draft=true \
+            -f prerelease=false \
+            --jq .id)
+          echo "id=$RELEASE_ID" >> $GITHUB_OUTPUT
 
   build-tauri:
     needs: create-release
