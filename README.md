@@ -75,28 +75,25 @@ The project includes a GitHub Actions workflow for automated releases. To create
 
 ### Installing the App
 
-**Important:** The app is currently unsigned (not code-signed). macOS may show a "damaged" warning when you first open it. To fix this:
+**Important:** The app is currently unsigned (not code-signed). macOS may show a "damaged" warning when you first open it.
 
-**Method 1: Remove quarantine attribute (recommended)**
+**Recommended Installation Method:**
 ```bash
-# After downloading and mounting the DMG:
-xattr -cr /Volumes/Mermalaid_*/Mermalaid.app
-# Then drag the app to Applications or open it directly
+# 1. Copy the app from the DMG to Applications
+cp -R /Volumes/Mermalaid_*/Mermalaid.app /Applications/
+
+# 2. Remove quarantine attribute
+xattr -cr /Applications/Mermalaid.app
+
+# 3. Open the app
+open /Applications/Mermalaid.app
 ```
 
-**Method 2: System Settings**
+**Alternative: System Settings**
 1. Open **System Settings** → **Privacy & Security**
 2. Scroll down to see the blocked app message
 3. Click **"Open Anyway"** next to the Mermalaid warning
 4. Click **"Open"** in the confirmation dialog
-
-**Method 3: Terminal (if methods above don't work)**
-```bash
-# Navigate to where the DMG is mounted
-cd /Volumes/Mermalaid_*/
-# Remove quarantine and open
-xattr -cr Mermalaid.app && open Mermalaid.app
-```
 
 **Note:** For distribution, code signing and notarization are recommended. This requires an Apple Developer account ($99/year).
 
