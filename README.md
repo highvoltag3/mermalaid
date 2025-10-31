@@ -2,7 +2,7 @@
 
 A native macOS Mermaid diagram editor built with **Tauri**, React, and TypeScript.
 
-I built this project after realizing that the only tool meeting my needs limited free users to just three documents. Mermalaid started as a personal solution, but I’m expanding it as I find new use cases. If you find it helpful and notice missing features, contributions are welcome.
+I built this project after realizing that the only tool meeting my needs limited free users to just three documents. Mermalaid started as a personal solution, but I'm expanding it as I find new use cases. If you find it helpful and notice missing features, [contributions](CONTRIBUTING.md) are welcome.
 
 ## Features
 
