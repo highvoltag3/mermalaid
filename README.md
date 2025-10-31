@@ -73,6 +73,8 @@ The project includes a GitHub Actions workflow for automated releases. To create
 
 3. Review and publish the draft release on GitHub
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on contributing to the project.
+
 ### Installing the App
 
 **Important:** The app is currently unsigned (not code-signed). macOS may show a "damaged" warning when you first open it.
