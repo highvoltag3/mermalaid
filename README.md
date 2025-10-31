@@ -56,6 +56,23 @@ The built app will be in `src-tauri/target/release/bundle/`:
 - `.app` file for macOS
 - `.dmg` installer
 
+### Automated Releases
+
+The project includes a GitHub Actions workflow for automated releases. To create a release:
+
+1. Create and push a version tag:
+   ```bash
+   git tag v1.0.0
+   git push origin v1.0.0
+   ```
+
+2. The workflow will:
+   - Build the Tauri app for macOS
+   - Create a draft GitHub release
+   - Attach the `.dmg` installer and `.app` bundle
+
+3. Review and publish the draft release on GitHub
+
 ### Other Commands
 
 ```bash
