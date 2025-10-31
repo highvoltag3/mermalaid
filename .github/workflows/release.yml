@@ -26,8 +26,8 @@ jobs:
             -f tag_name="$TAG_NAME" \
             -f name="Release $TAG_NAME" \
             -f body="Release $TAG_NAME" \
-            -f draft=true \
-            -f prerelease=false \
+            --raw-field draft=true \
+            --raw-field prerelease=false \
             --jq .id)
           echo "id=$RELEASE_ID" >> $GITHUB_OUTPUT
 
