@@ -2,6 +2,7 @@
   "name": "mermalaid",
   "version": "1.0.0",
   "type": "module",
+  "license": "CC-BY-NC-SA-4.0",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
