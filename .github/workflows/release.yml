@@ -21,14 +21,15 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG_NAME=${GITHUB_REF#refs/tags/}
-          RELEASE_ID=$(gh api repos/$GITHUB_REPOSITORY/releases \
-            -X POST \
-            -f tag_name="$TAG_NAME" \
-            -f name="Release $TAG_NAME" \
-            -f body="Release $TAG_NAME" \
-            --raw-field draft=true \
-            --raw-field prerelease=false \
-            --jq .id)
+          # Create draft release using gh release create, then get the ID
+          gh release create "$TAG_NAME" \
+            --title "Release $TAG_NAME" \
+            --notes "Release $TAG_NAME" \
+            --draft \
+            --repo "$GITHUB_REPOSITORY" || true
+          
+          # Get the release ID from the API
+          RELEASE_ID=$(gh api repos/$GITHUB_REPOSITORY/releases/tags/$TAG_NAME --jq .id)
           echo "id=$RELEASE_ID" >> $GITHUB_OUTPUT
 
   build-tauri:
