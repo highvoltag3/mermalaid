@@ -151,7 +151,9 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({ code, setCode }, ref) =>
   }
 
   const handleCopyCode = () => {
-    const codeBlock = `\`\`\`mermaid\n${code}\n\`\`\``
+    // Extract plain Mermaid code if wrapped, then wrap it for markdown
+    const plainCode = extractMermaidCode(code)
+    const codeBlock = `\`\`\`mermaid\n${plainCode}\n\`\`\``
     navigator.clipboard.writeText(codeBlock)
     alert('Code copied to clipboard!')
   }
