@@ -136,7 +136,7 @@ export default function Editor({ code, setCode, error }: EditorProps) {
         editorContainer.removeEventListener('paste', handlePaste, true)
       }
     }
-  }, [setCode])
+  }, [setCode]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="editor-container">
