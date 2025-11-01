@@ -103,32 +103,40 @@ export default function Editor({ code, setCode, error }: EditorProps) {
 
   const handleEditorDidMount = (editor: any) => {
     editorRef.current = editor
-    
-    // Listen for paste events on the editor container
+  }
+
+  // Set up paste handler once editor is mounted
+  useEffect(() => {
+    const editor = editorRef.current
+    if (!editor) return
+
+    const handlePaste = (e: ClipboardEvent) => {
+      try {
+        const pastedText = e.clipboardData?.getData('text') || ''
+        const extractedCode = extractMermaidCode(pastedText)
+        
+        // If the pasted text was a code block and we extracted different content
+        if (pastedText !== extractedCode) {
+          e.preventDefault()
+          e.stopPropagation()
+          // Replace the entire editor content with the extracted code
+          editor.setValue(extractedCode)
+          // Update the state
+          setCode(extractedCode)
+        }
+      } catch (err) {
+        console.error('Error handling paste:', err)
+      }
+    }
+
     const editorContainer = editor.getContainerDomNode()
     if (editorContainer) {
-      const handlePaste = async (e: ClipboardEvent) => {
-        try {
-          const pastedText = e.clipboardData?.getData('text') || ''
-          const extractedCode = extractMermaidCode(pastedText)
-          
-          // If the pasted text was a code block and we extracted different content
-          if (pastedText !== extractedCode) {
-            e.preventDefault()
-            e.stopPropagation()
-            // Replace the entire editor content with the extracted code
-            editor.setValue(extractedCode)
-            // Update the state
-            setCode(extractedCode)
-          }
-        } catch (err) {
-          console.error('Error handling paste:', err)
-        }
-      }
-      
       editorContainer.addEventListener('paste', handlePaste, true)
+      return () => {
+        editorContainer.removeEventListener('paste', handlePaste, true)
+      }
     }
-  }
+  }, [setCode])
 
   return (
     <div className="editor-container">
