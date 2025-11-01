@@ -59,6 +59,8 @@ Return ONLY the corrected Mermaid code:`
     const data: OpenAIResponse = await response.json()
     const fixedCode = data.choices[0]?.message?.content?.trim()
     
+    console.log('AI Response received:', { fixedCode })
+    
     if (!fixedCode) {
       throw new Error('No response from AI')
     }
@@ -69,6 +71,8 @@ Return ONLY the corrected Mermaid code:`
       .replace(/```\s*$/, '')
       .trim()
 
+    console.log('Cleaned code:', cleanedCode)
+    
     return cleanedCode
   } catch (error) {
     if (error instanceof Error) {

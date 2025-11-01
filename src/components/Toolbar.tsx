@@ -179,10 +179,12 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({ code, setCode, error }, 
     setIsFixing(true)
     try {
       const fixedCode = await fixMermaidErrorWithAI(code, error, apiKey)
+      console.log('Setting fixed code:', fixedCode)
       setCode(fixedCode)
       alert('Code fixed! Check if the diagram renders correctly.')
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to fix code'
+      console.error('AI Fix error:', err)
       alert(`AI Fix failed: ${errorMsg}`)
     } finally {
       setIsFixing(false)
