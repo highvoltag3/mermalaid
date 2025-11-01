@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import EditorComponent, { loader } from '@monaco-editor/react'
 import { useTheme } from '../contexts/ThemeContext'
+import { extractMermaidCode } from '../utils/mermaidCodeBlock'
 import './Editor.css'
 
 // Register Mermaid language
@@ -84,6 +85,7 @@ interface EditorProps {
 export default function Editor({ code, setCode, error }: EditorProps) {
   const { theme } = useTheme()
   const debounceTimer = useRef<NodeJS.Timeout>()
+  const editorRef = useRef<any>(null)
 
   useEffect(() => {
     if (debounceTimer.current) {
@@ -99,6 +101,35 @@ export default function Editor({ code, setCode, error }: EditorProps) {
     }
   }, [code])
 
+  const handleEditorDidMount = (editor: any) => {
+    editorRef.current = editor
+    
+    // Listen for paste events on the editor container
+    const editorContainer = editor.getContainerDomNode()
+    if (editorContainer) {
+      const handlePaste = async (e: ClipboardEvent) => {
+        try {
+          const pastedText = e.clipboardData?.getData('text') || ''
+          const extractedCode = extractMermaidCode(pastedText)
+          
+          // If the pasted text was a code block and we extracted different content
+          if (pastedText !== extractedCode) {
+            e.preventDefault()
+            e.stopPropagation()
+            // Replace the entire editor content with the extracted code
+            editor.setValue(extractedCode)
+            // Update the state
+            setCode(extractedCode)
+          }
+        } catch (err) {
+          console.error('Error handling paste:', err)
+        }
+      }
+      
+      editorContainer.addEventListener('paste', handlePaste, true)
+    }
+  }
+
   return (
     <div className="editor-container">
       <div className="editor-header">
@@ -110,6 +141,7 @@ export default function Editor({ code, setCode, error }: EditorProps) {
         defaultLanguage="mermaid"
         value={code}
         onChange={(value) => setCode(value || '')}
+        onMount={handleEditorDidMount}
         theme={theme === 'dark' ? 'vs-dark' : 'vs'}
         options={{
           minimap: { enabled: false },

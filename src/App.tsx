@@ -3,6 +3,7 @@ import { ThemeProvider, useTheme } from './contexts/ThemeContext'
 import Editor from './components/Editor'
 import Preview from './components/Preview'
 import Toolbar from './components/Toolbar'
+import { extractMermaidCode } from './utils/mermaidCodeBlock'
 import './App.css'
 
 function AppContent() {
@@ -46,7 +47,9 @@ function AppContent() {
     const reader = new FileReader()
     reader.onload = (event) => {
       const content = event.target?.result as string
-      setCode(content)
+      // Extract Mermaid code from potential markdown code blocks
+      const extractedCode = extractMermaidCode(content)
+      setCode(extractedCode)
     }
     reader.readAsText(file)
   }

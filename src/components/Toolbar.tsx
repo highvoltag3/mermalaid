@@ -1,6 +1,7 @@
 import { useRef, useImperativeHandle, forwardRef } from 'react'
 import html2canvas from 'html2canvas'
 import { useTheme } from '../contexts/ThemeContext'
+import { extractMermaidCode } from '../utils/mermaidCodeBlock'
 import './Toolbar.css'
 
 interface ToolbarProps {
@@ -65,7 +66,9 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({ code, setCode }, ref) =>
       try {
         const content = event.target?.result as string
         if (content) {
-          setCode(content)
+          // Extract Mermaid code from potential markdown code blocks
+          const extractedCode = extractMermaidCode(content)
+          setCode(extractedCode)
           console.log(`Successfully loaded file: ${file.name}`)
         } else {
           alert('File appears to be empty.')
