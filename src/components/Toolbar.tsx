@@ -1,12 +1,15 @@
-import { useRef, useImperativeHandle, forwardRef } from 'react'
+import { useState, useRef, useImperativeHandle, forwardRef } from 'react'
 import html2canvas from 'html2canvas'
 import { useTheme } from '../contexts/ThemeContext'
 import { extractMermaidCode } from '../utils/mermaidCodeBlock'
+import { fixMermaidErrorWithAI, getStoredApiKey } from '../utils/aiErrorFixer'
+import Settings from './Settings'
 import './Toolbar.css'
 
 interface ToolbarProps {
   code: string
   setCode: (code: string) => void
+  error: string | null
 }
 
 export interface ToolbarRef {
@@ -15,9 +18,11 @@ export interface ToolbarRef {
   handleSave: () => void
 }
 
-const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({ code, setCode }, ref) => {
+const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({ code, setCode, error }, ref) => {
   const { theme, toggleTheme, mermaidTheme, setMermaidTheme } = useTheme()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [showSettings, setShowSettings] = useState(false)
+  const [isFixing, setIsFixing] = useState(false)
 
   const handleNew = () => {
     if (confirm('Create a new diagram? Unsaved changes will be lost.')) {
@@ -158,6 +163,32 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({ code, setCode }, ref) =>
     alert('Code copied to clipboard!')
   }
 
+  const handleAIFix = async () => {
+    const apiKey = getStoredApiKey()
+    if (!apiKey) {
+      alert('Please add your OpenAI API key in Settings to use AI Fix.')
+      setShowSettings(true)
+      return
+    }
+
+    if (!error || !code.trim()) {
+      alert('No error to fix')
+      return
+    }
+
+    setIsFixing(true)
+    try {
+      const fixedCode = await fixMermaidErrorWithAI(code, error, apiKey)
+      setCode(fixedCode)
+      alert('Code fixed! Check if the diagram renders correctly.')
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to fix code'
+      alert(`AI Fix failed: ${errorMsg}`)
+    } finally {
+      setIsFixing(false)
+    }
+  }
+
   useImperativeHandle(ref, () => ({
     handleNew,
     handleOpen,
@@ -165,55 +196,71 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({ code, setCode }, ref) =>
   }))
 
   return (
-    <div className={`toolbar ${theme}`}>
-      <div className="toolbar-section">
-        <button onClick={handleNew} className="toolbar-btn" title="New (⌘N)">
-          New
-        </button>
-        <button onClick={handleOpen} className="toolbar-btn" title="Open (⌘O)">
-          Open
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".mmd,.txt,.md,.markdown"
-          onChange={handleFileChange}
-          style={{ display: 'none' }}
-        />
-        <button onClick={handleSave} className="toolbar-btn" title="Save (⌘S)">
-          Save
-        </button>
-      </div>
+    <>
+      <div className={`toolbar ${theme}`}>
+        <div className="toolbar-section">
+          <button onClick={handleNew} className="toolbar-btn" title="New (⌘N)">
+            New
+          </button>
+          <button onClick={handleOpen} className="toolbar-btn" title="Open (⌘O)">
+            Open
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".mmd,.txt,.md,.markdown"
+            onChange={handleFileChange}
+            style={{ display: 'none' }}
+          />
+          <button onClick={handleSave} className="toolbar-btn" title="Save (⌘S)">
+            Save
+          </button>
+        </div>
 
-      <div className="toolbar-section">
-        <button onClick={handleExportSVG} className="toolbar-btn" title="Export SVG">
-          Export SVG
-        </button>
-        <button onClick={handleExportPNG} className="toolbar-btn" title="Export PNG">
-          Export PNG
-        </button>
-        <button onClick={handleCopyCode} className="toolbar-btn" title="Copy Code">
-          Copy Code
-        </button>
-      </div>
+        <div className="toolbar-section">
+          <button onClick={handleExportSVG} className="toolbar-btn" title="Export SVG">
+            Export SVG
+          </button>
+          <button onClick={handleExportPNG} className="toolbar-btn" title="Export PNG">
+            Export PNG
+          </button>
+          <button onClick={handleCopyCode} className="toolbar-btn" title="Copy Code">
+            Copy Code
+          </button>
+          {error && (
+            <button 
+              onClick={handleAIFix} 
+              className="toolbar-btn ai-fix-btn" 
+              title="AI Fix Error (uses OpenAI)"
+              disabled={isFixing}
+            >
+              {isFixing ? '🔄 Fixing...' : '🤖 AI Fix'}
+            </button>
+          )}
+        </div>
 
-      <div className="toolbar-section">
-        <select
-          value={mermaidTheme}
-          onChange={(e) => setMermaidTheme(e.target.value as any)}
-          className="toolbar-select"
-          title="Mermaid Theme"
-        >
-          <option value="default">Default</option>
-          <option value="dark">Dark</option>
-          <option value="forest">Forest</option>
-          <option value="neutral">Neutral</option>
-        </select>
-        <button onClick={toggleTheme} className="toolbar-btn" title="Toggle Theme">
-          {theme === 'light' ? '🌙' : '☀️'}
-        </button>
+        <div className="toolbar-section">
+          <select
+            value={mermaidTheme}
+            onChange={(e) => setMermaidTheme(e.target.value as any)}
+            className="toolbar-select"
+            title="Mermaid Theme"
+          >
+            <option value="default">Default</option>
+            <option value="dark">Dark</option>
+            <option value="forest">Forest</option>
+            <option value="neutral">Neutral</option>
+          </select>
+          <button onClick={toggleTheme} className="toolbar-btn" title="Toggle Theme">
+            {theme === 'light' ? '🌙' : '☀️'}
+          </button>
+          <button onClick={() => setShowSettings(true)} className="toolbar-btn" title="Settings">
+            ⚙️
+          </button>
+        </div>
       </div>
-    </div>
+      <Settings isOpen={showSettings} onClose={() => setShowSettings(false)} />
+    </>
   )
 })
 
