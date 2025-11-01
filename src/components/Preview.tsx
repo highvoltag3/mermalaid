@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import mermaid from 'mermaid'
 import { useTheme } from '../contexts/ThemeContext'
+import { extractMermaidCode } from '../utils/mermaidCodeBlock'
 import './Preview.css'
 
 interface PreviewProps {
@@ -29,7 +30,10 @@ export default function Preview({ code, setError }: PreviewProps) {
       const currentId = ++renderIdRef.current
       const container = previewRef.current
 
-      const trimmedCode = code.trim()
+      // Extract Mermaid code from potential markdown code blocks
+      const extractedCode = extractMermaidCode(code)
+      const trimmedCode = extractedCode.trim()
+      
       if (!trimmedCode) {
         if (renderIdRef.current === currentId) {
           container.innerHTML = '<div class="empty-preview">Start typing your Mermaid diagram...</div>'
