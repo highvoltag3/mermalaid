@@ -20,13 +20,20 @@ export async function fixMermaidErrorWithAI(
   errorMessage: string,
   apiKey: string
 ): Promise<string> {
-  const systemPrompt = `You are a Mermaid syntax expert. Fix Mermaid diagram syntax errors while preserving the diagram's intent and structure. Return ONLY the corrected Mermaid code without any explanations, markdown formatting, or code blocks.`
+  const systemPrompt = `You are a Mermaid syntax expert. Fix Mermaid diagram syntax errors while preserving the diagram's intent and structure.
+
+CRITICAL RULES:
+1. Node labels with special characters (parentheses, spaces, operators) MUST be enclosed in double quotes: ["Label (with parentheses)"]
+2. Subgraphs end with "end" (not "end sub")
+3. Use proper flowchart/graph syntax for the diagram type
+4. Ensure proper indentation and line breaks
+5. Return ONLY the corrected Mermaid code without explanations, markdown, or code blocks`
 
   const userPrompt = `Fix this Mermaid syntax error:
 
 Error: ${errorMessage}
 
-Code:
+Broken Code:
 ${code}
 
 Return ONLY the corrected Mermaid code:`
