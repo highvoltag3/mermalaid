@@ -8,7 +8,7 @@ export function extractMermaidCode(text: string): string {
   const trimmed = text.trim()
   
   // Check if it's wrapped in markdown code blocks
-  const codeBlockRegex = /^```mermaid\s*\n([\s\S]*?)\n```$/i
+  const codeBlockRegex = /^```mermaid\s*\n([\s\S]*?)\n```\s*$/i
   const match = trimmed.match(codeBlockRegex)
   
   if (match && match[1]) {
