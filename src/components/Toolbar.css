@@ -73,3 +73,27 @@
   color: #d4d4d4;
 }
 
+.ai-fix-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: transparent;
+}
+
+.ai-fix-btn:hover {
+  background: linear-gradient(135deg, #5568d3 0%, #653a91 100%);
+}
+
+.ai-fix-btn:disabled {
+  background: linear-gradient(135deg, #999 0%, #666 100%);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.app.dark .ai-fix-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.app.dark .ai-fix-btn:hover {
+  background: linear-gradient(135deg, #5568d3 0%, #653a91 100%);
+}
+
