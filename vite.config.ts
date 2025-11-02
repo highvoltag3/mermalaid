@@ -11,5 +11,8 @@ export default defineConfig({
     sourcemap: false,
     minify: 'esbuild',
   },
+  // Expose environment variables to the client
+  // Variables prefixed with VITE_ will be available via import.meta.env
+  envPrefix: 'VITE_',
 })
 

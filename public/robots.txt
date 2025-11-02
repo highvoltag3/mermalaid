@@ -1,0 +1,5 @@
+# Robots.txt for Mermalaid
+User-agent: *
+Allow: /
+
+Sitemap: https://your-domain.com/sitemap.xml
