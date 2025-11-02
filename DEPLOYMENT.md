@@ -112,7 +112,33 @@ npm run preview
 
 The preview server will serve the built files from the `dist` directory, allowing you to verify everything works correctly.
 
-## Deployment
+## Deployment Methods
+
+### Method 1: GitHub Actions (Recommended)
+
+Automated deployment via GitHub Actions is configured and ready to use.
+
+**Setup:**
+
+1. Add the following secrets to your GitHub repository (Settings → Secrets and variables → Actions):
+   - `APPWRITE_API_KEY` - Your Appwrite API key with Sites permissions
+   - `APPWRITE_PROJECT_ID` - Your Appwrite Project ID
+   - `APPWRITE_SITE_ID` - Your Appwrite Site ID
+   - `APPWRITE_ENDPOINT` (optional) - Default: `https://cloud.appwrite.io/v1`
+
+2. Push to `main` or `feature/appwrite-sites` branch to trigger automatic deployment
+
+3. Monitor deployment in the **Actions** tab
+
+**Benefits:**
+- ✅ Automatic deployment on every push
+- ✅ Consistent build environment
+- ✅ Deployment history in GitHub Actions
+- ✅ No manual steps required
+
+See [.github/workflows/README.md](.github/workflows/README.md) for detailed setup instructions.
+
+### Method 2: Appwrite Console (Manual)
 
 Once configured in the Appwrite Console:
 
@@ -122,6 +148,22 @@ Once configured in the Appwrite Console:
    - Build the project (`npm run build`)
    - Deploy the `dist` directory
 3. Your site will be available at the Appwrite-provided URL
+
+### Method 3: Appwrite CLI (Local)
+
+Deploy from your local machine using Appwrite CLI:
+
+```bash
+# Install Appwrite CLI
+npm install -g appwrite-cli
+
+# Login and setup
+appwrite login
+appwrite init project
+
+# Deploy
+appwrite deploy sites --siteId YOUR_SITE_ID --entrypoint dist/index.html --output dist
+```
 
 ## Troubleshooting
 

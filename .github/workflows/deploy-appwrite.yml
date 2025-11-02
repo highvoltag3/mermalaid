@@ -1,0 +1,51 @@
+name: Deploy to Appwrite Sites
+
+on:
+  push:
+    branches:
+      - main
+      - feature/appwrite-sites
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        run: npm run build
+        env:
+          # Add any build-time environment variables here
+          # VITE_APP_NAME: ${{ secrets.VITE_APP_NAME }}
+          # VITE_APP_VERSION: ${{ secrets.VITE_APP_VERSION }}
+
+      - name: Setup Appwrite CLI
+        uses: appwrite/setup-for-appwrite@v2
+        with:
+          method: key
+          key: ${{ secrets.APPWRITE_API_KEY }}
+          project: ${{ secrets.APPWRITE_PROJECT_ID }}
+          endpoint: ${{ secrets.APPWRITE_ENDPOINT || 'https://cloud.appwrite.io/v1' }}
+
+      - name: Deploy to Appwrite Sites
+        run: |
+          appwrite deploy sites \
+            --siteId ${{ secrets.APPWRITE_SITE_ID }} \
+            --entrypoint dist/index.html \
+            --output dist
+
+      - name: Deployment Status
+        run: |
+          echo "✅ Deployment completed successfully!"
+          echo "🌐 Your site should be available shortly"
