@@ -1,6 +1,7 @@
 .toolbar {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 8px 16px;
   border-bottom: 1px solid #e0e0e0;
   gap: 8px;
@@ -16,6 +17,10 @@
   display: flex;
   gap: 8px;
   align-items: center;
+}
+
+.toolbar-section-right {
+  margin-left: auto;
 }
 
 .toolbar-section:not(:last-child)::after {
@@ -39,6 +44,10 @@
   cursor: pointer;
   font-size: 13px;
   transition: all 0.2s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .toolbar-btn:hover {
@@ -95,5 +104,24 @@
 
 .app.dark .ai-fix-btn:hover {
   background: linear-gradient(135deg, #5568d3 0%, #653a91 100%);
+}
+
+.github-btn {
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.github-btn svg {
+  display: block;
+}
+
+.app.dark .github-btn {
+  color: #d4d4d4;
+}
+
+.app.dark .github-btn:hover {
+  color: #ffffff;
 }
 
