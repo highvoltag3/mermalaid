@@ -87,6 +87,17 @@ export default function Editor({ code, setCode, error }: EditorProps) {
   const debounceTimer = useRef<NodeJS.Timeout>()
   const editorRef = useRef<any>(null)
 
+  // Update Monaco editor when code changes externally (e.g., from AI Fix)
+  useEffect(() => {
+    if (editorRef.current) {
+      const currentValue = editorRef.current.getValue()
+      if (currentValue !== code) {
+        console.log('Updating Monaco editor with new code')
+        editorRef.current.setValue(code)
+      }
+    }
+  }, [code])
+
   useEffect(() => {
     if (debounceTimer.current) {
       clearTimeout(debounceTimer.current)
