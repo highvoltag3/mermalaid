@@ -1,33 +1,32 @@
 {
-  "name": "react-starter-kit-for-appwrite",
-  "private": true,
-  "version": "0.0.0",
+  "name": "mermalaid",
+  "version": "1.0.0",
   "type": "module",
+  "license": "CC-BY-NC-SA-4.0",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
   },
   "dependencies": {
-    "@appwrite.io/pink-icons": "^1.0.0",
-    "@tailwindcss/vite": "^4.0.14",
-    "appwrite": "^17.0.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "tailwindcss": "^4.0.14"
+    "@monaco-editor/react": "^4.6.0",
+    "@tauri-apps/api": "^2.9.0",
+    "html2canvas": "^1.4.1",
+    "mermaid": "^10.9.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.19.0",
-    "@types/react": "^19.0.8",
-    "@types/react-dom": "^19.0.3",
-    "@vitejs/plugin-react": "^4.3.4",
-    "eslint": "^9.19.0",
-    "eslint-plugin-react": "^7.37.4",
-    "eslint-plugin-react-hooks": "^5.0.0",
-    "eslint-plugin-react-refresh": "^0.4.18",
-    "globals": "^15.14.0",
-    "prettier": "3.5.3",
-    "vite": "^6.1.0"
+    "@tauri-apps/cli": "^2.9.2",
+    "@types/html2canvas": "^0.5.35",
+    "@types/node": "^24.9.2",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "typescript": "^5.2.2",
+    "vite": "^5.4.21"
   }
 }
