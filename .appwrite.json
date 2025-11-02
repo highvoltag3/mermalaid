@@ -2,10 +2,22 @@
   "installCommand": "npm install",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "runtime": "node20",
   "routes": [
     {
       "src": "/(.*)",
       "dest": "/index.html"
     }
-  ]
+  ],
+  "environmentVariables": {
+    "note": "Configure these in the Appwrite Console under your site's environment variables section",
+    "optional": [
+      "VITE_OPENAI_API_KEY",
+      "VITE_APP_NAME",
+      "VITE_APP_VERSION",
+      "VITE_ANALYTICS_ID",
+      "VITE_ENABLE_AI_FIXER",
+      "VITE_ENABLE_ANALYTICS"
+    ]
+  }
 }

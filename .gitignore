@@ -6,9 +6,14 @@ src-tauri/target
 *.log
 .env
 .env.local
+.env.*.local
 *.app
 *.dmg
 *.zip
+
+# Environment files (keep example files)
+!.env.example
+!env.example
 
 # Historical reference document
 MermaidChart_PRD.md

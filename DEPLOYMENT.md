@@ -53,7 +53,37 @@ Configure the following in the Appwrite Console:
 
 ### Environment Variables
 
-This project doesn't require any environment variables for deployment. If you add features that need environment variables in the future, configure them in the Appwrite Console under your site's environment variables section.
+Environment variables are optional for basic functionality but can be configured for enhanced features:
+
+**Available Environment Variables:**
+
+- `VITE_OPENAI_API_KEY` (optional) - OpenAI API key for AI error fixing feature
+- `VITE_APP_NAME` (optional) - Custom application name (defaults to "Mermalaid")
+- `VITE_APP_VERSION` (optional) - Application version
+- `VITE_ANALYTICS_ID` (optional) - Analytics tracking ID
+- `VITE_ENABLE_AI_FIXER` (optional) - Enable/disable AI fixer feature (default: true)
+- `VITE_ENABLE_ANALYTICS` (optional) - Enable/disable analytics (default: false)
+
+**Configuring Environment Variables:**
+
+1. In Appwrite Console, navigate to your site settings
+2. Go to the "Environment Variables" section
+3. Add each variable with the `VITE_` prefix (required by Vite)
+4. Variables are available in code via `import.meta.env.VITE_*`
+5. Use the helper functions from `src/utils/env.ts` for type-safe access
+
+**Example:**
+```
+VITE_OPENAI_API_KEY=sk-...
+VITE_APP_NAME=Mermalaid
+VITE_ENABLE_AI_FIXER=true
+```
+
+**Important:** 
+- All client-side environment variables must be prefixed with `VITE_`
+- Environment variables are embedded at build time, not runtime
+- For security, never commit `.env` files with actual API keys
+- Use `env.example` as a template (without sensitive data)
 
 ### VCS Integration (Optional but Recommended)
 
