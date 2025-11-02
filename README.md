@@ -1,36 +1,155 @@
-# Mermalaid
+# Mermalaid - The #1 Free Mermaid Diagram Editor | 100% Open Source & Free
 
-A native macOS Mermaid diagram editor built with **Tauri**, React, and TypeScript.
+**Mermalaid** is the premier free, open-source Mermaid diagram editor and chart creator. Create unlimited Mermaid diagrams, flowcharts, sequence diagrams, and more—completely free, no restrictions, no sign-ups required. The best free alternative to paid Mermaid editors.
 
-I built this project after realizing that the only tool meeting my needs limited free users to just three documents. Mermalaid started as a personal solution, but I'm expanding it as I find new use cases. If you find it helpful and notice missing features, [contributions](CONTRIBUTING.md) are welcome.
+[![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+[![Open Source](https://img.shields.io/badge/Open%20Source-Free%20Beer-success)](LICENSE)
+[![Free Forever](https://img.shields.io/badge/Free-Forever-green)]()
 
-## Features
+## 🎯 Why Mermalaid? The Best Free Mermaid Editor
 
-- **Monaco Editor** with syntax highlighting
-- **Live Preview** with debounced updates (500ms)
-- **Auto-save** to localStorage
-- **File Management**: Open, Save, Export (SVG, PNG)
-- **Theme Support**: Light/Dark mode and multiple Mermaid themes
-- **Syntax Validation**: Real-time error detection
-- **Copy to Clipboard**: Export code blocks for Markdown
-- **Native macOS App**: Lightweight desktop app using system webview
+Looking for a **free Mermaid editor**? Tired of **Mermaid diagram tools** with limits, subscriptions, or hidden costs? **Mermalaid is completely free and open source**—no document limits, no premium features, no credit cards required.
 
-## Why Tauri?
+### Key Differentiators
 
-Tauri is a modern alternative to Electron that provides:
+- ✅ **100% Free** - No restrictions, no limits, free forever (free as in free beer)
+- ✅ **Completely Open Source** - Full source code available, modify as you need
+- ✅ **No Sign-Up Required** - Start creating Mermaid diagrams instantly
+- ✅ **Unlimited Diagrams** - Create as many Mermaid charts as you need
+- ✅ **Professional Features** - Live preview, syntax highlighting, export options
+- ✅ **Web & Desktop** - Use in browser or download native macOS app
+- ✅ **Privacy-First** - All data stays local, no cloud sync required
+
+## 🚀 Quick Start - Create Your First Mermaid Diagram
+
+### Use Online (Web Version)
+
+Visit [Mermalaid](https://your-domain.com) to start creating Mermaid diagrams instantly in your browser—no installation needed.
+
+### Download Desktop App (macOS)
+
+1. Download the latest release from [GitHub Releases](https://github.com/your-username/mermalaid/releases)
+2. Install the `.dmg` file
+3. Start creating unlimited free Mermaid diagrams
+
+## ✨ Features - Professional Mermaid Editor, Zero Cost
+
+Mermalaid provides professional-grade features typically found in paid Mermaid editors—all completely free:
+
+### Editor Features
+
+- **Monaco Editor** with syntax highlighting for Mermaid code
+- **Live Preview** with debounced updates (500ms) - See changes in real-time
+- **Real-time Syntax Validation** - Instant error detection and feedback
+- **Auto-save** to localStorage - Never lose your work
+- **Dark/Light Mode** - Work in your preferred theme
+- **Multiple Mermaid Themes** - Customize diagram appearance
+
+### File Management
+
+- **Open Files** - Import `.mmd`, `.txt`, or `.md` files with Mermaid code
+- **Save Diagrams** - Export your Mermaid diagrams to local files
+- **Export Options**:
+  - **SVG Export** - Vector graphics for presentations and documents
+  - **PNG Export** - Raster images for documentation and web use
+- **Copy to Clipboard** - Export code blocks ready for Markdown, GitHub, or documentation
+
+### Mermaid Diagram Types Supported
+
+Create unlimited diagrams of all types:
+
+- **Flowcharts** (`graph`, `flowchart`)
+- **Sequence Diagrams** (`sequenceDiagram`)
+- **Class Diagrams** (`classDiagram`, `classDiagram-v2`)
+- **State Diagrams** (`stateDiagram`, `stateDiagram-v2`)
+- **Entity Relationship Diagrams** (`erDiagram`)
+- **User Journey** (`journey`)
+- **Gantt Charts** (`gantt`)
+- **Pie Charts** (`pie`)
+- **Git Graphs** (`gitGraph`)
+- **And More** - Full Mermaid.js support
+
+### Cross-Platform Support
+
+- **Web Application** - Works in any modern browser
+- **Native macOS App** - Lightweight desktop application
+- **Static Hosting** - Deploy anywhere (Vercel, Netlify, Appwrite Sites, etc.)
+
+## 💻 Technical Excellence
+
+### Built with Modern Technologies
+
+- **Tauri** - Lightweight, secure, native desktop framework (~10MB vs ~100MB+ Electron apps)
+- **React** + **TypeScript** - Modern, type-safe UI development
+- **Monaco Editor** - The same editor that powers VS Code
+- **Mermaid.js** - Industry-standard diagram rendering
+
+### Why Tauri?
+
+Mermalaid uses Tauri instead of Electron for a superior experience:
+
 - 🚀 **Much smaller app size** (~10MB vs ~100MB+ for Electron)
 - ⚡ **Better performance** using system webview instead of bundled Chromium
 - 🔒 **Enhanced security** with Rust backend
-- 💰 **Lower memory usage**
-- 🎯 **Better native integration**
+- 💰 **Lower memory usage** - Runs efficiently on any machine
+- 🎯 **Better native integration** - Feels like a real macOS app
 
-## Prerequisites
+## 📚 Use Cases - When to Use Mermalaid
+
+Mermalaid is perfect for:
+
+- **Software Developers** - Document architecture, workflows, and system designs
+- **Technical Writers** - Create diagrams for documentation and tutorials
+- **Project Managers** - Visualize project flows and processes
+- **Students** - Create diagrams for assignments and presentations
+- **DevOps Engineers** - Document infrastructure and deployment pipelines
+- **Anyone** - Who needs to create Mermaid diagrams without limits or costs
+
+## 🎨 Example Mermaid Diagrams
+
+Try these examples in Mermalaid:
+
+### Flowchart Example
+
+```mermaid
+graph TD
+    A[Start] --> B{Decision}
+    B -->|Yes| C[Action 1]
+    B -->|No| D[Action 2]
+    C --> E[End]
+    D --> E
+```
+
+### Sequence Diagram Example
+
+```mermaid
+sequenceDiagram
+    Alice->>Bob: Hello Bob, how are you?
+    Bob-->>Alice: Great!
+```
+
+### Class Diagram Example
+
+```mermaid
+classDiagram
+    class Animal {
+        +String name
+        +int age
+        +eat()
+    }
+    class Dog {
+        +bark()
+    }
+    Animal <|-- Dog
+```
+
+## 🔧 Development & Installation
+
+### Prerequisites
 
 - Node.js 18+
-- Rust (Tauri will install this automatically if not present)
+- Rust (Tauri will install automatically if not present)
 - macOS (for building macOS apps)
-
-## Development
 
 ### Running in Development
 
@@ -38,19 +157,25 @@ Tauri is a modern alternative to Electron that provides:
 # Install dependencies
 npm install
 
-# Run Tauri in development mode
+# Run Tauri in development mode (desktop app)
 npm run tauri:dev
+
+# Or run web version only
+npm run dev
 ```
 
 This will:
 1. Start the Vite dev server on `http://localhost:5173`
-2. Launch Tauri with the development server
+2. Launch Tauri with the development server (if using desktop)
 3. Hot reload your React app
 
 ### Building for Production
 
 ```bash
-# Build the app for macOS
+# Build web assets
+npm run build
+
+# Build macOS desktop app
 npm run tauri:build
 ```
 
@@ -58,26 +183,7 @@ The built app will be in `src-tauri/target/release/bundle/`:
 - `.app` file for macOS
 - `.dmg` installer
 
-### Automated Releases
-
-The project includes a GitHub Actions workflow for automated releases. To create a release:
-
-1. Create and push a version tag:
-   ```bash
-   git tag v1.0.0
-   git push origin v1.0.0
-   ```
-
-2. The workflow will:
-   - Build the Tauri app for macOS
-   - Create a draft GitHub release
-   - Attach the `.dmg` installer and `.app` bundle
-
-3. Review and publish the draft release on GitHub
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on contributing to the project.
-
-### Installing the App
+### Installing the Desktop App
 
 **Important:** The app is currently unsigned (not code-signed). macOS may show a "damaged" warning when you first open it.
 
@@ -99,62 +205,30 @@ open /Applications/Mermalaid.app
 3. Click **"Open Anyway"** next to the Mermalaid warning
 4. Click **"Open"** in the confirmation dialog
 
-**Note:** For distribution, code signing and notarization are recommended. This requires an Apple Developer account ($99/year).
+## ⌨️ Keyboard Shortcuts
 
-### Other Commands
+- `⌘N` (Mac) / `Ctrl+N` (Windows/Linux): New diagram
+- `⌘O` / `Ctrl+O`: Open file
+- `⌘S` / `Ctrl+S`: Save file
 
-```bash
-# Just run web version (dev server)
-npm run dev
+## 🤝 Contributing
 
-# Build web assets only
-npm run build
+Mermalaid is open source and welcomes contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-# Tauri CLI commands
-npm run tauri [command]
-```
+Areas where contributions are especially welcome:
+- Additional Mermaid diagram types
+- Export formats (PDF, etc.)
+- Platform support (Windows, Linux)
+- Performance improvements
+- Documentation and examples
 
-## Project Structure
+## 📖 Documentation
 
-```
-mermalaid/
-├── src/                 # React app
-│   ├── components/      # React components
-│   ├── contexts/         # React contexts
-│   └── main.tsx         # App entry point
-├── src-tauri/           # Tauri backend (Rust)
-│   ├── src/             # Rust source code
-│   ├── Cargo.toml       # Rust dependencies
-│   └── tauri.conf.json  # Tauri configuration
-└── dist/                # Built web assets
-```
+- [Contributing Guide](CONTRIBUTING.md) - How to contribute to Mermalaid
+- [Deployment Guide](DEPLOYMENT.md) - Deploy Mermalaid web version
+- [Static Hosting](STATIC_HOSTING.md) - Hosting configuration details
 
-## Keyboard Shortcuts
-
-- ⌘N: New diagram
-- ⌘O: Open file
-- ⌘S: Save file
-
-## Example Diagrams
-
-Try these in the editor:
-
-```
-graph TD
-    A[Start] --> B{Decision}
-    B -->|Yes| C[Action 1]
-    B -->|No| D[Action 2]
-    C --> E[End]
-    D --> E
-```
-
-```
-sequenceDiagram
-    Alice->>Bob: Hello Bob, how are you?
-    Bob-->>Alice: Great!
-```
-
-## Troubleshooting
+## 🐛 Troubleshooting
 
 **Tauri won't start:**
 - Make sure Rust is installed: `rustc --version`
@@ -170,8 +244,47 @@ sequenceDiagram
 - Tauri apps are much smaller than Electron (~10MB vs ~100MB+)
 - First build may take longer as Rust compiles dependencies
 
-## License
+## 📄 License
 
 This work is licensed under a [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License](http://creativecommons.org/licenses/by-nc-sa/4.0/).
 
-CC BY-NC-SA 4.0
+**CC BY-NC-SA 4.0** - Free to use, modify, and share (non-commercial)
+
+## 🌟 Why Choose Mermalaid Over Other Mermaid Editors?
+
+| Feature | Mermalaid | Other Tools |
+|---------|-----------|-------------|
+| **Cost** | ✅ 100% Free | ❌ Free tier with limits, paid for unlimited |
+| **Open Source** | ✅ Yes, fully open | ❌ Usually closed source |
+| **Document Limits** | ✅ Unlimited | ❌ Often 3-5 documents max |
+| **Sign-Up Required** | ✅ No | ❌ Usually required |
+| **Privacy** | ✅ Local storage only | ❌ Cloud sync required |
+| **Export Options** | ✅ SVG, PNG | ✅/❌ Varies |
+| **Syntax Validation** | ✅ Real-time | ✅/❌ Varies |
+| **Desktop App** | ✅ Native macOS | ❌ Often web-only |
+
+## 🎯 SEO Keywords & Search Terms
+
+Mermalaid is optimized for these search terms:
+- **free mermaid editor**
+- **mermaid diagram editor free**
+- **open source mermaid editor**
+- **free mermaid chart creator**
+- **mermaid diagram tool free**
+- **online mermaid editor free**
+- **mermaid flowchart editor**
+- **free mermaid diagram generator**
+- **mermaid editor no sign up**
+- **best free mermaid tool**
+
+---
+
+**⭐ Star this repo** if you find Mermalaid useful for creating free, unlimited Mermaid diagrams!
+
+**🔗 Share Mermalaid** with others who need a completely free, open-source Mermaid editor.
+
+**💬 Have questions?** Open an issue or check our documentation.
+
+---
+
+*Mermalaid - The #1 Free Mermaid Diagram Editor. Completely Open Source. 100% Free. Forever.*
