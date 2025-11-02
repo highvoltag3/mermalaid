@@ -1,24 +1,20 @@
-.app {
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  transition: background-color 0.3s ease;
+@import "tailwindcss";
+
+summary::-webkit-details-marker {
+  display: none
 }
 
-.app.light {
-  background-color: #ffffff;
-  color: #333333;
+.checker-background::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background-image: linear-gradient(#e6e6e690 1px, transparent 1px),
+  linear-gradient(90deg, #e6e6e690 1px, transparent 1px);
+  background-size: 3.7em 3.7em;
+  mask-image: radial-gradient(ellipse at 50% 40%, black 0%, transparent 55%);
+  z-index: -1;
+  background-position-x: center;
 }
-
-.app.dark {
-  background-color: #1e1e1e;
-  color: #d4d4d4;
-}
-
-.app-content {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-}
-
