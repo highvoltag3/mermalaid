@@ -1,5 +1,23 @@
-# Robots.txt for Mermalaid
+# Robots.txt for Mermalaid - Free Mermaid Diagram Editor
+# Optimized for search engine crawling
+
 User-agent: *
 Allow: /
 
-Sitemap: https://your-domain.com/sitemap.xml
+# Disallow admin or development paths if any exist in the future
+Disallow: /admin/
+Disallow: /_next/
+Disallow: /.git/
+
+# Allow all assets
+Allow: /assets/
+Allow: /images/
+Allow: /favicon.ico
+Allow: /robots.txt
+Allow: /sitemap.xml
+
+# Crawl-delay for respectful crawling
+Crawl-delay: 1
+
+# Sitemap location (update with your actual domain)
+Sitemap: https://mermalaid.com/sitemap.xml

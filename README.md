@@ -225,7 +225,9 @@ Areas where contributions are especially welcome:
 ## 📖 Documentation
 
 - [Contributing Guide](CONTRIBUTING.md) - How to contribute to Mermalaid
+- [Project Structure](PROJECT_STRUCTURE.md) - Codebase organization and file structure
 - [Deployment Guide](DEPLOYMENT.md) - Deploy Mermalaid web version
+- [Appwrite Setup](APPWRITE_SETUP.md) - Step-by-step Appwrite Sites setup
 - [Static Hosting](STATIC_HOSTING.md) - Hosting configuration details
 
 ## 🐛 Troubleshooting
