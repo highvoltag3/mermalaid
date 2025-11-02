@@ -64,7 +64,7 @@ function AppContent() {
       onDrop={handleDrop}
       onDragOver={handleDragOver}
     >
-      <Toolbar ref={toolbarRef} code={code} setCode={setCode} />
+      <Toolbar ref={toolbarRef} code={code} setCode={setCode} error={error} />
       <div className="app-content">
         <Editor code={code} setCode={setCode} error={error} />
         <Preview code={code} setError={setError} />
