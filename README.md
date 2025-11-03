@@ -24,11 +24,11 @@ Looking for a **free Mermaid editor**? Tired of **Mermaid diagram tools** with l
 
 ### Use Online (Web Version)
 
-Visit [Mermalaid](https://your-domain.com) to start creating Mermaid diagrams instantly in your browser—no installation needed.
+Visit [Mermalaid](https://mermalaid.com) to start creating Mermaid diagrams instantly in your browser—no installation needed.
 
 ### Download Desktop App (macOS)
 
-1. Download the latest release from [GitHub Releases](https://github.com/your-username/mermalaid/releases)
+1. Download the latest release from [GitHub Releases](https://github.com/highvoltag3/mermalaid/releases)
 2. Install the `.dmg` file
 3. Start creating unlimited free Mermaid diagrams
 
@@ -44,7 +44,7 @@ Mermalaid provides professional-grade features typically found in paid Mermaid e
 - **Auto-save** to localStorage - Never lose your work
 - **Dark/Light Mode** - Work in your preferred theme
 - **Multiple Mermaid Themes** - Customize diagram appearance
-- **Ai syntax Fix** - Copy-pasted the diagram from somewhere but it has syntaxt errors? Let Ai fix it for you. (You will need an OpenAi API key, it's stored locally in your machine so it's only yours).
+- **Ai syntax Fix** - Copy-pasted the diagram from somewhere but it has syntaxt errors? 🤖 Let Ai fix it ✨ for you. (**You will need an OpenAi API key, it's __stored locally__ in your machine so it's only yours**).
 
 ### File Management
 
