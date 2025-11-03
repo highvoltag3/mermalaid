@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Mermalaid - The #1 Free Mermaid Diagram Editor | 100% Open Source & Free
 
 **Mermalaid** is the premier free, open-source Mermaid diagram editor and chart creator. Create unlimited Mermaid diagrams, flowcharts, sequence diagrams, and more—completely free, no restrictions, no sign-ups required. The best free alternative to paid Mermaid editors.
