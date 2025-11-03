@@ -12,7 +12,7 @@ Looking for a **free Mermaid editor**? Tired of **Mermaid diagram tools** with l
 
 ### Key Differentiators
 
-- ✅ **100% Free** - No restrictions, no limits, free forever (free as in free beer)
+- ✅ **100% Free** - No restrictions, no limits, free forever (free as in free beer 🍺)
 - ✅ **Completely Open Source** - Full source code available, modify as you need
 - ✅ **No Sign-Up Required** - Start creating Mermaid diagrams instantly
 - ✅ **Unlimited Diagrams** - Create as many Mermaid charts as you need
@@ -44,6 +44,7 @@ Mermalaid provides professional-grade features typically found in paid Mermaid e
 - **Auto-save** to localStorage - Never lose your work
 - **Dark/Light Mode** - Work in your preferred theme
 - **Multiple Mermaid Themes** - Customize diagram appearance
+- **Ai syntax Fix** - Copy-pasted the diagram from somewhere but it has syntaxt errors? Let Ai fix it for you. (You will need an OpenAi API key, it's stored locally in your machine so it's only yours).
 
 ### File Management
 
