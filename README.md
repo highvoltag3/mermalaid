@@ -12,7 +12,7 @@ Looking for a **free Mermaid editor**? Tired of **Mermaid diagram tools** with l
 
 ### Key Differentiators
 
-- ✅ **100% Free** - No restrictions, no limits, free forever (free as in free beer)
+- ✅ **100% Free** - No restrictions, no limits, free forever (free as in free beer 🍺)
 - ✅ **Completely Open Source** - Full source code available, modify as you need
 - ✅ **No Sign-Up Required** - Start creating Mermaid diagrams instantly
 - ✅ **Unlimited Diagrams** - Create as many Mermaid charts as you need
