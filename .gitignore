@@ -13,7 +13,13 @@ logs
 !env.example
 
 # Documentation files to keep local only
+APPWRITE_SETUP.md
+APPWRITE_TROUBLESHOOTING.md
+github_dario_novoa_io.pub
 PROJECT_STRUCTURE.md
+SEO_IMPLEMENTATION_SUMMARY.md
+SEO_OPTIMIZATION.md
+STATIC_HOSTING.md
 MermaidChart_PRD.md
 
 npm-debug.log*
