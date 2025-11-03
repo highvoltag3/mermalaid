@@ -44,6 +44,7 @@ Mermalaid provides professional-grade features typically found in paid Mermaid e
 - **Auto-save** to localStorage - Never lose your work
 - **Dark/Light Mode** - Work in your preferred theme
 - **Multiple Mermaid Themes** - Customize diagram appearance
+- **Ai syntax Fix** - Copy-pasted the diagram from somewhere but it has syntaxt errors? Let Ai fix it for you. (You will need an OpenAi API key, it's stored locally in your machine so it's only yours).
 
 ### File Management
 
