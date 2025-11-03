@@ -12,8 +12,10 @@ logs
 !.env.example
 !env.example
 
-# Historical reference document
+# Documentation files to keep local only
+PROJECT_STRUCTURE.md
 MermaidChart_PRD.md
+
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
