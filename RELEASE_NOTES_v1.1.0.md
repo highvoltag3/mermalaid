@@ -64,4 +64,4 @@ Thanks to all contributors and users who helped make this release possible!
 
 ---
 
-**Full Changelog**: See [GitHub Commits](https://github.com/your-username/mermalaid/compare/v1.0.0...v1.1.0)
+**Full Changelog**: See [GitHub Commits](https://github.com/highvoltag3/mermalaid/compare/v1.0.0...v1.1.0)
