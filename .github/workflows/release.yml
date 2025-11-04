@@ -6,44 +6,7 @@ on:
       - 'v*'
 
 jobs:
-  create-release:
-    permissions:
-      contents: write
-    runs-on: ubuntu-latest
-    outputs:
-      release_id: ${{ steps.create-release.outputs.id }}
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Create Release
-        id: create-release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          TAG_NAME=${GITHUB_REF#refs/tags/}
-          echo "Creating release for tag: $TAG_NAME"
-          
-          # Check if release already exists
-          if gh release view "$TAG_NAME" --repo "$GITHUB_REPOSITORY" &>/dev/null; then
-            echo "Release already exists for tag $TAG_NAME"
-            # Get release ID from existing release
-            RELEASE_ID=$(gh release view "$TAG_NAME" --repo "$GITHUB_REPOSITORY" --json id --jq .id)
-          else
-            # Create draft release and get ID
-            gh release create "$TAG_NAME" \
-              --title "Release $TAG_NAME" \
-              --notes "Release $TAG_NAME" \
-              --draft \
-              --repo "$GITHUB_REPOSITORY"
-            # Get the release ID after creation
-            RELEASE_ID=$(gh release view "$TAG_NAME" --repo "$GITHUB_REPOSITORY" --json id --jq .id)
-          fi
-          
-          echo "Release ID: $RELEASE_ID"
-          echo "id=$RELEASE_ID" >> $GITHUB_OUTPUT
-
   build-tauri:
-    needs: create-release
     permissions:
       contents: write
     strategy:
@@ -77,6 +40,28 @@ jobs:
           which hdiutil && echo "✓ hdiutil found" || echo "✗ hdiutil not found"
           xcode-select -p && echo "✓ Xcode Command Line Tools found" || echo "✗ Xcode Command Line Tools not found"
 
+      - name: Check for existing release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          echo "Checking for existing release: $TAG_NAME"
+          
+          if gh release view "$TAG_NAME" --repo "$GITHUB_REPOSITORY" &>/dev/null; then
+            RELEASE_STATE=$(gh release view "$TAG_NAME" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft)
+            if [ "$RELEASE_STATE" == "true" ]; then
+              echo "⚠️  Draft release already exists. Deleting it so tauri-action can create a new one..."
+              gh release delete "$TAG_NAME" --repo "$GITHUB_REPOSITORY" --yes || true
+            else
+              echo "❌ ERROR: Published release already exists for tag $TAG_NAME"
+              echo "Published releases are immutable and cannot be modified."
+              echo "Please delete the existing release or use a different tag."
+              exit 1
+            fi
+          else
+            echo "✓ No existing release found. tauri-action will create a new draft release."
+          fi
+
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -85,6 +70,7 @@ jobs:
           projectPath: ./
           tagName: ${{ github.ref }}
           releaseName: Release ${{ github.ref_name }}
+          releaseDraft: true
           args: ${{ matrix.args }}
 
       - name: Verify DMG was created
