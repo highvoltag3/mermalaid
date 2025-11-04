@@ -86,3 +86,17 @@ jobs:
           tagName: ${{ github.ref }}
           releaseName: Release ${{ github.ref_name }}
           args: ${{ matrix.args }}
+
+      - name: Verify DMG was created
+        run: |
+          echo "Checking for DMG file..."
+          DMG_PATH=$(find src-tauri/target/release/bundle -name "*.dmg" 2>/dev/null | head -n 1)
+          if [ -z "$DMG_PATH" ]; then
+            echo "❌ ERROR: DMG file not found!"
+            echo "Contents of bundle directory:"
+            ls -la src-tauri/target/release/bundle/ || echo "Bundle directory not found"
+            exit 1
+          else
+            echo "✅ DMG file found: $DMG_PATH"
+            ls -lh "$DMG_PATH"
+          fi
