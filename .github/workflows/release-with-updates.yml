@@ -1,0 +1,239 @@
+name: Release with Auto-Updates
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  create-release:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    outputs:
+      release_id: ${{ steps.create-release.outputs.id }}
+      version: ${{ steps.create-release.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Create Release
+        id: create-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          VERSION=${TAG_NAME#v}
+          echo "Creating release for tag: $TAG_NAME (version: $VERSION)"
+          
+          # Check if release already exists
+          if gh release view "$TAG_NAME" --repo "$GITHUB_REPOSITORY" &>/dev/null; then
+            echo "Release already exists for tag $TAG_NAME"
+            RELEASE_ID=$(gh release view "$TAG_NAME" --repo "$GITHUB_REPOSITORY" --json id --jq .id)
+          else
+            # Create draft release and get ID
+            gh release create "$TAG_NAME" \
+              --title "Release $TAG_NAME" \
+              --notes "Release $TAG_NAME" \
+              --draft \
+              --repo "$GITHUB_REPOSITORY"
+            RELEASE_ID=$(gh release view "$TAG_NAME" --repo "$GITHUB_REPOSITORY" --json id --jq .id)
+          fi
+          
+          echo "Release ID: $RELEASE_ID"
+          echo "id=$RELEASE_ID" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+  build-tauri:
+    needs: create-release
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'macos-latest'
+            args: ''
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install frontend dependencies
+        run: npm install
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Setup Code Signing (macOS)
+        if: matrix.platform == 'macos-latest'
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_KEYCHAIN_PASSWORD: ${{ secrets.APPLE_KEYCHAIN_PASSWORD }}
+        run: |
+          # Only setup if certificate is provided
+          if [ -z "$APPLE_CERTIFICATE" ]; then
+            echo "Skipping code signing setup (no certificate provided)"
+            exit 0
+          fi
+          
+          # Create keychain
+          security create-keychain -p "$APPLE_KEYCHAIN_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "$APPLE_KEYCHAIN_PASSWORD" build.keychain
+          security set-keychain-settings -t 3600 -u build.keychain
+          
+          # Import certificate
+          echo "$APPLE_CERTIFICATE" | base64 --decode > certificate.p12
+          security import certificate.p12 -k build.keychain -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$APPLE_KEYCHAIN_PASSWORD" build.keychain
+          
+          # Verify certificate
+          security find-identity -v -p codesigning
+
+      - name: Verify DMG tools
+        run: |
+          echo "Checking DMG creation prerequisites..."
+          which hdiutil && echo "✓ hdiutil found" || echo "✗ hdiutil not found"
+          xcode-select -p && echo "✓ Xcode Command Line Tools found" || echo "✗ Xcode Command Line Tools not found"
+
+      - name: Build Tauri App
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUST_BACKTRACE: 1
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY || '' }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE || '' }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD || '' }}
+          APPLE_KEYCHAIN_PASSWORD: ${{ secrets.APPLE_KEYCHAIN_PASSWORD || '' }}
+        with:
+          projectPath: ./
+          tagName: ${{ github.ref }}
+          releaseName: Release ${{ github.ref_name }}
+          args: ${{ matrix.args }}
+
+      - name: Prepare Update Bundle
+        if: matrix.platform == 'macos-latest'
+        run: |
+          # Find the built .app bundle
+          APP_BUNDLE=$(find src-tauri/target/release/bundle -name "*.app" -type d | head -n 1)
+          if [ -z "$APP_BUNDLE" ]; then
+            echo "Error: App bundle not found"
+            exit 1
+          fi
+          
+          # Get architecture
+          ARCH=$(uname -m)
+          if [ "$ARCH" = "x86_64" ]; then
+            ARCH_SUFFIX="x64"
+          elif [ "$ARCH" = "arm64" ]; then
+            ARCH_SUFFIX="aarch64"
+          else
+            ARCH_SUFFIX="$ARCH"
+          fi
+          
+          VERSION="${{ needs.create-release.outputs.version }}"
+          TAR_GZ="Mermalaid_${VERSION}_${ARCH_SUFFIX}.app.tar.gz"
+          
+          # Create tar.gz bundle
+          cd "$(dirname "$APP_BUNDLE")"
+          tar -czf "$TAR_GZ" "$(basename "$APP_BUNDLE")"
+          mv "$TAR_GZ" "$GITHUB_WORKSPACE/"
+          
+          echo "TAR_GZ=$TAR_GZ" >> $GITHUB_ENV
+          echo "ARCH_SUFFIX=$ARCH_SUFFIX" >> $GITHUB_ENV
+
+      - name: Sign Update Bundle
+        if: matrix.platform == 'macos-latest'
+        env:
+          TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY || '' }}
+        run: |
+          # Check if private key is provided
+          if [ -z "$TAURI_PRIVATE_KEY" ]; then
+            echo "Skipping update bundle signing (no private key provided)"
+            exit 0
+          fi
+          
+          # Decode private key
+          echo "$TAURI_PRIVATE_KEY" | base64 --decode > ~/.tauri/mermalaid.key
+          chmod 600 ~/.tauri/mermalaid.key
+          
+          # Sign the bundle
+          npm run tauri signer sign -- -w ~/.tauri/mermalaid.key -f "$TAR_GZ" -o "${TAR_GZ}.sig"
+          
+          # Verify signature was created
+          if [ -f "${TAR_GZ}.sig" ]; then
+            echo "✓ Update bundle signed successfully"
+            echo "SIGNATURE=$(cat "${TAR_GZ}.sig")" >> $GITHUB_ENV
+          else
+            echo "Error: Failed to create signature"
+            exit 1
+          fi
+
+      - name: Generate Update Manifest
+        if: matrix.platform == 'macos-latest'
+        env:
+          SIGNATURE: ${{ env.SIGNATURE || '' }}
+        run: |
+          VERSION="${{ needs.create-release.outputs.version }}"
+          ARCH_SUFFIX="$ARCH_SUFFIX"
+          BASE_URL="https://github.com/${{ github.repository }}/releases/download/v${VERSION}"
+          PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          PLATFORM="darwin-$ARCH_SUFFIX"
+          
+          cat > latest.json <<EOF
+          {
+            "version": "$VERSION",
+            "notes": "Release $VERSION - See full release notes on GitHub",
+            "pub_date": "$PUB_DATE",
+            "platforms": {
+              "$PLATFORM": {
+                "signature": "$SIGNATURE",
+                "url": "$BASE_URL/$TAR_GZ"
+              }
+            }
+          }
+          EOF
+          
+          cat latest.json
+          echo "MANIFEST_CREATED=true" >> $GITHUB_ENV
+          else
+            echo "Warning: No signature available, skipping manifest creation"
+            echo "Update checks will fall back to GitHub Releases API"
+          fi
+
+      - name: Upload Update Assets
+        if: matrix.platform == 'macos-latest'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          
+          # Upload update bundle
+          gh release upload "$TAG_NAME" "$TAR_GZ" \
+            --repo "${{ github.repository }}" \
+            --clobber
+          
+          # Upload signature if it exists
+          if [ -f "${TAR_GZ}.sig" ]; then
+            gh release upload "$TAG_NAME" "${TAR_GZ}.sig" \
+              --repo "${{ github.repository }}" \
+              --clobber
+          fi
+          
+          # Upload manifest if it exists
+          if [ -f "latest.json" ]; then
+            gh release upload "$TAG_NAME" latest.json \
+              --repo "${{ github.repository }}" \
+              --clobber \
+              --name "latest.json"
+          fi
+

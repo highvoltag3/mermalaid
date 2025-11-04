@@ -25,6 +25,15 @@
       "csp": null
     }
   },
+  "plugins": {
+    "updater": {
+      "active": true,
+      "endpoints": [
+        "https://github.com/highvoltag3/mermalaid/releases/latest/download/latest.json"
+      ],
+      "dialog": true
+    }
+  },
   "bundle": {
     "active": true,
     "targets": "all",

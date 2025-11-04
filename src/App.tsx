@@ -3,6 +3,7 @@ import { ThemeProvider, useTheme } from './contexts/ThemeContext'
 import Editor from './components/Editor'
 import Preview from './components/Preview'
 import Toolbar from './components/Toolbar'
+import UpdateNotification from './components/UpdateNotification'
 import { extractMermaidCode } from './utils/mermaidCodeBlock'
 import './App.css'
 
@@ -64,6 +65,7 @@ function AppContent() {
       onDrop={handleDrop}
       onDragOver={handleDragOver}
     >
+      <UpdateNotification />
       <Toolbar ref={toolbarRef} code={code} setCode={setCode} error={error} />
       <div className="app-content">
         <Editor code={code} setCode={setCode} error={error} />

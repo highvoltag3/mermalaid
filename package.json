@@ -9,11 +9,15 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri:build": "tauri build",
+    "update:generate-keys": "tauri signer generate -- -w ~/.tauri/mermalaid.key",
+    "update:sign": "bash scripts/sign-update.sh",
+    "update:manifest": "bash scripts/generate-update-manifest.sh"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.6.0",
     "@tauri-apps/api": "^2.9.0",
+    "@tauri-apps/plugin-updater": "^2.0.0",
     "html2canvas": "^1.4.1",
     "mermaid": "^10.9.1",
     "react": "^18.2.0",
