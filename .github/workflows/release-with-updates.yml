@@ -189,22 +189,24 @@ jobs:
           PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           PLATFORM="darwin-$ARCH_SUFFIX"
           
-          cat > latest.json <<EOF
-          {
-            "version": "$VERSION",
-            "notes": "Release $VERSION - See full release notes on GitHub",
-            "pub_date": "$PUB_DATE",
-            "platforms": {
-              "$PLATFORM": {
-                "signature": "$SIGNATURE",
-                "url": "$BASE_URL/$TAR_GZ"
+          # Only create manifest if signature exists (bundle was signed)
+          if [ -n "$SIGNATURE" ]; then
+            cat > latest.json <<EOF
+            {
+              "version": "$VERSION",
+              "notes": "Release $VERSION - See full release notes on GitHub",
+              "pub_date": "$PUB_DATE",
+              "platforms": {
+                "$PLATFORM": {
+                  "signature": "$SIGNATURE",
+                  "url": "$BASE_URL/$TAR_GZ"
+                }
               }
             }
-          }
-          EOF
-          
-          cat latest.json
-          echo "MANIFEST_CREATED=true" >> $GITHUB_ENV
+            EOF
+            
+            cat latest.json
+            echo "MANIFEST_CREATED=true" >> $GITHUB_ENV
           else
             echo "Warning: No signature available, skipping manifest creation"
             echo "Update checks will fall back to GitHub Releases API"
