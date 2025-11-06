@@ -37,12 +37,47 @@ const CustomNode = ({ data, selected }: { data: any; selected: boolean }) => {
       case 'rounded':
         return { borderRadius: '20px' }
       case 'diamond':
+      case 'rhombus':
         return {
           clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
-          transform: 'rotate(45deg)',
         }
       case 'circle':
         return { borderRadius: '50%' }
+      case 'doublecircle':
+        return { 
+          borderRadius: '50%',
+          border: '3px solid',
+          borderColor: isDark ? '#555' : '#ddd',
+        }
+      case 'stadium':
+        return { borderRadius: '999px' }
+      case 'subroutine':
+        return { 
+          borderRadius: '4px',
+          border: '2px solid',
+          borderColor: isDark ? '#555' : '#ddd',
+        }
+      case 'hexagon':
+        return {
+          clipPath: 'polygon(30% 0%, 70% 0%, 100% 50%, 70% 100%, 30% 100%, 0% 50%)',
+        }
+      case 'parallelogram':
+        return {
+          clipPath: 'polygon(20% 0%, 100% 0%, 80% 100%, 0% 100%)',
+        }
+      case 'trapezoid':
+        return {
+          clipPath: 'polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%)',
+        }
+      case 'trapezoidAlt':
+        return {
+          clipPath: 'polygon(0% 0%, 100% 0%, 80% 100%, 20% 100%)',
+        }
+      case 'cylinder':
+        return {
+          borderRadius: '4px 4px 50% 50%',
+        }
+      case 'rect':
       default:
         return { borderRadius: '4px' }
     }

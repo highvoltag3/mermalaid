@@ -159,9 +159,13 @@ export function parseMermaidFlowchart(code: string): ParsedMermaidDiagram | null
                     id
       
       // Determine shape from brackets (check most specific patterns first)
+      // IMPORTANT: Check hexagon BEFORE diamond ({{ vs {)
       let shape: MermaidNode['shape'] = 'rect'
       if (fullMatch?.startsWith('{{') && fullMatch?.endsWith('}}')) {
         shape = 'hexagon'
+      } else if (fullMatch?.startsWith('{') && fullMatch?.endsWith('}')) {
+        // Check diamond AFTER hexagon to avoid false matches
+        shape = 'diamond'
       } else if (fullMatch?.startsWith('[\\') && fullMatch?.endsWith('/]')) {
         shape = 'trapezoidAlt'
       } else if (fullMatch?.startsWith('[/') && fullMatch?.endsWith('\\]')) {
@@ -182,8 +186,6 @@ export function parseMermaidFlowchart(code: string): ParsedMermaidDiagram | null
         shape = 'cylinder'
       } else if (fullMatch?.startsWith('(') && fullMatch?.endsWith(')')) {
         shape = 'rounded'
-      } else if (fullMatch?.startsWith('{') && fullMatch?.endsWith('}')) {
-        shape = 'diamond'
       } else if (fullMatch?.startsWith('[') && fullMatch?.endsWith(']')) {
         shape = 'rect'
       }
