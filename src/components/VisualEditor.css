@@ -1,0 +1,145 @@
+.visual-editor-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.visual-editor-header {
+  padding: 8px 16px;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.app.dark .visual-editor-header {
+  border-bottom-color: #404040;
+}
+
+.visual-editor-hint {
+  font-size: 10px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: #999;
+  font-style: italic;
+}
+
+.app.dark .visual-editor-hint {
+  color: #666;
+}
+
+.visual-editor-content {
+  flex: 1;
+  position: relative;
+}
+
+/* React Flow styling */
+.visual-editor-content .react-flow {
+  background-color: transparent;
+}
+
+.visual-editor-content .react-flow.dark {
+  background-color: transparent;
+}
+
+.visual-node {
+  min-width: 100px;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: move;
+  transition: all 0.2s;
+  position: relative;
+}
+
+/* Disable node dragging when hovering over handles */
+.visual-node:hover .react-flow__handle {
+  cursor: crosshair;
+}
+
+.visual-node:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.visual-node.selected {
+  box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.3);
+}
+
+.visual-node.dark {
+  background-color: #2d2d2d;
+  color: #d4d4d4;
+}
+
+/* React Flow Handle styling */
+.react-flow__handle {
+  border-radius: 50%;
+  border: 2px solid #fff;
+  transition: all 0.2s;
+  cursor: crosshair !important;
+  pointer-events: all !important;
+  z-index: 1000 !important;
+  position: absolute !important;
+}
+
+.react-flow__handle:hover {
+  transform: scale(1.3);
+  box-shadow: 0 0 8px rgba(74, 158, 255, 0.6);
+  cursor: crosshair !important;
+}
+
+.react-flow__handle:active {
+  cursor: crosshair !important;
+}
+
+.react-flow__handle-connecting {
+  background: #ff6b6b !important;
+  cursor: crosshair !important;
+}
+
+.react-flow__handle-valid {
+  background: #51cf66 !important;
+  cursor: crosshair !important;
+}
+
+/* Ensure handles are above everything and prevent node drag interference */
+.visual-node .react-flow__handle {
+  position: absolute !important;
+  pointer-events: all !important;
+  z-index: 1000 !important;
+  cursor: crosshair !important;
+}
+
+/* Prevent node from being dragged when clicking on handles */
+.react-flow__node:has(.react-flow__handle:hover) {
+  cursor: default !important;
+}
+
+/* React Flow controls dark mode */
+.app.dark .react-flow__controls {
+  background-color: #2d2d2d;
+  border: 1px solid #404040;
+}
+
+.app.dark .react-flow__controls button {
+  background-color: #2d2d2d;
+  color: #d4d4d4;
+  border-bottom: 1px solid #404040;
+}
+
+.app.dark .react-flow__controls button:hover {
+  background-color: #3d3d3d;
+}
+
+/* React Flow minimap dark mode */
+.app.dark .react-flow__minimap {
+  background-color: #2d2d2d;
+  border: 1px solid #404040;
+}
+
