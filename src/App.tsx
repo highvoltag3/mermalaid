@@ -67,7 +67,7 @@ function AppContent() {
       <Toolbar ref={toolbarRef} code={code} setCode={setCode} error={error} />
       <div className="app-content">
         <Editor code={code} setCode={setCode} error={error} />
-        <Preview code={code} setError={setError} />
+        <Preview code={code} setError={setError} onCodeChange={setCode} />
       </div>
     </div>
   )

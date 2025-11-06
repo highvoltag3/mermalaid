@@ -1,18 +1,33 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import mermaid from 'mermaid'
 import { useTheme } from '../contexts/ThemeContext'
 import { extractMermaidCode } from '../utils/mermaidCodeBlock'
+import { isEditableDiagram, parseMermaidFlowchart } from '../utils/mermaidParser'
+import VisualEditor from './VisualEditor'
 import './Preview.css'
 
 interface PreviewProps {
   code: string
   setError: (error: string | null) => void
+  onCodeChange?: (code: string) => void
 }
 
-export default function Preview({ code, setError }: PreviewProps) {
+export default function Preview({ code, setError, onCodeChange }: PreviewProps) {
   const { mermaidTheme } = useTheme()
   const previewRef = useRef<HTMLDivElement>(null)
   const renderIdRef = useRef(0)
+  const [isEditMode, setIsEditMode] = useState(false)
+  
+  const extractedCode = extractMermaidCode(code)
+  const trimmedCode = extractedCode.trim()
+  const parsedDiagram = trimmedCode ? parseMermaidFlowchart(trimmedCode) : null
+  const canEdit = parsedDiagram !== null && isEditableDiagram(trimmedCode)
+
+  const handleCodeChange = (newCode: string) => {
+    if (onCodeChange) {
+      onCodeChange(newCode)
+    }
+  }
 
   useEffect(() => {
     mermaid.initialize({
@@ -30,8 +45,12 @@ export default function Preview({ code, setError }: PreviewProps) {
       const currentId = ++renderIdRef.current
       const container = previewRef.current
 
+      // Don't render preview if we're in edit mode
+      if (isEditMode && canEdit) {
+        return
+      }
+      
       // Extract Mermaid code from potential markdown code blocks
-      const extractedCode = extractMermaidCode(code)
       const trimmedCode = extractedCode.trim()
       
       if (!trimmedCode) {
@@ -78,12 +97,43 @@ export default function Preview({ code, setError }: PreviewProps) {
     }, 500)
 
     return () => clearTimeout(timer)
-  }, [code, setError, mermaidTheme])
+  }, [code, setError, mermaidTheme, isEditMode, canEdit, extractedCode])
+
+  // Show visual editor if in edit mode and diagram is editable
+  if (isEditMode && canEdit && parsedDiagram) {
+    return (
+      <div className="preview-container">
+        <div className="preview-header">
+          <span>Visual Editor</span>
+          <button
+            className="mode-toggle-btn"
+            onClick={() => setIsEditMode(false)}
+            title="Switch to preview mode"
+          >
+            Preview Mode
+          </button>
+        </div>
+        <VisualEditor
+          parsedDiagram={parsedDiagram}
+          onCodeChange={handleCodeChange}
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="preview-container">
       <div className="preview-header">
         <span>Preview</span>
+        {canEdit && (
+          <button
+            className="mode-toggle-btn"
+            onClick={() => setIsEditMode(true)}
+            title="Switch to visual edit mode"
+          >
+            Visual Edit
+          </button>
+        )}
       </div>
       <div className="preview-content" ref={previewRef}>
         <div className="empty-preview">Loading...</div>

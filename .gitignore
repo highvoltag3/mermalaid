@@ -44,6 +44,14 @@ dist-ssr
 *.sln
 *.sw?
 
+# Temporary test/debug files
+test-*.js
+test-*.ts
+debug-*.js
+debug-*.ts
+*.test.local.*
+*.debug.*
+
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

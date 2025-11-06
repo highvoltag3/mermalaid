@@ -19,6 +19,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  min-height: 40px;
 }
 
 .app.dark .editor-header {
