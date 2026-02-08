@@ -3,17 +3,9 @@
   height: 100vh;
   display: flex;
   flex-direction: column;
-  transition: background-color 0.3s ease;
-}
-
-.app.light {
-  background-color: #ffffff;
-  color: #333333;
-}
-
-.app.dark {
-  background-color: #1e1e1e;
-  color: #d4d4d4;
+  background-color: var(--app-bg, #ffffff);
+  color: var(--app-fg, #333333);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .app-content {

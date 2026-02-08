@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { useTheme } from '../contexts/ThemeContext'
+import { useTheme } from '../hooks/useTheme'
+import { isAppThemeDark } from '../utils/mermaidThemes'
 import { getStoredApiKey, storeApiKey, clearApiKey } from '../utils/aiErrorFixer'
 import './Settings.css'
 
@@ -9,7 +10,7 @@ interface SettingsProps {
 }
 
 export default function Settings({ isOpen, onClose }: SettingsProps) {
-  const { theme } = useTheme()
+  const { mermaidTheme } = useTheme()
   const [apiKey, setApiKey] = useState('')
   const [showApiKey, setShowApiKey] = useState(false)
 
@@ -44,7 +45,7 @@ export default function Settings({ isOpen, onClose }: SettingsProps) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className={`settings-modal ${theme}`} onClick={(e) => e.stopPropagation()}>
+      <div className={`settings-modal ${isAppThemeDark(mermaidTheme) ? 'dark' : 'light'}`} onClick={(e) => e.stopPropagation()}>
         <div className="settings-header">
           <h2>Settings</h2>
           <button className="close-button" onClick={onClose}>
