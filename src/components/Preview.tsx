@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import mermaid from 'mermaid'
-import { useTheme } from '../contexts/ThemeContext'
+import { renderMermaid } from 'beautiful-mermaid'
+import { useTheme } from '../hooks/useTheme'
 import { extractMermaidCode } from '../utils/mermaidCodeBlock'
+import { getMermaidThemeOptions } from '../utils/mermaidThemes'
 import { isEditableDiagram, parseMermaidFlowchart } from '../utils/mermaidParser'
 import VisualEditor from './VisualEditor'
 import './Preview.css'
@@ -30,15 +31,6 @@ export default function Preview({ code, setError, onCodeChange }: PreviewProps) 
   }
 
   useEffect(() => {
-    mermaid.initialize({
-      startOnLoad: false,
-      theme: mermaidTheme,
-      securityLevel: 'loose',
-      fontFamily: 'inherit',
-    })
-  }, [mermaidTheme])
-
-  useEffect(() => {
     const timer = setTimeout(async () => {
       if (!previewRef.current) return
 
@@ -49,10 +41,9 @@ export default function Preview({ code, setError, onCodeChange }: PreviewProps) 
       if (isEditMode && canEdit) {
         return
       }
-      
-      // Extract Mermaid code from potential markdown code blocks
+
       const trimmedCode = extractedCode.trim()
-      
+
       if (!trimmedCode) {
         if (renderIdRef.current === currentId) {
           container.innerHTML = '<div class="empty-preview">Start typing your Mermaid diagram...</div>'
@@ -62,30 +53,12 @@ export default function Preview({ code, setError, onCodeChange }: PreviewProps) 
       }
 
       try {
-        // Validate syntax first
-        mermaid.parse(trimmedCode)
-        const id = `mermaid-${currentId}-${Date.now()}`
-        
-        // Render into a hidden element first
-        const renderContainer = document.createElement('div')
-        renderContainer.id = id
-        renderContainer.style.position = 'absolute'
-        renderContainer.style.left = '-9999px'
-        renderContainer.style.top = '-9999px'
-        document.body.appendChild(renderContainer)
+        const themeOptions = getMermaidThemeOptions(mermaidTheme)
+        const svg = await renderMermaid(trimmedCode, themeOptions)
 
-        try {
-          const result = await mermaid.render(id, trimmedCode)
-          
-          if (renderIdRef.current === currentId && container) {
-            container.innerHTML = result.svg
-            setError(null)
-          }
-        } finally {
-          // Clean up
-          if (renderContainer.parentNode) {
-            renderContainer.parentNode.removeChild(renderContainer)
-          }
+        if (renderIdRef.current === currentId && container) {
+          container.innerHTML = svg
+          setError(null)
         }
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : 'Invalid Mermaid syntax'

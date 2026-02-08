@@ -18,7 +18,8 @@ import {
 import '@xyflow/react/dist/style.css'
 import { ParsedMermaidDiagram } from '../utils/mermaidParser'
 import { generateMermaidCode } from '../utils/mermaidGenerator'
-import { useTheme } from '../contexts/ThemeContext'
+import { useTheme } from '../hooks/useTheme'
+import { isAppThemeDark } from '../utils/mermaidThemes'
 import './VisualEditor.css'
 
 interface VisualEditorProps {
@@ -28,8 +29,8 @@ interface VisualEditorProps {
 
 // Custom node component for better visual representation
 const CustomNode = ({ data, selected }: { data: any; selected: boolean }) => {
-  const { theme } = useTheme()
-  const isDark = theme === 'dark'
+  const { mermaidTheme } = useTheme()
+  const isDark = isAppThemeDark(mermaidTheme)
   
   const getShapeStyle = () => {
     const shape = data.shape || 'rect'
@@ -163,7 +164,8 @@ const nodeTypes: NodeTypes = {
 }
 
 export default function VisualEditor({ parsedDiagram, onCodeChange }: VisualEditorProps) {
-  const { theme } = useTheme()
+  const { mermaidTheme } = useTheme()
+  const isDark = isAppThemeDark(mermaidTheme)
 
   // Convert parsed diagram to react-flow format
   const initialNodes = useMemo<Node[]>(() => {
@@ -322,8 +324,6 @@ export default function VisualEditor({ parsedDiagram, onCodeChange }: VisualEdit
       )
     }
   }, [setEdges])
-
-  const isDark = theme === 'dark'
 
   return (
     <div className="visual-editor-container">

@@ -7,7 +7,7 @@
 
 .visual-editor-header {
   padding: 8px 16px;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--app-border);
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
@@ -17,21 +17,13 @@
   align-items: center;
 }
 
-.app.dark .visual-editor-header {
-  border-bottom-color: #404040;
-}
-
 .visual-editor-hint {
   font-size: 10px;
   font-weight: 400;
   text-transform: none;
   letter-spacing: 0;
-  color: #999;
+  color: var(--app-muted);
   font-style: italic;
-}
-
-.app.dark .visual-editor-hint {
-  color: #666;
 }
 
 .visual-editor-content {
@@ -73,8 +65,8 @@
 }
 
 .visual-node.dark {
-  background-color: #2d2d2d;
-  color: #d4d4d4;
+  background-color: var(--app-surface);
+  color: var(--app-fg);
 }
 
 /* React Flow Handle styling */
@@ -121,25 +113,24 @@
   cursor: default !important;
 }
 
-/* React Flow controls dark mode */
-.app.dark .react-flow__controls {
-  background-color: #2d2d2d;
-  border: 1px solid #404040;
+/* React Flow controls - use app theme */
+.react-flow__controls {
+  background-color: var(--app-surface);
+  border: 1px solid var(--app-border);
 }
 
-.app.dark .react-flow__controls button {
-  background-color: #2d2d2d;
-  color: #d4d4d4;
-  border-bottom: 1px solid #404040;
+.react-flow__controls button {
+  background-color: var(--app-surface);
+  color: var(--app-fg);
+  border-bottom: 1px solid var(--app-border);
 }
 
-.app.dark .react-flow__controls button:hover {
-  background-color: #3d3d3d;
+.react-flow__controls button:hover {
+  background-color: var(--app-bg);
 }
 
-/* React Flow minimap dark mode */
-.app.dark .react-flow__minimap {
-  background-color: #2d2d2d;
-  border: 1px solid #404040;
+.react-flow__minimap {
+  background-color: var(--app-surface);
+  border: 1px solid var(--app-border);
 }
 

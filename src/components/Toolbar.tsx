@@ -1,8 +1,14 @@
 import { useState, useRef, useImperativeHandle, forwardRef } from 'react'
 import html2canvas from 'html2canvas'
-import { useTheme } from '../contexts/ThemeContext'
+import { useTheme } from '../hooks/useTheme'
 import { extractMermaidCode } from '../utils/mermaidCodeBlock'
 import { fixMermaidErrorWithAI, getStoredApiKey } from '../utils/aiErrorFixer'
+import {
+  MERMAID_THEME_IDS,
+  getMermaidThemeLabel,
+  isAppThemeDark,
+  type MermaidThemeId,
+} from '../utils/mermaidThemes'
 import Settings from './Settings'
 import './Toolbar.css'
 
@@ -19,7 +25,8 @@ export interface ToolbarRef {
 }
 
 const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({ code, setCode, error }, ref) => {
-  const { theme, toggleTheme, mermaidTheme, setMermaidTheme } = useTheme()
+  const { mermaidTheme, setMermaidTheme } = useTheme()
+  const isDark = isAppThemeDark(mermaidTheme)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [showSettings, setShowSettings] = useState(false)
   const [isFixing, setIsFixing] = useState(false)
@@ -127,7 +134,7 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({ code, setCode, error }, 
     try {
       // Use html2canvas to capture the SVG as PNG
       const canvas = await html2canvas(previewContainer as HTMLElement, {
-        backgroundColor: theme === 'dark' ? '#1e1e1e' : '#ffffff',
+        backgroundColor: isDark ? '#1e1e1e' : '#ffffff',
         scale: 2, // Higher resolution
         logging: false,
         useCORS: true,
@@ -199,7 +206,7 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({ code, setCode, error }, 
 
   return (
     <>
-      <div className={`toolbar ${theme}`}>
+      <div className="toolbar">
         <div className="toolbar-section">
           <button onClick={handleNew} className="toolbar-btn" title="New (⌘N)">
             New
@@ -244,18 +251,16 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({ code, setCode, error }, 
         <div className="toolbar-section">
           <select
             value={mermaidTheme}
-            onChange={(e) => setMermaidTheme(e.target.value as any)}
+            onChange={(e) => setMermaidTheme(e.target.value as MermaidThemeId)}
             className="toolbar-select"
-            title="Mermaid Theme"
+            title="Theme (diagram + app UI)"
           >
-            <option value="default">Default</option>
-            <option value="dark">Dark</option>
-            <option value="forest">Forest</option>
-            <option value="neutral">Neutral</option>
+            {MERMAID_THEME_IDS.map((id) => (
+              <option key={id} value={id}>
+                {getMermaidThemeLabel(id)}
+              </option>
+            ))}
           </select>
-          <button onClick={toggleTheme} className="toolbar-btn" title="Toggle Theme">
-            {theme === 'light' ? '🌙' : '☀️'}
-          </button>
           <button onClick={() => setShowSettings(true)} className="toolbar-btn" title="Settings">
             ⚙️
           </button>
