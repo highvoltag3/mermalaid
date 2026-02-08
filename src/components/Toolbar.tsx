@@ -1,6 +1,8 @@
 import { useState, useRef, useImperativeHandle, forwardRef } from 'react'
 import html2canvas from 'html2canvas'
+import { renderMermaidAscii } from 'beautiful-mermaid'
 import { useTheme } from '../hooks/useTheme'
+import { useToast } from '../hooks/useToast'
 import { extractMermaidCode } from '../utils/mermaidCodeBlock'
 import { fixMermaidErrorWithAI, getStoredApiKey } from '../utils/aiErrorFixer'
 import {
@@ -26,6 +28,7 @@ export interface ToolbarRef {
 
 const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({ code, setCode, error }, ref) => {
   const { mermaidTheme, setMermaidTheme } = useTheme()
+  const { showToast } = useToast()
   const isDark = isAppThemeDark(mermaidTheme)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [showSettings, setShowSettings] = useState(false)
@@ -43,11 +46,11 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({ code, setCode, error }, 
         fileInputRef.current.click()
       } else {
         console.error('File input ref is not available')
-        alert('Unable to open file dialog. Please try again.')
+        showToast('Unable to open file dialog. Please try again.', 'error')
       }
-    } catch (error) {
-      console.error('Error opening file dialog:', error)
-      alert('Failed to open file dialog. Please ensure your browser supports file selection.')
+    } catch (err) {
+      console.error('Error opening file dialog:', err)
+      showToast('Failed to open file dialog. Please ensure your browser supports file selection.', 'error')
     }
   }
 
@@ -63,14 +66,14 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({ code, setCode, error }, 
     const isValid = validExtensions.some(ext => fileName.endsWith(ext))
     
     if (!isValid) {
-      alert(`Invalid file type. Please select a file with one of these extensions: ${validExtensions.join(', ')}`)
+      showToast(`Invalid file type. Use: ${validExtensions.join(', ')}`, 'error')
       e.target.value = ''
       return
     }
 
     const reader = new FileReader()
     reader.onerror = () => {
-      alert('Failed to read file. Please try again.')
+      showToast('Failed to read file. Please try again.', 'error')
       e.target.value = ''
     }
     
@@ -81,13 +84,13 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({ code, setCode, error }, 
           // Extract Mermaid code from potential markdown code blocks
           const extractedCode = extractMermaidCode(content)
           setCode(extractedCode)
-          console.log(`Successfully loaded file: ${file.name}`)
+          showToast(`Loaded ${file.name}`)
         } else {
-          alert('File appears to be empty.')
+          showToast('File appears to be empty.', 'error')
         }
-      } catch (error) {
-        console.error('Error processing file:', error)
-        alert('Failed to process file content.')
+      } catch (err) {
+        console.error('Error processing file:', err)
+        showToast('Failed to process file content.', 'error')
       }
       e.target.value = ''
     }
@@ -103,12 +106,13 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({ code, setCode, error }, 
     a.download = 'diagram.mmd'
     a.click()
     URL.revokeObjectURL(url)
+    showToast('Saved diagram.mmd')
   }
 
   const handleExportSVG = async () => {
     const svgElement = document.querySelector('.preview-content svg')
     if (!svgElement) {
-      alert('No diagram to export')
+      showToast('No diagram to export', 'error')
       return
     }
 
@@ -120,6 +124,7 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({ code, setCode, error }, 
     a.download = 'diagram.svg'
     a.click()
     URL.revokeObjectURL(url)
+    showToast('Exported diagram.svg')
   }
 
   const handleExportPNG = async () => {
@@ -127,7 +132,7 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({ code, setCode, error }, 
     const svgElement = previewContainer?.querySelector('svg') as SVGSVGElement | null
     
     if (!svgElement || !previewContainer) {
-      alert('No diagram to export')
+      showToast('No diagram to export', 'error')
       return
     }
 
@@ -143,7 +148,7 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({ code, setCode, error }, 
 
       canvas.toBlob((blob) => {
         if (!blob) {
-          alert('Failed to generate PNG')
+          showToast('Failed to generate PNG', 'error')
           return
         }
         
@@ -155,10 +160,34 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({ code, setCode, error }, 
         a.click()
         document.body.removeChild(a)
         URL.revokeObjectURL(url)
+        showToast('Exported diagram.png')
       }, 'image/png')
-    } catch (error) {
-      console.error('PNG export error:', error)
-      alert('Failed to export PNG: ' + (error instanceof Error ? error.message : 'Unknown error'))
+    } catch (err) {
+      console.error('PNG export error:', err)
+      showToast('Failed to export PNG: ' + (err instanceof Error ? err.message : 'Unknown error'), 'error')
+    }
+  }
+
+  const handleExportASCII = () => {
+    const plainCode = extractMermaidCode(code)
+    if (!plainCode.trim()) {
+      showToast('No diagram to export', 'error')
+      return
+    }
+    try {
+      const ascii = renderMermaidAscii(plainCode)
+      const blob = new Blob([ascii], { type: 'text/plain' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'diagram.txt'
+      a.click()
+      URL.revokeObjectURL(url)
+      showToast('Exported diagram.txt')
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unknown error'
+      console.error('ASCII export error:', err)
+      showToast(`Export failed: ${msg}. Supported: flowcharts, state, sequence, class, ER.`, 'error')
     }
   }
 
@@ -167,19 +196,19 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({ code, setCode, error }, 
     const plainCode = extractMermaidCode(code)
     const codeBlock = `\`\`\`mermaid\n${plainCode}\n\`\`\``
     navigator.clipboard.writeText(codeBlock)
-    alert('Code copied to clipboard!')
+    showToast('Code copied to clipboard')
   }
 
   const handleAIFix = async () => {
     const apiKey = getStoredApiKey()
     if (!apiKey) {
-      alert('Please add your OpenAI API key in Settings to use AI Fix.')
+      showToast('Add your OpenAI API key in Settings to use AI Fix.', 'error')
       setShowSettings(true)
       return
     }
 
     if (!error || !code.trim()) {
-      alert('No error to fix')
+      showToast('No error to fix', 'error')
       return
     }
 
@@ -188,11 +217,11 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({ code, setCode, error }, 
       const fixedCode = await fixMermaidErrorWithAI(code, error, apiKey)
       console.log('Setting fixed code:', fixedCode)
       setCode(fixedCode)
-      alert('Code fixed! Check if the diagram renders correctly.')
+      showToast('Code fixed! Check if the diagram renders correctly.')
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to fix code'
       console.error('AI Fix error:', err)
-      alert(`AI Fix failed: ${errorMsg}`)
+      showToast(`AI Fix failed: ${errorMsg}`, 'error')
     } finally {
       setIsFixing(false)
     }
@@ -232,6 +261,9 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({ code, setCode, error }, 
           </button>
           <button onClick={handleExportPNG} className="toolbar-btn" title="Export PNG">
             Export PNG
+          </button>
+          <button onClick={handleExportASCII} className="toolbar-btn" title="Export ASCII (Unicode box-drawing for terminals)">
+            Export ASCII
           </button>
           <button onClick={handleCopyCode} className="toolbar-btn" title="Copy Code">
             Copy Code
