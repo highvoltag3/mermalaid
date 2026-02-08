@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { ThemeProvider } from './contexts/ThemeContext'
+import { ToastProvider } from './contexts/ToastContext'
 import { useTheme } from './hooks/useTheme'
 import Editor from './components/Editor'
 import Preview from './components/Preview'
@@ -79,7 +80,9 @@ function AppContent() {
 function App() {
   return (
     <ThemeProvider>
-      <AppContent />
+      <ToastProvider>
+        <AppContent />
+      </ToastProvider>
     </ThemeProvider>
   )
 }
