@@ -13,7 +13,7 @@ This guide explains how to deploy Mermalaid to Appwrite Sites.
 The project is configured for static site deployment with the following settings:
 
 - **Build Command**: `npm run build`
-- **Install Command**: `npm install`
+- **Install Command**: `npm install --no-package-lock`
 - **Output Directory**: `dist`
 - **Framework Adapter**: `static` (static site)
 
@@ -33,7 +33,7 @@ Configure the following in the Appwrite Console:
 
 - **Install Command**: 
   ```
-  npm install
+  npm install --no-package-lock
   ```
 
 - **Build Command**: 
@@ -172,6 +172,18 @@ appwrite deploy sites --siteId YOUR_SITE_ID --entrypoint dist/index.html --outpu
 - Check that all dependencies are listed in `package.json`
 - Verify Node.js version compatibility (18+)
 - Review build logs in Appwrite Console
+
+### Rollup native module missing (Appwrite builds)
+
+If you see an error like:
+
+```
+Error: Cannot find module @rollup/rollup-linux-x64-musl
+```
+
+This is caused by npm skipping platform-specific optional dependencies when the
+lockfile was generated on a different platform. Use the `--no-package-lock`
+install command in Appwrite, or remove `package-lock.json` and reinstall.
 
 ### Site Not Loading
 
