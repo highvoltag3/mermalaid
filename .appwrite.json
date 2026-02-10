@@ -1,5 +1,5 @@
 {
-  "installCommand": "npm install --no-package-lock",
+  "installCommand": "npm install --no-package-lock --include=optional",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "runtime": "node20",
