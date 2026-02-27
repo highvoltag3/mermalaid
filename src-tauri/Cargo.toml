@@ -1,6 +1,6 @@
 [package]
 name = "mermalaid"
-version = "1.0.0"
+version = "1.3.0"
 description = "Mermalaid - A native macOS Mermaid diagram editor"
 authors = ["Dario Novoa Vergara"]
 license = "CC-BY-NC-SA-4.0"

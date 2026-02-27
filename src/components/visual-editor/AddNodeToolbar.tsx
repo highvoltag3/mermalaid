@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import type { MermaidNode } from '../../utils/mermaidParser'
-import { useTheme } from '../../contexts/ThemeContext'
+import { useTheme } from '../../hooks/useTheme'
+import { isAppThemeDark } from '../../utils/mermaidThemes'
 import './AddNodeToolbar.css'
 
 const SHAPE_OPTIONS: { value: MermaidNode['shape']; label: string }[] = [
@@ -23,8 +24,8 @@ interface AddNodeToolbarProps {
 }
 
 export default function AddNodeToolbar({ onAddNode }: AddNodeToolbarProps) {
-  const { theme } = useTheme()
-  const isDark = theme === 'dark'
+  const { mermaidTheme } = useTheme()
+  const isDark = isAppThemeDark(mermaidTheme)
   const [open, setOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 

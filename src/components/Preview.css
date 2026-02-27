@@ -7,15 +7,11 @@
 
 .preview-header {
   padding: 8px 16px;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--app-border);
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-}
-
-.app.dark .preview-header {
-  border-bottom-color: #404040;
 }
 
 .preview-content {
@@ -33,27 +29,19 @@
 }
 
 .empty-preview {
-  color: #999;
+  color: var(--app-muted);
   font-size: 14px;
   text-align: center;
 }
 
-.app.dark .empty-preview {
-  color: #666;
-}
-
 .error-preview {
-  color: #d32f2f;
+  color: var(--app-accent);
   font-size: 12px;
   padding: 16px;
-  background-color: #ffebee;
+  background-color: var(--app-surface);
+  border: 1px solid var(--app-border);
   border-radius: 4px;
   max-width: 500px;
-}
-
-.app.dark .error-preview {
-  color: #ef5350;
-  background-color: #3d1f1f;
 }
 
 .preview-header {
@@ -65,9 +53,9 @@
 .mode-toggle-btn {
   font-size: 11px;
   padding: 4px 12px;
-  border: 1px solid #e0e0e0;
-  background-color: #ffffff;
-  color: #333;
+  border: 1px solid var(--app-border);
+  background-color: var(--app-bg);
+  color: var(--app-fg);
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
@@ -77,18 +65,7 @@
 }
 
 .mode-toggle-btn:hover {
-  background-color: #f5f5f5;
-  border-color: #ccc;
-}
-
-.app.dark .mode-toggle-btn {
-  background-color: #2d2d2d;
-  color: #d4d4d4;
-  border-color: #404040;
-}
-
-.app.dark .mode-toggle-btn:hover {
-  background-color: #3d3d3d;
-  border-color: #555;
+  background-color: var(--app-surface);
+  border-color: var(--app-accent);
 }
 

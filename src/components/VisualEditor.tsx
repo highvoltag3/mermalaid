@@ -18,7 +18,8 @@ import {
 import '@xyflow/react/dist/style.css'
 import type { ParsedMermaidDiagram, MermaidNode, MermaidEdge } from '../utils/mermaidParser'
 import { generateMermaidCode } from '../utils/mermaidGenerator'
-import { useTheme } from '../contexts/ThemeContext'
+import { useTheme } from '../hooks/useTheme'
+import { isAppThemeDark } from '../utils/mermaidThemes'
 import { useAutoLayout } from '../hooks/useAutoLayout'
 import { useUndoRedo } from '../hooks/useUndoRedo'
 import { useVisualEditorKeyboard } from '../hooks/useVisualEditorKeyboard'
@@ -44,8 +45,8 @@ function generateNodeId(existingNodes: Node[]): string {
 }
 
 function VisualEditorInner({ parsedDiagram, onCodeChange }: VisualEditorProps) {
-  const { theme } = useTheme()
-  const isDark = theme === 'dark'
+  const { mermaidTheme } = useTheme()
+  const isDark = isAppThemeDark(mermaidTheme)
   const containerRef = useRef<HTMLDivElement>(null)
   const reactFlowInstance = useReactFlow()
 

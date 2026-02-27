@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react'
 import EditorComponent, { loader } from '@monaco-editor/react'
-import { useTheme } from '../contexts/ThemeContext'
+import { useTheme } from '../hooks/useTheme'
 import { extractMermaidCode } from '../utils/mermaidCodeBlock'
+import { isAppThemeDark } from '../utils/mermaidThemes'
 import './Editor.css'
 
 // Register Mermaid language
@@ -83,7 +84,7 @@ interface EditorProps {
 }
 
 export default function Editor({ code, setCode, error }: EditorProps) {
-  const { theme } = useTheme()
+  const { mermaidTheme } = useTheme()
   const debounceTimer = useRef<NodeJS.Timeout>()
   const editorRef = useRef<any>(null)
 
@@ -161,7 +162,7 @@ export default function Editor({ code, setCode, error }: EditorProps) {
         value={code}
         onChange={(value) => setCode(value || '')}
         onMount={handleEditorDidMount}
-        theme={theme === 'dark' ? 'vs-dark' : 'vs'}
+        theme={isAppThemeDark(mermaidTheme) ? 'vs-dark' : 'vs'}
         options={{
           minimap: { enabled: false },
           fontSize: 14,

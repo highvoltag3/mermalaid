@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { useTheme } from '../../contexts/ThemeContext'
+import { useTheme } from '../../hooks/useTheme'
+import { isAppThemeDark } from '../../utils/mermaidThemes'
 
 interface EdgeLabelEditorProps {
   edgeId: string
@@ -16,8 +17,8 @@ export default function EdgeLabelEditor({
   onLabelChange,
   onClose,
 }: EdgeLabelEditorProps) {
-  const { theme } = useTheme()
-  const isDark = theme === 'dark'
+  const { mermaidTheme } = useTheme()
+  const isDark = isAppThemeDark(mermaidTheme)
   const [value, setValue] = useState(currentLabel)
   const inputRef = useRef<HTMLInputElement>(null)
 

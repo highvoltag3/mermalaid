@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { Handle, Position, NodeToolbar } from '@xyflow/react'
 import type { MermaidNode } from '../../utils/mermaidParser'
-import { useTheme } from '../../contexts/ThemeContext'
+import { useTheme } from '../../hooks/useTheme'
+import { isAppThemeDark } from '../../utils/mermaidThemes'
 import './CustomNode.css'
 
 export interface CustomNodeData {
@@ -41,8 +42,8 @@ const HANDLE_POSITIONS = [
 ] as const
 
 export default function CustomNode({ data, selected }: { data: CustomNodeData; selected: boolean }) {
-  const { theme } = useTheme()
-  const isDark = theme === 'dark'
+  const { mermaidTheme } = useTheme()
+  const isDark = isAppThemeDark(mermaidTheme)
   const [editValue, setEditValue] = useState(data.label)
   const [showShapePicker, setShowShapePicker] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)

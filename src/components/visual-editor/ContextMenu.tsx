@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import type { MermaidNode, MermaidEdge } from '../../utils/mermaidParser'
-import { useTheme } from '../../contexts/ThemeContext'
+import { useTheme } from '../../hooks/useTheme'
+import { isAppThemeDark } from '../../utils/mermaidThemes'
 import './ContextMenu.css'
 
 const SHAPE_OPTIONS: { value: MermaidNode['shape']; label: string }[] = [
@@ -56,8 +57,8 @@ export default function ContextMenu({
   onAutoLayout,
   flowPosition,
 }: ContextMenuProps) {
-  const { theme } = useTheme()
-  const isDark = theme === 'dark'
+  const { mermaidTheme } = useTheme()
+  const isDark = isAppThemeDark(mermaidTheme)
   const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {

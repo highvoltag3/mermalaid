@@ -1,13 +1,16 @@
 import { useState, useEffect, useRef } from 'react'
-import { ThemeProvider, useTheme } from './contexts/ThemeContext'
+import { ThemeProvider } from './contexts/ThemeContext'
+import { ToastProvider } from './contexts/ToastContext'
+import { useTheme } from './hooks/useTheme'
 import Editor from './components/Editor'
 import Preview from './components/Preview'
 import Toolbar from './components/Toolbar'
 import { extractMermaidCode } from './utils/mermaidCodeBlock'
+import { getAppThemeCssVars } from './utils/mermaidThemes'
 import './App.css'
 
 function AppContent() {
-  const { theme } = useTheme()
+  const { mermaidTheme } = useTheme()
   const [code, setCode] = useState('graph TD\n    A[Start] --> B{Decision}\n    B -->|Yes| C[Action 1]\n    B -->|No| D[Action 2]\n    C --> E[End]\n    D --> E')
   const [error, setError] = useState<string | null>(null)
   const toolbarRef = useRef<{ handleNew: () => void; handleOpen: () => void; handleSave: () => void }>(null)
@@ -59,8 +62,9 @@ function AppContent() {
   }
 
   return (
-    <div 
-      className={`app ${theme}`}
+    <div
+      className="app"
+      style={getAppThemeCssVars(mermaidTheme) as React.CSSProperties}
       onDrop={handleDrop}
       onDragOver={handleDragOver}
     >
@@ -76,7 +80,9 @@ function AppContent() {
 function App() {
   return (
     <ThemeProvider>
-      <AppContent />
+      <ToastProvider>
+        <AppContent />
+      </ToastProvider>
     </ThemeProvider>
   )
 }

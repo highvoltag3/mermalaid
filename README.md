@@ -16,7 +16,7 @@ Looking for a **free Mermaid editor**? Tired of **Mermaid diagram tools** with l
 - ✅ **Completely Open Source** - Full source code available, modify as you need
 - ✅ **No Sign-Up Required** - Start creating Mermaid diagrams instantly
 - ✅ **Unlimited Diagrams** - Create as many Mermaid charts as you need
-- ✅ **Professional Features** - Live preview, syntax highlighting, export options
+- ✅ **Professional Features** - Live preview, visual editor, syntax highlighting, SVG/PNG/ASCII export
 - ✅ **Web & Desktop** - Use in browser or download native macOS app
 - ✅ **Privacy-First** - All data stays local, no cloud sync required
 
@@ -40,11 +40,13 @@ Mermalaid provides professional-grade features typically found in paid Mermaid e
 
 - **Monaco Editor** with syntax highlighting for Mermaid code
 - **Live Preview** with debounced updates (500ms) - See changes in real-time
+- **Visual Editor** - Drag-and-drop flowcharts with React Flow; switch to visual mode for supported diagrams
 - **Real-time Syntax Validation** - Instant error detection and feedback
 - **Auto-save** to localStorage - Never lose your work
 - **Dark/Light Mode** - Work in your preferred theme
-- **Multiple Mermaid Themes** - Customize diagram appearance
-- **Ai syntax Fix** - Copy-pasted the diagram from somewhere but it has syntaxt errors? 🤖 Let Ai fix it ✨ for you. (**You will need an OpenAi API key, it's __stored locally__ in your machine so it's only yours**).
+- **beautiful-mermaid Themes** - Multiple themes (GitHub Light/Dark, Tokyo Night, Catppuccin, Dracula, Nord, and more) that style both diagrams and the app UI
+- **Toast Notifications** - Clear feedback for actions (save, export, errors)
+- **AI Syntax Fix** - Copy-pasted the diagram from somewhere but it has syntax errors? 🤖 Let AI fix it ✨ for you. (**You will need an OpenAI API key, it's __stored locally__ in your machine so it's only yours**).
 
 ### File Management
 
@@ -53,6 +55,7 @@ Mermalaid provides professional-grade features typically found in paid Mermaid e
 - **Export Options**:
   - **SVG Export** - Vector graphics for presentations and documents
   - **PNG Export** - Raster images for documentation and web use
+  - **ASCII Export** - Unicode box-drawing for terminals (flowcharts, state, sequence, class, ER diagrams)
 - **Copy to Clipboard** - Export code blocks ready for Markdown, GitHub, or documentation
 
 ### Mermaid Diagram Types Supported
@@ -83,7 +86,8 @@ Create unlimited diagrams of all types:
 - **Tauri** - Lightweight, secure, native desktop framework (~10MB vs ~100MB+ Electron apps)
 - **React** + **TypeScript** - Modern, type-safe UI development
 - **Monaco Editor** - The same editor that powers VS Code
-- **Mermaid.js** - Industry-standard diagram rendering
+- **beautiful-mermaid** - Beautiful, themed Mermaid diagram rendering with customizable themes
+- **@xyflow/react** - Visual editor for drag-and-drop flowchart editing
 
 ### Why Tauri?
 
@@ -262,9 +266,10 @@ This work is licensed under a [Creative Commons Attribution-NonCommercial-ShareA
 | **Document Limits** | ✅ Unlimited | ❌ Often 3-5 documents max |
 | **Sign-Up Required** | ✅ No | ❌ Usually required |
 | **Privacy** | ✅ Local storage only | ❌ Cloud sync required |
-| **Export Options** | ✅ SVG, PNG | ✅/❌ Varies |
+| **Export Options** | ✅ SVG, PNG, ASCII | ✅/❌ Varies |
 | **Syntax Validation** | ✅ Real-time | ✅/❌ Varies |
 | **Desktop App** | ✅ Native macOS | ❌ Often web-only |
+| **Visual Editor** | ✅ Yes (flowcharts) | ❌ Usually code-only |
 
 ## 🎯 SEO Keywords & Search Terms
 
