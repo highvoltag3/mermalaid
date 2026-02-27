@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 282.4 438.2" width="282.4" height="438.2" style="--bg:#ffffff;--fg:#1f2328;--line:#d1d9e0;--accent:#0969da;--muted:#59636e;background:var(--bg)">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap');
+  text { font-family: 'Inter', system-ui, sans-serif; }
+  svg {
+    --_text:          var(--fg);
+    --_text-sec:      var(--muted, color-mix(in srgb, var(--fg) 60%, var(--bg)));
+    --_text-muted:    var(--muted, color-mix(in srgb, var(--fg) 40%, var(--bg)));
+    --_text-faint:    color-mix(in srgb, var(--fg) 25%, var(--bg));
+    --_line:          var(--line, color-mix(in srgb, var(--fg) 30%, var(--bg)));
+    --_arrow:         var(--accent, color-mix(in srgb, var(--fg) 50%, var(--bg)));
+    --_node-fill:     var(--surface, color-mix(in srgb, var(--fg) 3%, var(--bg)));
+    --_node-stroke:   var(--border, color-mix(in srgb, var(--fg) 20%, var(--bg)));
+    --_group-fill:    var(--bg);
+    --_group-hdr:     color-mix(in srgb, var(--fg) 5%, var(--bg));
+    --_inner-stroke:  color-mix(in srgb, var(--fg) 12%, var(--bg));
+    --_key-badge:     color-mix(in srgb, var(--fg) 10%, var(--bg));
+  }
+</style>
+<defs>
+  <marker id="arrowhead" markerWidth="8" markerHeight="4.8" refX="8" refY="2.4" orient="auto">
+    <polygon points="0 0, 8 2.4, 0 4.8" fill="var(--_arrow)"></polygon>
+  </marker>
+  <marker id="arrowhead-start" markerWidth="8" markerHeight="4.8" refX="0" refY="2.4" orient="auto-start-reverse">
+    <polygon points="8 0, 0 2.4, 8 4.8" fill="var(--_arrow)"></polygon>
+  </marker>
+</defs>
+<polyline points="141.2,76 141.2,115.99999999999999" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-end="url(#arrowhead)"></polyline>
+<polyline points="118.59195483415665,206.59195483415667 118.59195483415665,257.7 84.6,257.7 84.6,286.2" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-end="url(#arrowhead)"></polyline>
+<polyline points="163.8080451658433,206.59195483415667 163.8080451658433,257.7 197.79999999999998,257.7 197.79999999999998,286.2" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-end="url(#arrowhead)"></polyline>
+<polyline points="84.6,322.2 84.6,380.2 111.19999999999999,380.2" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-end="url(#arrowhead)"></polyline>
+<polyline points="197.79999999999998,322.2 197.79999999999998,380.2 171.2,380.2" fill="none" stroke="var(--_line)" stroke-width="0.75" marker-end="url(#arrowhead)"></polyline>
+<rect x="68.02" y="244.2" width="33.16" height="27" rx="4" ry="4" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="0.5"></rect>
+<text x="84.6" y="257.7" text-anchor="middle" dy="0.35em" font-size="11" font-weight="400" fill="var(--_text-muted)">Yes</text>
+<rect x="184.07999999999998" y="244.2" width="27.44" height="27" rx="4" ry="4" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="0.5"></rect>
+<text x="197.79999999999998" y="257.7" text-anchor="middle" dy="0.35em" font-size="11" font-weight="400" fill="var(--_text-muted)">No</text>
+<polygon points="141.2,116 197.79999999999998,172.6 141.2,229.2 84.6,172.6" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75"></polygon>
+<rect x="107.32499999999999" y="40" width="67.75" height="36" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75"></rect>
+<rect x="39.99999999999999" y="286.2" width="89.2" height="36" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75"></rect>
+<rect x="153.2" y="286.2" width="89.2" height="36" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75"></rect>
+<rect x="111.19999999999999" y="362.2" width="60" height="36" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75"></rect>
+<text x="141.2" y="172.6" text-anchor="middle" dy="0.35em" font-size="13" font-weight="500" fill="var(--_text)">Decision</text>
+<text x="141.2" y="58" text-anchor="middle" dy="0.35em" font-size="13" font-weight="500" fill="var(--_text)">Start</text>
+<text x="84.6" y="304.2" text-anchor="middle" dy="0.35em" font-size="13" font-weight="500" fill="var(--_text)">Action 1</text>
+<text x="197.79999999999998" y="304.2" text-anchor="middle" dy="0.35em" font-size="13" font-weight="500" fill="var(--_text)">Action 2</text>
+<text x="141.2" y="380.2" text-anchor="middle" dy="0.35em" font-size="13" font-weight="500" fill="var(--_text)">End</text>
+</svg>
