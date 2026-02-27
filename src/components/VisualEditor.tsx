@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ReactFlow,
   Background,
@@ -12,14 +12,21 @@ import {
   Connection,
   MarkerType,
   NodeTypes,
-  Handle,
-  Position,
+  useReactFlow,
+  ReactFlowProvider,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { ParsedMermaidDiagram } from '../utils/mermaidParser'
+import type { ParsedMermaidDiagram, MermaidNode, MermaidEdge } from '../utils/mermaidParser'
 import { generateMermaidCode } from '../utils/mermaidGenerator'
 import { useTheme } from '../hooks/useTheme'
 import { isAppThemeDark } from '../utils/mermaidThemes'
+import { useAutoLayout } from '../hooks/useAutoLayout'
+import { useUndoRedo } from '../hooks/useUndoRedo'
+import { useVisualEditorKeyboard } from '../hooks/useVisualEditorKeyboard'
+import CustomNode from './visual-editor/CustomNode'
+import AddNodeToolbar from './visual-editor/AddNodeToolbar'
+import ContextMenu, { ContextMenuState } from './visual-editor/ContextMenu'
+import EdgeLabelEditor from './visual-editor/EdgeLabelEditor'
 import './VisualEditor.css'
 
 interface VisualEditorProps {
@@ -27,162 +34,46 @@ interface VisualEditorProps {
   onCodeChange: (code: string) => void
 }
 
-// Custom node component for better visual representation
-const CustomNode = ({ data, selected }: { data: any; selected: boolean }) => {
-  const { mermaidTheme } = useTheme()
-  const isDark = isAppThemeDark(mermaidTheme)
-  
-  const getShapeStyle = () => {
-    const shape = data.shape || 'rect'
-    switch (shape) {
-      case 'rounded':
-        return { borderRadius: '20px' }
-      case 'diamond':
-        return {
-          clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
-          transform: 'rotate(45deg)',
-        }
-      case 'circle':
-        return { borderRadius: '50%' }
-      default:
-        return { borderRadius: '4px' }
-    }
-  }
+const nodeTypes: NodeTypes = { custom: CustomNode }
 
-  return (
-    <div
-      className={`visual-node ${isDark ? 'dark' : ''} ${selected ? 'selected' : ''}`}
-      style={{
-        ...getShapeStyle(),
-        backgroundColor: isDark ? '#2d2d2d' : '#ffffff',
-        border: `2px solid ${selected ? '#4a9eff' : isDark ? '#555' : '#ddd'}`,
-        color: isDark ? '#d4d4d4' : '#333',
-        position: 'relative',
-      }}
-    >
-      {/* Source handles - allow connecting from this node */}
-      <Handle
-        type="source"
-        position={Position.Top}
-        id="top-source"
-        style={{ 
-          background: isDark ? '#4a9eff' : '#1976d2',
-          width: '12px',
-          height: '12px',
-          zIndex: 10,
-        }}
-      />
-      <Handle
-        type="source"
-        position={Position.Right}
-        id="right-source"
-        style={{ 
-          background: isDark ? '#4a9eff' : '#1976d2',
-          width: '12px',
-          height: '12px',
-          zIndex: 10,
-        }}
-      />
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        id="bottom-source"
-        style={{ 
-          background: isDark ? '#4a9eff' : '#1976d2',
-          width: '12px',
-          height: '12px',
-          zIndex: 10,
-        }}
-      />
-      <Handle
-        type="source"
-        position={Position.Left}
-        id="left-source"
-        style={{ 
-          background: isDark ? '#4a9eff' : '#1976d2',
-          width: '12px',
-          height: '12px',
-          zIndex: 10,
-        }}
-      />
-      
-      {/* Target handles - allow connecting to this node */}
-      <Handle
-        type="target"
-        position={Position.Top}
-        id="top-target"
-        style={{ 
-          background: isDark ? '#4a9eff' : '#1976d2',
-          width: '12px',
-          height: '12px',
-          zIndex: 10,
-        }}
-      />
-      <Handle
-        type="target"
-        position={Position.Right}
-        id="right-target"
-        style={{ 
-          background: isDark ? '#4a9eff' : '#1976d2',
-          width: '12px',
-          height: '12px',
-          zIndex: 10,
-        }}
-      />
-      <Handle
-        type="target"
-        position={Position.Bottom}
-        id="bottom-target"
-        style={{ 
-          background: isDark ? '#4a9eff' : '#1976d2',
-          width: '12px',
-          height: '12px',
-          zIndex: 10,
-        }}
-      />
-      <Handle
-        type="target"
-        position={Position.Left}
-        id="left-target"
-        style={{ 
-          background: isDark ? '#4a9eff' : '#1976d2',
-          width: '12px',
-          height: '12px',
-          zIndex: 10,
-        }}
-      />
-      
-      <div style={{ padding: '8px 12px', textAlign: 'center', pointerEvents: 'none' }}>
-        {data.label || data.id}
-      </div>
-    </div>
-  )
+let nodeCounter = 0
+
+function generateNodeId(existingNodes: Node[]): string {
+  const existingIds = new Set(existingNodes.map((n) => n.id))
+  while (existingIds.has(`node_${++nodeCounter}`)) {}
+  return `node_${nodeCounter}`
 }
 
-const nodeTypes: NodeTypes = {
-  custom: CustomNode,
-}
-
-export default function VisualEditor({ parsedDiagram, onCodeChange }: VisualEditorProps) {
+function VisualEditorInner({ parsedDiagram, onCodeChange }: VisualEditorProps) {
   const { mermaidTheme } = useTheme()
   const isDark = isAppThemeDark(mermaidTheme)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const reactFlowInstance = useReactFlow()
 
-  // Convert parsed diagram to react-flow format
+  const { applyLayout } = useAutoLayout(parsedDiagram.direction)
+  const { pushState, undo, redo, canUndo, canRedo } = useUndoRedo()
+
+  const isUpdatingFromCodeRef = useRef(false)
+  const [editingNodeId, setEditingNodeId] = useState<string | null>(null)
+  const [editingEdge, setEditingEdge] = useState<{ id: string; label: string } | null>(null)
+  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
+  const [contextFlowPos, setContextFlowPos] = useState<{ x: number; y: number } | null>(null)
+
+  // Build initial nodes from parsed diagram with dagre layout
   const initialNodes = useMemo<Node[]>(() => {
-    return parsedDiagram.nodes.map((node, index) => ({
+    const rawNodes = parsedDiagram.nodes.map((node) => ({
       id: node.id,
-      type: 'custom',
-      position: {
-        x: (index % 3) * 200 + 50,
-        y: Math.floor(index / 3) * 150 + 50,
-      },
-      data: {
-        label: node.label,
-        shape: node.shape,
-        id: node.id,
-      },
+      type: 'custom' as const,
+      position: { x: 0, y: 0 },
+      data: { label: node.label, shape: node.shape, id: node.id },
     }))
-  }, [parsedDiagram.nodes])
+    const rawEdges = parsedDiagram.edges.map((edge) => ({
+      id: `${edge.source}-${edge.target}`,
+      source: edge.source,
+      target: edge.target,
+    }))
+    return applyLayout(rawNodes, rawEdges)
+  }, [parsedDiagram.nodes, parsedDiagram.edges, applyLayout])
 
   const initialEdges = useMemo<Edge[]>(() => {
     return parsedDiagram.edges.map((edge) => ({
@@ -191,51 +82,71 @@ export default function VisualEditor({ parsedDiagram, onCodeChange }: VisualEdit
       target: edge.target,
       label: edge.label || '',
       type: 'smoothstep',
-      markerEnd: {
-        type: MarkerType.ArrowClosed,
-      },
-      data: {
-        type: edge.type,
-      },
+      markerEnd: edge.type !== 'line' ? { type: MarkerType.ArrowClosed } : undefined,
+      style: edge.type === 'thick'
+        ? { strokeWidth: 3 }
+        : edge.type === 'dotted'
+          ? { strokeDasharray: '5 5' }
+          : undefined,
+      data: { type: edge.type },
     }))
   }, [parsedDiagram.edges])
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
 
-  // Track if we're updating from code to prevent cycles
-  const isUpdatingFromCodeRef = useRef(false)
+  // Inject callbacks into node data so CustomNode can call them
+  const nodesWithCallbacks = useMemo(() => {
+    return nodes.map((node) => ({
+      ...node,
+      data: {
+        ...node.data,
+        isEditing: editingNodeId === node.id,
+        onLabelChange: (id: string, label: string) => {
+          pushState({ nodes, edges })
+          setNodes((nds) =>
+            nds.map((n) => (n.id === id ? { ...n, data: { ...n.data, label } } : n))
+          )
+        },
+        onStartEditing: (id: string) => setEditingNodeId(id),
+        onStopEditing: () => setEditingNodeId(null),
+        onDeleteNode: (id: string) => deleteNodes([id]),
+        onDuplicateNode: (id: string) => duplicateNode(id),
+        onChangeShape: (id: string, shape: MermaidNode['shape']) => {
+          pushState({ nodes, edges })
+          setNodes((nds) =>
+            nds.map((n) => (n.id === id ? { ...n, data: { ...n.data, shape } } : n))
+          )
+        },
+      },
+    }))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes, edges, editingNodeId])
 
-  // Update nodes/edges when parsed diagram changes (from code changes)
+  // Sync from code changes
   useEffect(() => {
-    // Check if nodes/edges actually changed to avoid unnecessary updates
-    const nodeIds = new Set(nodes.map(n => n.id))
-    const edgeIds = new Set(edges.map(e => e.id))
-    const parsedNodeIds = new Set(parsedDiagram.nodes.map(n => n.id))
-    const parsedEdgeIds = new Set(
-      parsedDiagram.edges.map(e => `${e.source}-${e.target}`)
-    )
+    const nodeIds = new Set(nodes.map((n) => n.id))
+    const edgeIds = new Set(edges.map((e) => e.id))
+    const parsedNodeIds = new Set(parsedDiagram.nodes.map((n) => n.id))
+    const parsedEdgeIds = new Set(parsedDiagram.edges.map((e) => `${e.source}-${e.target}`))
 
-    const nodesChanged = 
+    const nodesChanged =
       nodes.length !== parsedDiagram.nodes.length ||
-      [...parsedNodeIds].some(id => !nodeIds.has(id)) ||
-      nodes.some(n => {
-        const parsed = parsedDiagram.nodes.find(p => p.id === n.id)
+      [...parsedNodeIds].some((id) => !nodeIds.has(id)) ||
+      nodes.some((n) => {
+        const parsed = parsedDiagram.nodes.find((p) => p.id === n.id)
         return !parsed || parsed.label !== (n.data.label || n.id) || parsed.shape !== n.data.shape
       })
 
     const edgesChanged =
       edges.length !== parsedDiagram.edges.length ||
-      [...parsedEdgeIds].some(id => !edgeIds.has(id))
+      [...parsedEdgeIds].some((id) => !edgeIds.has(id))
 
-    if (!nodesChanged && !edgesChanged) {
-      return
-    }
+    if (!nodesChanged && !edgesChanged) return
 
     isUpdatingFromCodeRef.current = true
 
     const newNodes = parsedDiagram.nodes.map((node, index) => {
-      // Try to preserve positions of existing nodes
       const existingNode = nodes.find((n) => n.id === node.id)
       return {
         id: node.id,
@@ -244,13 +155,14 @@ export default function VisualEditor({ parsedDiagram, onCodeChange }: VisualEdit
           x: (index % 3) * 200 + 50,
           y: Math.floor(index / 3) * 150 + 50,
         },
-        data: {
-          label: node.label,
-          shape: node.shape,
-          id: node.id,
-        },
+        data: { label: node.label, shape: node.shape, id: node.id },
       }
     })
+
+    // Apply dagre layout only if there are new nodes without positions
+    const hasNewNodes = parsedDiagram.nodes.some(
+      (n) => !nodes.find((existing) => existing.id === n.id)
+    )
 
     const newEdges = parsedDiagram.edges.map((edge) => ({
       id: `${edge.source}-${edge.target}`,
@@ -258,28 +170,30 @@ export default function VisualEditor({ parsedDiagram, onCodeChange }: VisualEdit
       target: edge.target,
       label: edge.label || '',
       type: 'smoothstep' as const,
-      markerEnd: {
-        type: MarkerType.ArrowClosed,
-      },
-      data: {
-        type: edge.type,
-      },
+      markerEnd: edge.type !== 'line' ? { type: MarkerType.ArrowClosed } : undefined,
+      style: edge.type === 'thick'
+        ? { strokeWidth: 3 }
+        : edge.type === 'dotted'
+          ? { strokeDasharray: '5 5' }
+          : undefined,
+      data: { type: edge.type },
     }))
 
-    setNodes(newNodes)
+    if (hasNewNodes) {
+      setNodes(applyLayout(newNodes, newEdges))
+    } else {
+      setNodes(newNodes)
+    }
     setEdges(newEdges)
 
-    // Reset flag after a short delay
     setTimeout(() => {
       isUpdatingFromCodeRef.current = false
     }, 100)
   }, [parsedDiagram]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Generate code when nodes or edges change (but not when updating from code)
+  // Generate code when nodes/edges change from user actions
   useEffect(() => {
-    if (isUpdatingFromCodeRef.current) {
-      return
-    }
+    if (isUpdatingFromCodeRef.current) return
 
     const code = generateMermaidCode(
       nodes,
@@ -290,71 +204,373 @@ export default function VisualEditor({ parsedDiagram, onCodeChange }: VisualEdit
     onCodeChange(code)
   }, [nodes, edges, parsedDiagram.direction, parsedDiagram.type, onCodeChange])
 
+  // Connection handler
   const onConnect = useCallback(
     (params: Connection) => {
       if (params.source && params.target) {
-        setEdges((eds) => addEdge(params, eds))
+        pushState({ nodes, edges })
+        setEdges((eds) =>
+          addEdge(
+            {
+              ...params,
+              type: 'smoothstep',
+              markerEnd: { type: MarkerType.ArrowClosed },
+              data: { type: 'arrow' },
+            },
+            eds
+          )
+        )
       }
     },
-    [setEdges]
+    [setEdges, pushState, nodes, edges]
   )
 
-  const onNodeDoubleClick = useCallback((_event: React.MouseEvent, node: Node) => {
-    const currentLabel = typeof node.data?.label === 'string' ? node.data.label : node.id || ''
-    const newLabel = prompt('Enter new label:', currentLabel)
-    if (newLabel !== null) {
-      setNodes((nds) =>
-        nds.map((n) =>
-          n.id === node.id
-            ? { ...n, data: { ...n.data, label: newLabel } }
-            : n
-        )
-      )
-    }
-  }, [setNodes])
+  // Node drag stop -> push undo state
+  const onNodeDragStop = useCallback(() => {
+    pushState({ nodes, edges })
+  }, [pushState, nodes, edges])
 
+  // Delete functions
+  const deleteNodes = useCallback(
+    (ids: string[]) => {
+      if (ids.length === 0) return
+      pushState({ nodes, edges })
+      const idSet = new Set(ids)
+      setEdges((eds) => eds.filter((e) => !idSet.has(e.source) && !idSet.has(e.target)))
+      setNodes((nds) => nds.filter((n) => !idSet.has(n.id)))
+    },
+    [pushState, nodes, edges, setNodes, setEdges]
+  )
+
+  const deleteEdges = useCallback(
+    (ids: string[]) => {
+      if (ids.length === 0) return
+      pushState({ nodes, edges })
+      const idSet = new Set(ids)
+      setEdges((eds) => eds.filter((e) => !idSet.has(e.id)))
+    },
+    [pushState, nodes, edges, setEdges]
+  )
+
+  const deleteSelected = useCallback(() => {
+    const selectedNodeIds = nodes.filter((n) => n.selected).map((n) => n.id)
+    const selectedEdgeIds = edges.filter((e) => e.selected).map((e) => e.id)
+    if (selectedNodeIds.length === 0 && selectedEdgeIds.length === 0) return
+
+    pushState({ nodes, edges })
+    const nodeIdSet = new Set(selectedNodeIds)
+    setEdges((eds) =>
+      eds.filter(
+        (e) =>
+          !selectedEdgeIds.includes(e.id) &&
+          !nodeIdSet.has(e.source) &&
+          !nodeIdSet.has(e.target)
+      )
+    )
+    setNodes((nds) => nds.filter((n) => !nodeIdSet.has(n.id)))
+  }, [nodes, edges, pushState, setNodes, setEdges])
+
+  // Add node
+  const addNode = useCallback(
+    (shape: MermaidNode['shape'], position?: { x: number; y: number }) => {
+      pushState({ nodes, edges })
+      const id = generateNodeId(nodes)
+      const pos = position || reactFlowInstance.screenToFlowPosition({
+        x: window.innerWidth / 2,
+        y: window.innerHeight / 2,
+      })
+      const newNode: Node = {
+        id,
+        type: 'custom',
+        position: pos,
+        data: { label: id, shape, id },
+      }
+      setNodes((nds) => [...nds, newNode])
+      // Start editing immediately so user can name it
+      setTimeout(() => setEditingNodeId(id), 50)
+    },
+    [pushState, nodes, edges, setNodes, reactFlowInstance]
+  )
+
+  // Duplicate node
+  const duplicateNode = useCallback(
+    (sourceId: string) => {
+      const sourceNode = nodes.find((n) => n.id === sourceId)
+      if (!sourceNode) return
+      pushState({ nodes, edges })
+      const id = generateNodeId(nodes)
+      const newNode: Node = {
+        id,
+        type: 'custom',
+        position: { x: sourceNode.position.x + 30, y: sourceNode.position.y + 30 },
+        data: { label: sourceNode.data.label, shape: sourceNode.data.shape, id },
+      }
+      setNodes((nds) => [...nds, newNode])
+    },
+    [nodes, edges, pushState, setNodes]
+  )
+
+  // Auto layout
+  const handleAutoLayout = useCallback(() => {
+    pushState({ nodes, edges })
+    setNodes(applyLayout(nodes, edges))
+    setTimeout(() => reactFlowInstance.fitView({ padding: 0.2 }), 50)
+  }, [pushState, nodes, edges, setNodes, applyLayout, reactFlowInstance])
+
+  // Undo/Redo handlers - don't set isUpdatingFromCodeRef so code-gen useEffect runs
+  const handleUndo = useCallback(() => {
+    const prev = undo({ nodes, edges })
+    if (prev) {
+      setNodes(prev.nodes)
+      setEdges(prev.edges)
+    }
+  }, [undo, nodes, edges, setNodes, setEdges])
+
+  const handleRedo = useCallback(() => {
+    const next = redo({ nodes, edges })
+    if (next) {
+      setNodes(next.nodes)
+      setEdges(next.edges)
+    }
+  }, [redo, nodes, edges, setNodes, setEdges])
+
+  // Select all
+  const selectAll = useCallback(() => {
+    setNodes((nds) => nds.map((n) => ({ ...n, selected: true })))
+    setEdges((eds) => eds.map((e) => ({ ...e, selected: true })))
+  }, [setNodes, setEdges])
+
+  // Escape handler
+  const handleEscape = useCallback(() => {
+    setEditingNodeId(null)
+    setEditingEdge(null)
+    setContextMenu(null)
+    setNodes((nds) => nds.map((n) => ({ ...n, selected: false })))
+    setEdges((eds) => eds.map((e) => ({ ...e, selected: false })))
+  }, [setNodes, setEdges])
+
+  // Keyboard shortcuts
+  useVisualEditorKeyboard(containerRef, {
+    onDelete: deleteSelected,
+    onUndo: handleUndo,
+    onRedo: handleRedo,
+    onSelectAll: selectAll,
+    onEscape: handleEscape,
+  })
+
+  // Context menu handlers
+  const handleContextMenu = useCallback(
+    (event: React.MouseEvent) => {
+      event.preventDefault()
+      const flowPos = reactFlowInstance.screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      })
+      setContextFlowPos(flowPos)
+      setContextMenu({ x: event.clientX, y: event.clientY, type: 'canvas' })
+    },
+    [reactFlowInstance]
+  )
+
+  const handleNodeContextMenu = useCallback(
+    (event: React.MouseEvent, node: Node) => {
+      event.preventDefault()
+      event.stopPropagation()
+      setContextMenu({ x: event.clientX, y: event.clientY, type: 'node', targetId: node.id })
+    },
+    []
+  )
+
+  const handleEdgeContextMenu = useCallback(
+    (event: React.MouseEvent, edge: Edge) => {
+      event.preventDefault()
+      event.stopPropagation()
+      setContextMenu({ x: event.clientX, y: event.clientY, type: 'edge', targetId: edge.id })
+    },
+    []
+  )
+
+  // Double-click edge to edit label
   const onEdgeDoubleClick = useCallback((_event: React.MouseEvent, edge: Edge) => {
-    const currentLabel = typeof edge.label === 'string' ? edge.label : ''
-    const newLabel = prompt('Enter edge label:', currentLabel)
-    if (newLabel !== null) {
+    const label = typeof edge.label === 'string' ? edge.label : ''
+    setEditingEdge({ id: edge.id, label })
+  }, [])
+
+  // Edge label change
+  const handleEdgeLabelChange = useCallback(
+    (edgeId: string, label: string) => {
+      pushState({ nodes, edges })
+      setEdges((eds) => eds.map((e) => (e.id === edgeId ? { ...e, label } : e)))
+    },
+    [pushState, nodes, edges, setEdges]
+  )
+
+  // Change edge type
+  const handleChangeEdgeType = useCallback(
+    (edgeId: string, edgeType: MermaidEdge['type']) => {
+      pushState({ nodes, edges })
       setEdges((eds) =>
         eds.map((e) =>
-          e.id === edge.id ? { ...e, label: newLabel } : e
+          e.id === edgeId
+            ? {
+                ...e,
+                data: { ...e.data, type: edgeType },
+                markerEnd: edgeType !== 'line' ? { type: MarkerType.ArrowClosed } : undefined,
+                style: edgeType === 'thick'
+                  ? { strokeWidth: 3 }
+                  : edgeType === 'dotted'
+                    ? { strokeDasharray: '5 5' }
+                    : undefined,
+              }
+            : e
         )
       )
-    }
-  }, [setEdges])
+    },
+    [pushState, nodes, edges, setEdges]
+  )
+
+  // Edit label from context menu
+  const handleEditLabel = useCallback(
+    (targetId: string) => {
+      // Check if it's a node or edge
+      const isNode = nodes.some((n) => n.id === targetId)
+      if (isNode) {
+        setEditingNodeId(targetId)
+      } else {
+        const edge = edges.find((e) => e.id === targetId)
+        if (edge) {
+          setEditingEdge({ id: edge.id, label: typeof edge.label === 'string' ? edge.label : '' })
+        }
+      }
+    },
+    [nodes, edges]
+  )
+
+  // Compute edge label editor position
+  const getEdgeLabelPosition = useCallback(
+    (edgeId: string) => {
+      const edge = edges.find((e) => e.id === edgeId)
+      if (!edge) return { x: 0, y: 0 }
+      const sourceNode = nodes.find((n) => n.id === edge.source)
+      const targetNode = nodes.find((n) => n.id === edge.target)
+      if (!sourceNode || !targetNode) return { x: 0, y: 0 }
+
+      return {
+        x: (sourceNode.position.x + targetNode.position.x) / 2 + 80,
+        y: (sourceNode.position.y + targetNode.position.y) / 2 + 25,
+      }
+    },
+    [edges, nodes]
+  )
 
   return (
-    <div className="visual-editor-container">
-      <div className="visual-editor-header">
-        <span className="visual-editor-hint">Drag nodes • Connect by dragging from handle to handle • Double-click to edit labels</span>
+    <div className="visual-editor-container" ref={containerRef} tabIndex={0}>
+      <div className={`visual-editor-header ${isDark ? 'dark' : ''}`}>
+        <div className="ve-header-actions">
+          <AddNodeToolbar onAddNode={(shape) => addNode(shape)} />
+          <div className="ve-header-divider" />
+          <button
+            className={`ve-header-btn ${isDark ? 'dark' : ''}`}
+            onClick={handleAutoLayout}
+            title="Auto-arrange nodes"
+          >
+            Layout
+          </button>
+          <div className="ve-header-divider" />
+          <button
+            className={`ve-header-btn ${isDark ? 'dark' : ''}`}
+            onClick={handleUndo}
+            disabled={!canUndo}
+            title="Undo (Ctrl+Z)"
+          >
+            Undo
+          </button>
+          <button
+            className={`ve-header-btn ${isDark ? 'dark' : ''}`}
+            onClick={handleRedo}
+            disabled={!canRedo}
+            title="Redo (Ctrl+Shift+Z)"
+          >
+            Redo
+          </button>
+          <div className="ve-header-divider" />
+          <button
+            className={`ve-header-btn danger ${isDark ? 'dark' : ''}`}
+            onClick={deleteSelected}
+            title="Delete selected (Del)"
+          >
+            Delete
+          </button>
+        </div>
+        <span className="visual-editor-hint">
+          Double-click to edit &middot; Right-click for menu &middot; Drag handles to connect
+        </span>
       </div>
       <div className="visual-editor-content">
         <ReactFlow
-          nodes={nodes}
+          nodes={nodesWithCallbacks}
           edges={edges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
-          onNodeDoubleClick={onNodeDoubleClick}
+          onNodeDragStop={onNodeDragStop}
           onEdgeDoubleClick={onEdgeDoubleClick}
+          onContextMenu={handleContextMenu}
+          onNodeContextMenu={handleNodeContextMenu}
+          onEdgeContextMenu={handleEdgeContextMenu}
           nodeTypes={nodeTypes}
           fitView
           className={isDark ? 'dark' : ''}
           nodesDraggable={true}
           nodesConnectable={true}
           elementsSelectable={true}
+          deleteKeyCode={null}
         >
-          <Background color={isDark ? '#2d2d2d' : '#f5f5f5'} />
-          <Controls />
+          <Background color={isDark ? '#333' : '#e8e8e8'} gap={20} />
+          <Controls showInteractive={false} />
           <MiniMap
-            nodeColor={isDark ? '#2d2d2d' : '#fff'}
-            maskColor={isDark ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.1)'}
+            nodeColor={isDark ? '#3d3d3d' : '#e8e8e8'}
+            maskColor={isDark ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.08)'}
           />
+
+          {editingEdge && (
+            <EdgeLabelEditor
+              edgeId={editingEdge.id}
+              currentLabel={editingEdge.label}
+              position={getEdgeLabelPosition(editingEdge.id)}
+              onLabelChange={handleEdgeLabelChange}
+              onClose={() => setEditingEdge(null)}
+            />
+          )}
         </ReactFlow>
       </div>
+
+      <ContextMenu
+        state={contextMenu}
+        onClose={() => setContextMenu(null)}
+        onAddNode={(shape, position) => addNode(shape, position)}
+        onDeleteNode={(id) => deleteNodes([id])}
+        onDeleteEdge={(id) => deleteEdges([id])}
+        onChangeShape={(id, shape) => {
+          pushState({ nodes, edges })
+          setNodes((nds) =>
+            nds.map((n) => (n.id === id ? { ...n, data: { ...n.data, shape } } : n))
+          )
+        }}
+        onChangeEdgeType={handleChangeEdgeType}
+        onDuplicateNode={duplicateNode}
+        onEditLabel={handleEditLabel}
+        onAutoLayout={handleAutoLayout}
+        flowPosition={contextFlowPos}
+      />
     </div>
   )
 }
 
+export default function VisualEditor(props: VisualEditorProps) {
+  return (
+    <ReactFlowProvider>
+      <VisualEditorInner {...props} />
+    </ReactFlowProvider>
+  )
+}

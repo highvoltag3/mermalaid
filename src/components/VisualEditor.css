@@ -3,134 +3,189 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  outline: none;
 }
 
+/* Header toolbar */
 .visual-editor-header {
-  padding: 8px 16px;
-  border-bottom: 1px solid var(--app-border);
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  padding: 6px 12px;
+  border-bottom: 1px solid #e0e0e0;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
+  background: #fafafa;
+}
+
+.visual-editor-header.dark {
+  border-bottom-color: #404040;
+  background: #252525;
+}
+
+.ve-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ve-header-divider {
+  width: 1px;
+  height: 20px;
+  background: #e0e0e0;
+  margin: 0 4px;
+}
+
+.visual-editor-header.dark .ve-header-divider {
+  background: #404040;
+}
+
+.ve-header-btn {
+  padding: 4px 10px;
+  border: 1px solid #e0e0e0;
+  background: #fff;
+  color: #555;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 500;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  white-space: nowrap;
+}
+
+.ve-header-btn.dark {
+  background: #2d2d2d;
+  color: #bbb;
+  border-color: #404040;
+}
+
+.ve-header-btn:hover:not(:disabled) {
+  background: #f0f0f0;
+  border-color: #ccc;
+  color: #333;
+}
+
+.ve-header-btn.dark:hover:not(:disabled) {
+  background: #3d3d3d;
+  border-color: #555;
+  color: #eee;
+}
+
+.ve-header-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.ve-header-btn.primary {
+  background: #1976d2;
+  border-color: #1976d2;
+  color: #fff;
+  font-weight: 600;
+}
+
+.ve-header-btn.primary.dark {
+  background: #2196f3;
+  border-color: #2196f3;
+  color: #fff;
+}
+
+.ve-header-btn.primary:hover {
+  background: #1565c0;
+  border-color: #1565c0;
+  color: #fff;
+}
+
+.ve-header-btn.primary.dark:hover {
+  background: #1e88e5;
+  border-color: #1e88e5;
+}
+
+.ve-header-btn.danger:hover:not(:disabled) {
+  background: #fee;
+  border-color: #e57373;
+  color: #d32f2f;
+}
+
+.ve-header-btn.danger.dark:hover:not(:disabled) {
+  background: #3d1f1f;
+  border-color: #ef5350;
+  color: #ef5350;
 }
 
 .visual-editor-hint {
   font-size: 10px;
   font-weight: 400;
-  text-transform: none;
-  letter-spacing: 0;
-  color: var(--app-muted);
-  font-style: italic;
+  color: #999;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
+.visual-editor-header.dark .visual-editor-hint {
+  color: #666;
+}
+
+/* Editor content */
 .visual-editor-content {
   flex: 1;
   position: relative;
 }
 
-/* React Flow styling */
 .visual-editor-content .react-flow {
-  background-color: transparent;
+  background-color: #f8f9fa;
 }
 
 .visual-editor-content .react-flow.dark {
-  background-color: transparent;
+  background-color: #1a1a1a;
 }
 
-.visual-node {
-  min-width: 100px;
-  min-height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: move;
-  transition: all 0.2s;
-  position: relative;
+/* Edge label editor */
+.edge-label-editor {
+  pointer-events: all;
 }
 
-/* Disable node dragging when hovering over handles */
-.visual-node:hover .react-flow__handle {
-  cursor: crosshair;
+.edge-label-input {
+  border: none;
+  outline: none;
+  background: #fff;
+  color: #333;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+  padding: 4px 8px;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border: 2px solid #4a9eff;
 }
 
-.visual-node:hover {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+.edge-label-input.dark {
+  background: #2d2d2d;
+  color: #d4d4d4;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
-.visual-node.selected {
-  box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.3);
+/* React Flow controls dark mode */
+.app.dark .react-flow__controls {
+  background-color: #2d2d2d;
+  border: 1px solid #404040;
 }
 
-.visual-node.dark {
-  background-color: var(--app-surface);
-  color: var(--app-fg);
+.app.dark .react-flow__controls button {
+  background-color: #2d2d2d;
+  color: #d4d4d4;
+  border-bottom: 1px solid #404040;
 }
 
-/* React Flow Handle styling */
-.react-flow__handle {
-  border-radius: 50%;
-  border: 2px solid #fff;
-  transition: all 0.2s;
-  cursor: crosshair !important;
-  pointer-events: all !important;
-  z-index: 1000 !important;
-  position: absolute !important;
+.app.dark .react-flow__controls button:hover {
+  background-color: #3d3d3d;
 }
 
-.react-flow__handle:hover {
-  transform: scale(1.3);
-  box-shadow: 0 0 8px rgba(74, 158, 255, 0.6);
-  cursor: crosshair !important;
+/* React Flow minimap dark mode */
+.app.dark .react-flow__minimap {
+  background-color: #2d2d2d;
+  border: 1px solid #404040;
 }
 
-.react-flow__handle:active {
-  cursor: crosshair !important;
+/* Edge styling when selected */
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: #4a9eff;
+  stroke-width: 2;
 }
-
-.react-flow__handle-connecting {
-  background: #ff6b6b !important;
-  cursor: crosshair !important;
-}
-
-.react-flow__handle-valid {
-  background: #51cf66 !important;
-  cursor: crosshair !important;
-}
-
-/* Ensure handles are above everything and prevent node drag interference */
-.visual-node .react-flow__handle {
-  position: absolute !important;
-  pointer-events: all !important;
-  z-index: 1000 !important;
-  cursor: crosshair !important;
-}
-
-/* Prevent node from being dragged when clicking on handles */
-.react-flow__node:has(.react-flow__handle:hover) {
-  cursor: default !important;
-}
-
-/* React Flow controls - use app theme */
-.react-flow__controls {
-  background-color: var(--app-surface);
-  border: 1px solid var(--app-border);
-}
-
-.react-flow__controls button {
-  background-color: var(--app-surface);
-  color: var(--app-fg);
-  border-bottom: 1px solid var(--app-border);
-}
-
-.react-flow__controls button:hover {
-  background-color: var(--app-bg);
-}
-
-.react-flow__minimap {
-  background-color: var(--app-surface);
-  border: 1px solid var(--app-border);
-}
-

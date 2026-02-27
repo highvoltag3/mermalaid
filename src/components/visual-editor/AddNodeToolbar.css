@@ -1,0 +1,84 @@
+.add-node-wrapper {
+  position: relative;
+}
+
+.add-node-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 6px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  z-index: 200;
+  width: 280px;
+}
+
+.add-node-dropdown.dark {
+  background: #2d2d2d;
+  border-color: #404040;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.add-node-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+
+.add-node-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #555;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 10px;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.add-node-dropdown.dark .add-node-option {
+  color: #bbb;
+}
+
+.add-node-option:hover {
+  background: #f5f5f5;
+  border-color: #e0e0e0;
+}
+
+.add-node-dropdown.dark .add-node-option:hover {
+  background: #3d3d3d;
+  border-color: #555;
+}
+
+.add-node-option .shape-preview {
+  display: inline-block;
+  width: 28px;
+  height: 20px;
+  border: 1.5px solid currentColor;
+  flex-shrink: 0;
+}
+
+.add-node-option .shape-preview.rect { border-radius: 3px; }
+.add-node-option .shape-preview.rounded { border-radius: 8px; }
+.add-node-option .shape-preview.stadium { border-radius: 999px; }
+.add-node-option .shape-preview.diamond { transform: rotate(45deg) scale(0.65); border-radius: 2px; width: 20px; height: 20px; }
+.add-node-option .shape-preview.hexagon { clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); }
+.add-node-option .shape-preview.circle { border-radius: 50%; width: 20px; }
+.add-node-option .shape-preview.doublecircle { border-radius: 50%; width: 20px; outline: 1px solid currentColor; outline-offset: 2px; }
+.add-node-option .shape-preview.cylinder { border-radius: 3px 3px 50% 50%; }
+.add-node-option .shape-preview.subroutine { border-left: 3px double currentColor; border-right: 3px double currentColor; }
+.add-node-option .shape-preview.parallelogram { transform: skewX(-12deg); }
+.add-node-option .shape-preview.trapezoid { clip-path: polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%); }
+.add-node-option .shape-preview.trapezoidAlt { clip-path: polygon(0% 0%, 100% 0%, 80% 100%, 20% 100%); }
+
+.shape-name {
+  font-weight: 500;
+  letter-spacing: 0.2px;
+}
