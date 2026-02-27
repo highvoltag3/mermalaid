@@ -3,17 +3,21 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
         http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
-  
-  <!-- Main Page -->
+
+  <!-- Landing Page -->
   <url>
     <loc>https://mermalaid.com/</loc>
-    <lastmod>2024-01-01</lastmod>
+    <lastmod>2025-05-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
-  
-  <!-- Add more URLs as you add pages -->
-  <!-- Example: Documentation pages, blog posts, etc. -->
-  
-</urlset>
 
+  <!-- Editor -->
+  <url>
+    <loc>https://mermalaid.com/editor</loc>
+    <lastmod>2025-05-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+</urlset>

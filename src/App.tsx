@@ -1,15 +1,17 @@
 import { useState, useEffect, useRef } from 'react'
+import { Routes, Route } from 'react-router-dom'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { ToastProvider } from './contexts/ToastContext'
 import { useTheme } from './hooks/useTheme'
 import Editor from './components/Editor'
 import Preview from './components/Preview'
 import Toolbar from './components/Toolbar'
+import LandingPage from './components/LandingPage'
 import { extractMermaidCode, extractAllMermaidBlocks } from './utils/mermaidCodeBlock'
 import { getAppThemeCssVars } from './utils/mermaidThemes'
 import './App.css'
 
-function AppContent() {
+function EditorView() {
   const { mermaidTheme } = useTheme()
   const [code, setCode] = useState('graph TD\n    A[Start] --> B{Decision}\n    B -->|Yes| C[Action 1]\n    B -->|No| D[Action 2]\n    C --> E[End]\n    D --> E')
   const [error, setError] = useState<string | null>(null)
@@ -31,6 +33,10 @@ function AppContent() {
       setSelectedBlockIndex(0)
     }
   }, [mermaidBlocks.length])
+
+  useEffect(() => {
+    try { localStorage.setItem('mermalaid-has-used-editor', '1') } catch {}
+  }, [])
 
   useEffect(() => {
     const saved = localStorage.getItem('mermalaid-draft')
@@ -118,7 +124,10 @@ function App() {
   return (
     <ThemeProvider>
       <ToastProvider>
-        <AppContent />
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/editor" element={<EditorView />} />
+        </Routes>
       </ToastProvider>
     </ThemeProvider>
   )

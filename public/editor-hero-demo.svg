@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" width="640" height="300">
+  <defs>
+    <marker id="ah" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto">
+      <polygon points="0 0, 6 2, 0 4" fill="rgba(255,255,255,0.2)"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="640" height="300" fill="#1C1917"/>
+
+  <!-- Code panel -->
+  <text font-family="'DM Mono', ui-monospace, monospace" font-size="11" fill="rgba(255,255,255,0.18)">
+    <tspan x="14" y="30">1</tspan>
+    <tspan x="14" y="52">2</tspan>
+    <tspan x="14" y="74">3</tspan>
+    <tspan x="14" y="96">4</tspan>
+    <tspan x="14" y="118">5</tspan>
+    <tspan x="14" y="140">6</tspan>
+    <tspan x="14" y="162">7</tspan>
+  </text>
+
+  <text font-family="'DM Mono', ui-monospace, monospace" font-size="12" fill="#5EEAD4">
+    <tspan x="36" y="30">graph TD</tspan>
+    <tspan x="36" y="52">    A[User Request] --&gt; B{Valid?}</tspan>
+    <tspan x="36" y="74">    B --&gt;|Yes| C[Process Data]</tspan>
+    <tspan x="36" y="96">    B --&gt;|No| D[Show Error]</tspan>
+    <tspan x="36" y="118">    C --&gt; E[Return Result]</tspan>
+    <tspan x="36" y="140">    D --&gt; F[Log &amp; Retry]</tspan>
+    <tspan x="36" y="162">    F --&gt; A</tspan>
+  </text>
+
+  <!-- Blinking cursor -->
+  <rect x="66" y="152" width="1.5" height="14" fill="#5EEAD4" opacity="0.6">
+    <animate attributeName="opacity" values="0.6;0;0.6" dur="1.2s" repeatCount="indefinite"/>
+  </rect>
+
+  <!-- Separator -->
+  <line x1="310" y1="0" x2="310" y2="300" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+
+  <!-- Preview panel — rendered flowchart -->
+  <!-- User Request -->
+  <rect x="428" y="20" width="104" height="30" rx="4" fill="rgba(13,148,136,0.12)" stroke="rgba(13,148,136,0.35)" stroke-width="0.75"/>
+  <text x="480" y="39" text-anchor="middle" font-family="'DM Sans', system-ui, sans-serif" font-size="11.5" fill="#d6d3d1" font-weight="500">User Request</text>
+
+  <!-- Arrow → Valid? -->
+  <line x1="480" y1="50" x2="480" y2="72" stroke="rgba(255,255,255,0.15)" stroke-width="0.75" marker-end="url(#ah)"/>
+
+  <!-- Valid? diamond -->
+  <polygon points="480,72 520,100 480,128 440,100" fill="rgba(217,119,6,0.12)" stroke="rgba(217,119,6,0.4)" stroke-width="0.75"/>
+  <text x="480" y="104" text-anchor="middle" font-family="'DM Sans', system-ui, sans-serif" font-size="11" fill="#d6d3d1" font-weight="500">Valid?</text>
+
+  <!-- Yes → Process Data -->
+  <polyline points="440,100 400,100 400,148" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="0.75" marker-end="url(#ah)"/>
+  <text x="416" y="94" font-family="'DM Sans', system-ui, sans-serif" font-size="9" fill="rgba(255,255,255,0.3)" font-weight="500">Yes</text>
+
+  <rect x="348" y="148" width="104" height="30" rx="4" fill="rgba(13,148,136,0.12)" stroke="rgba(13,148,136,0.35)" stroke-width="0.75"/>
+  <text x="400" y="167" text-anchor="middle" font-family="'DM Sans', system-ui, sans-serif" font-size="11.5" fill="#d6d3d1" font-weight="500">Process Data</text>
+
+  <!-- No → Show Error -->
+  <polyline points="520,100 560,100 560,148" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="0.75" marker-end="url(#ah)"/>
+  <text x="544" y="94" font-family="'DM Sans', system-ui, sans-serif" font-size="9" fill="rgba(255,255,255,0.3)" font-weight="500">No</text>
+
+  <rect x="508" y="148" width="104" height="30" rx="4" fill="rgba(197,48,48,0.12)" stroke="rgba(197,48,48,0.35)" stroke-width="0.75"/>
+  <text x="560" y="167" text-anchor="middle" font-family="'DM Sans', system-ui, sans-serif" font-size="11.5" fill="#d6d3d1" font-weight="500">Show Error</text>
+
+  <!-- Process Data → Return Result -->
+  <line x1="400" y1="178" x2="400" y2="210" stroke="rgba(255,255,255,0.15)" stroke-width="0.75" marker-end="url(#ah)"/>
+
+  <rect x="348" y="210" width="104" height="30" rx="4" fill="rgba(34,197,94,0.12)" stroke="rgba(34,197,94,0.35)" stroke-width="0.75"/>
+  <text x="400" y="229" text-anchor="middle" font-family="'DM Sans', system-ui, sans-serif" font-size="11.5" fill="#d6d3d1" font-weight="500">Return Result</text>
+
+  <!-- Show Error → Log & Retry -->
+  <line x1="560" y1="178" x2="560" y2="210" stroke="rgba(255,255,255,0.15)" stroke-width="0.75" marker-end="url(#ah)"/>
+
+  <rect x="508" y="210" width="104" height="30" rx="4" fill="rgba(13,148,136,0.12)" stroke="rgba(13,148,136,0.35)" stroke-width="0.75"/>
+  <text x="560" y="229" text-anchor="middle" font-family="'DM Sans', system-ui, sans-serif" font-size="11.5" fill="#d6d3d1" font-weight="500">Log &amp; Retry</text>
+
+  <!-- Log & Retry → User Request (loop) -->
+  <polyline points="560,240 560,268 620,268 620,35 532,35" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="0.75" marker-end="url(#ah)"/>
+</svg>

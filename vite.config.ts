@@ -5,6 +5,10 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   base: '/', // Use absolute path for Appwrite Sites deployment
+  server: {
+    port: parseInt(process.env.PORT || '5173'),
+    host: true,
+  },
   build: {
     outDir: 'dist',
     emptyOutDir: true,

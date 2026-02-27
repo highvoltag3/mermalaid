@@ -10,11 +10,18 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Editor view needs overflow hidden, landing page needs scroll */
+body:has(.app) {
   overflow: hidden;
 }
 
-#root {
-  width: 100vw;
-  height: 100vh;
+body:has(.landing) {
+  overflow: auto;
 }
 
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
