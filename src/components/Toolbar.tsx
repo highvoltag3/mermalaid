@@ -36,6 +36,7 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({ code, setCode, error, ac
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [showSettings, setShowSettings] = useState(false)
   const [isFixing, setIsFixing] = useState(false)
+  const hasMultipleBlocks = mermaidBlocks.length > 1
 
   const handleNew = () => {
     if (confirm('Create a new diagram? Unsaved changes will be lost.')) {
@@ -204,25 +205,38 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({ code, setCode, error, ac
     }
 
     const themeOptions = getMermaidThemeOptions(mermaidTheme)
-    let exported = 0
+    const svgs: string[] = []
 
     for (let i = 0; i < mermaidBlocks.length; i++) {
       try {
         const svg = await renderMermaid(mermaidBlocks[i].code, themeOptions)
-        const blob = new Blob([svg], { type: 'image/svg+xml' })
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = `diagram-${i + 1}.svg`
-        a.click()
-        URL.revokeObjectURL(url)
-        exported++
+        svgs.push(svg)
       } catch (err) {
-        console.error(`Failed to export block ${i + 1}:`, err)
+        console.error(`Failed to render block ${i + 1}:`, err)
+        svgs.push(`<p>Failed to render diagram ${i + 1}</p>`)
       }
     }
 
-    showToast(`Exported ${exported} of ${mermaidBlocks.length} diagrams as SVG`)
+    const bg = isDark ? '#1e1e1e' : '#ffffff'
+    const fg = isDark ? '#e0e0e0' : '#333333'
+    const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Mermaid Diagrams</title>
+<style>body{background:${bg};color:${fg};font-family:system-ui;padding:2rem}
+.diagram{margin:2rem 0;padding:1rem;border:1px solid ${isDark ? '#444' : '#ddd'};border-radius:8px}
+.diagram h2{margin:0 0 1rem;font-size:1rem}
+.diagram svg{max-width:100%;height:auto}</style></head><body>
+<h1>Mermaid Diagrams (${svgs.length})</h1>
+${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</div>`).join('\n')}
+</body></html>`
+
+    const blob = new Blob([html], { type: 'text/html' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'diagrams.html'
+    a.click()
+    URL.revokeObjectURL(url)
+    showToast(`Exported ${svgs.length} diagrams as HTML`)
   }
 
   const handleAIFix = async () => {
@@ -282,18 +296,18 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({ code, setCode, error, ac
         </div>
 
         <div className="toolbar-section">
-          <button onClick={handleExportSVG} className="toolbar-btn" title="Export SVG">
+          <button onClick={handleExportSVG} className="toolbar-btn" title={hasMultipleBlocks ? 'Export selected block as SVG' : 'Export SVG'}>
             Export SVG
           </button>
-          <button onClick={handleExportPNG} className="toolbar-btn" title="Export PNG">
+          <button onClick={handleExportPNG} className="toolbar-btn" title={hasMultipleBlocks ? 'Export selected block as PNG' : 'Export PNG'}>
             Export PNG
           </button>
-          <button onClick={handleExportASCII} className="toolbar-btn" title="Export ASCII (Unicode box-drawing for terminals)">
+          <button onClick={handleExportASCII} className="toolbar-btn" title={hasMultipleBlocks ? 'Export selected block as ASCII' : 'Export ASCII (Unicode box-drawing for terminals)'}>
             Export ASCII
           </button>
-          {mermaidBlocks.length > 1 && (
-            <button onClick={handleExportAllSVG} className="toolbar-btn" title="Export all mermaid blocks as separate SVG files">
-              Export All SVGs
+          {hasMultipleBlocks && (
+            <button onClick={handleExportAllSVG} className="toolbar-btn" title="Export all mermaid blocks in a single HTML file">
+              Export All
             </button>
           )}
           <button onClick={handleCopyCode} className="toolbar-btn" title="Copy Code">

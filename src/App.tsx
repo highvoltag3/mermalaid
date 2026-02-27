@@ -92,7 +92,14 @@ function AppContent() {
         mermaidBlocks={mermaidBlocks}
       />
       <div className="app-content">
-        <Editor code={code} setCode={setCode} error={error} />
+        <Editor
+          code={code}
+          setCode={setCode}
+          error={error}
+          mermaidBlocks={mermaidBlocks}
+          selectedBlockIndex={selectedBlockIndex}
+          setSelectedBlockIndex={setSelectedBlockIndex}
+        />
         <Preview
           code={code}
           setError={setError}

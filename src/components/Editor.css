@@ -31,3 +31,14 @@
   border-top: 1px solid var(--app-border);
 }
 
+.mermaid-block-highlight {
+  background: color-mix(in srgb, var(--app-accent) 8%, transparent);
+}
+
+.mermaid-block-gutter {
+  background-color: var(--app-accent);
+  width: 3px !important;
+  margin-left: 4px;
+  border-radius: 1px;
+}
+

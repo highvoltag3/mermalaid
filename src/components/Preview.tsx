@@ -25,6 +25,15 @@ export default function Preview({
   const previewRef = useRef<HTMLDivElement>(null)
   const renderIdRef = useRef(0)
   const [isEditMode, setIsEditMode] = useState(false)
+  const prevBlockIndex = useRef(selectedBlockIndex)
+
+  // Reset edit mode when switching blocks
+  useEffect(() => {
+    if (selectedBlockIndex !== prevBlockIndex.current) {
+      prevBlockIndex.current = selectedBlockIndex
+      setIsEditMode(false)
+    }
+  }, [selectedBlockIndex])
 
   const hasMultipleBlocks = mermaidBlocks.length > 1
   const trimmedCode = activeCode.trim()
@@ -34,7 +43,7 @@ export default function Preview({
   const handleCodeChange = (newCode: string) => {
     if (!onCodeChange) return
 
-    if (hasMultipleBlocks && mermaidBlocks[selectedBlockIndex]) {
+    if (mermaidBlocks.length > 0 && mermaidBlocks[selectedBlockIndex]) {
       const updated = replaceMermaidBlock(code, mermaidBlocks[selectedBlockIndex], newCode)
       onCodeChange(updated)
     } else {
