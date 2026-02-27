@@ -44,6 +44,12 @@
   max-width: 500px;
 }
 
+.error-recovery-hint {
+  margin-top: 12px;
+  font-size: 11px;
+  color: var(--app-muted);
+}
+
 .preview-header {
   display: flex;
   justify-content: space-between;
@@ -67,5 +73,51 @@
 .mode-toggle-btn:hover {
   background-color: var(--app-surface);
   border-color: var(--app-accent);
+}
+
+.preview-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.block-selector {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.block-selector-btn {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--app-border);
+  background-color: var(--app-bg);
+  color: var(--app-fg);
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.block-selector-btn:hover:not(:disabled) {
+  background-color: var(--app-surface);
+  border-color: var(--app-accent);
+}
+
+.block-selector-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.block-selector-label {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  white-space: nowrap;
 }
 
