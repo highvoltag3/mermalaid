@@ -1,0 +1,371 @@
+/* Node base styles */
+.visual-node {
+  min-width: 100px;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+  position: relative;
+  background-color: #ffffff;
+  border: 2px solid #ddd;
+  color: #333;
+}
+
+.visual-node:active {
+  cursor: grabbing;
+}
+
+.visual-node.dark {
+  background-color: #2d2d2d;
+  border-color: #555;
+  color: #d4d4d4;
+}
+
+.visual-node:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.visual-node.dark:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.visual-node.selected {
+  border-color: #4a9eff;
+  box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.25);
+}
+
+/* Clip-path shapes can't use box-shadow for selection - handled via filter above */
+
+/* Shape styles */
+.node-shape-rect { border-radius: 4px; }
+.node-shape-rounded { border-radius: 20px; }
+.node-shape-stadium { border-radius: 999px; }
+.node-shape-circle { border-radius: 50%; min-width: 60px; min-height: 60px; }
+.node-shape-doublecircle {
+  border-radius: 50%;
+  min-width: 60px;
+  min-height: 60px;
+  outline: 2px solid;
+  outline-offset: 3px;
+  outline-color: #ddd;
+}
+.node-shape-doublecircle.dark { outline-color: #555; }
+
+/* Clip-path shapes use drop-shadow for borders since clip-path clips borders */
+.node-shape-diamond,
+.node-shape-rhombus,
+.node-shape-hexagon,
+.node-shape-parallelogram,
+.node-shape-trapezoid,
+.node-shape-trapezoidAlt {
+  border: none;
+  filter: drop-shadow(0 0 0 #999) drop-shadow(0 0 2px #aaa);
+}
+
+.node-shape-diamond.dark,
+.node-shape-rhombus.dark,
+.node-shape-hexagon.dark,
+.node-shape-parallelogram.dark,
+.node-shape-trapezoid.dark,
+.node-shape-trapezoidAlt.dark {
+  filter: drop-shadow(0 0 0 #888) drop-shadow(0 0 2px #666);
+}
+
+.node-shape-diamond.selected,
+.node-shape-rhombus.selected,
+.node-shape-hexagon.selected,
+.node-shape-parallelogram.selected,
+.node-shape-trapezoid.selected,
+.node-shape-trapezoidAlt.selected {
+  filter: drop-shadow(0 0 0 #4a9eff) drop-shadow(0 0 3px #4a9eff);
+}
+
+.node-shape-diamond:hover,
+.node-shape-rhombus:hover,
+.node-shape-hexagon:hover,
+.node-shape-parallelogram:hover,
+.node-shape-trapezoid:hover,
+.node-shape-trapezoidAlt:hover {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15)) drop-shadow(0 0 2px #aaa);
+}
+
+.node-shape-diamond.dark:hover,
+.node-shape-rhombus.dark:hover,
+.node-shape-hexagon.dark:hover,
+.node-shape-parallelogram.dark:hover,
+.node-shape-trapezoid.dark:hover,
+.node-shape-trapezoidAlt.dark:hover {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3)) drop-shadow(0 0 2px #666);
+}
+
+/* Subtle fill colors for different shapes (inspired by Mermaid's palette) */
+.node-shape-diamond,
+.node-shape-rhombus {
+  background-color: #f9f0ff;
+}
+.node-shape-diamond.dark,
+.node-shape-rhombus.dark {
+  background-color: #352d3d;
+}
+
+.node-shape-hexagon {
+  background-color: #fff3e0;
+}
+.node-shape-hexagon.dark {
+  background-color: #3d2d1a;
+}
+
+.node-shape-diamond,
+.node-shape-rhombus {
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  min-width: 120px;
+  min-height: 70px;
+  padding: 16px 32px;
+}
+
+.node-shape-hexagon {
+  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+  min-width: 120px;
+  padding: 8px 28px;
+}
+
+.node-shape-parallelogram {
+  clip-path: polygon(15% 0%, 100% 0%, 85% 100%, 0% 100%);
+  padding: 8px 24px;
+}
+
+.node-shape-trapezoid {
+  clip-path: polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%);
+  padding: 8px 20px;
+}
+
+.node-shape-trapezoidAlt {
+  clip-path: polygon(0% 0%, 100% 0%, 80% 100%, 20% 100%);
+  padding: 8px 20px;
+}
+
+.node-shape-subroutine {
+  border-radius: 4px;
+  border-left: 5px double;
+  border-right: 5px double;
+  border-left-color: #ddd;
+  border-right-color: #ddd;
+}
+.node-shape-subroutine.dark {
+  border-left-color: #555;
+  border-right-color: #555;
+}
+
+.node-shape-cylinder {
+  border-radius: 4px 4px 50% 50% / 4px 4px 20px 20px;
+  padding-bottom: 12px;
+}
+
+/* Node content */
+.node-content {
+  padding: 8px 14px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  pointer-events: none;
+}
+
+.node-label {
+  white-space: nowrap;
+  user-select: none;
+}
+
+/* Inline edit input */
+.node-edit-input {
+  border: none;
+  outline: none;
+  background: transparent;
+  color: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+  padding: 2px 4px;
+  border-bottom: 2px solid #4a9eff;
+  pointer-events: all;
+  min-width: 40px;
+}
+
+.node-edit-input.dark {
+  color: #d4d4d4;
+}
+
+/* Handles - hidden by default, shown on hover/select */
+.visual-node .react-flow__handle {
+  width: 8px;
+  height: 8px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  cursor: crosshair !important;
+  pointer-events: all !important;
+  z-index: 1000 !important;
+}
+
+.visual-node:hover .react-flow__handle,
+.visual-node.selected .react-flow__handle {
+  opacity: 1;
+}
+
+.visual-node .react-flow__handle:hover {
+  transform: scale(1.4);
+  box-shadow: 0 0 6px rgba(74, 158, 255, 0.5);
+}
+
+.react-flow__handle-connecting {
+  background: #ff6b6b !important;
+}
+
+.react-flow__handle-valid {
+  background: #51cf66 !important;
+}
+
+/* Node Toolbar */
+.node-toolbar {
+  display: flex;
+  gap: 4px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.node-toolbar.dark {
+  background: #2d2d2d;
+  border-color: #404040;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.toolbar-btn {
+  padding: 4px 10px;
+  border: none;
+  background: transparent;
+  color: #555;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 500;
+  transition: background 0.15s, color 0.15s;
+}
+
+.node-toolbar.dark .toolbar-btn {
+  color: #bbb;
+}
+
+.toolbar-btn:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.node-toolbar.dark .toolbar-btn:hover {
+  background: #3d3d3d;
+  color: #eee;
+}
+
+.toolbar-btn.danger:hover {
+  background: #fee;
+  color: #d32f2f;
+}
+
+.node-toolbar.dark .toolbar-btn.danger:hover {
+  background: #3d1f1f;
+  color: #ef5350;
+}
+
+/* Shape picker dropdown */
+.node-toolbar-shape {
+  position: relative;
+}
+
+.shape-picker-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  width: 220px;
+  z-index: 100;
+}
+
+.shape-picker-dropdown.dark {
+  background: #2d2d2d;
+  border-color: #404040;
+}
+
+.shape-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border: none;
+  background: transparent;
+  color: #555;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  text-align: left;
+  width: 100%;
+}
+
+.shape-picker-dropdown.dark .shape-option {
+  color: #bbb;
+}
+
+.shape-option:hover {
+  background: #f0f0f0;
+}
+
+.shape-picker-dropdown.dark .shape-option:hover {
+  background: #3d3d3d;
+}
+
+.shape-option.active {
+  background: #e3f2fd;
+  color: #1976d2;
+  font-weight: 600;
+}
+
+.shape-picker-dropdown.dark .shape-option.active {
+  background: #1a3a5c;
+  color: #4a9eff;
+}
+
+/* Shape preview icons */
+.shape-preview {
+  display: inline-block;
+  width: 16px;
+  height: 12px;
+  border: 1.5px solid currentColor;
+  flex-shrink: 0;
+}
+
+.shape-preview.rect { border-radius: 2px; }
+.shape-preview.rounded { border-radius: 6px; }
+.shape-preview.stadium { border-radius: 999px; }
+.shape-preview.diamond { transform: rotate(45deg) scale(0.7); border-radius: 1px; }
+.shape-preview.hexagon { clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); }
+.shape-preview.circle { border-radius: 50%; width: 12px; }
+.shape-preview.doublecircle { border-radius: 50%; width: 12px; outline: 1px solid currentColor; outline-offset: 1px; }
+.shape-preview.cylinder { border-radius: 2px 2px 50% 50%; }
+.shape-preview.subroutine { border-left: 3px double currentColor; border-right: 3px double currentColor; }
+.shape-preview.parallelogram { transform: skewX(-15deg); }
+.shape-preview.trapezoid { clip-path: polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%); }
+.shape-preview.trapezoidAlt { clip-path: polygon(0% 0%, 100% 0%, 80% 100%, 20% 100%); }

@@ -1,0 +1,120 @@
+.ctx-menu {
+  position: fixed;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 6px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.14);
+  z-index: 10000;
+  min-width: 160px;
+  font-size: 12px;
+}
+
+.ctx-menu.dark {
+  background: #2d2d2d;
+  border-color: #404040;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.ctx-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 10px;
+  border: none;
+  background: transparent;
+  color: #333;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  text-align: left;
+  transition: background 0.1s;
+}
+
+.ctx-menu.dark .ctx-menu-item {
+  color: #d4d4d4;
+}
+
+.ctx-menu-item:hover {
+  background: #f0f0f0;
+}
+
+.ctx-menu.dark .ctx-menu-item:hover {
+  background: #3d3d3d;
+}
+
+.ctx-menu-item.compact {
+  padding: 4px 8px;
+  font-size: 11px;
+}
+
+.ctx-menu-item.danger {
+  color: #d32f2f;
+}
+
+.ctx-menu.dark .ctx-menu-item.danger {
+  color: #ef5350;
+}
+
+.ctx-menu-item.danger:hover {
+  background: #fee;
+}
+
+.ctx-menu.dark .ctx-menu-item.danger:hover {
+  background: #3d1f1f;
+}
+
+.ctx-menu-divider {
+  height: 1px;
+  background: #e8e8e8;
+  margin: 4px 6px;
+}
+
+.ctx-menu.dark .ctx-menu-divider {
+  background: #404040;
+}
+
+.ctx-menu-group-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 4px 10px 2px;
+}
+
+.ctx-menu.dark .ctx-menu-group-label {
+  color: #666;
+}
+
+.ctx-menu-shape-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+}
+
+/* Small shape preview for context menu */
+.shape-preview-sm {
+  display: inline-block;
+  width: 14px;
+  height: 10px;
+  border: 1.5px solid currentColor;
+  flex-shrink: 0;
+}
+
+.shape-preview-sm.rect { border-radius: 2px; }
+.shape-preview-sm.rounded { border-radius: 4px; }
+.shape-preview-sm.stadium { border-radius: 999px; }
+.shape-preview-sm.diamond { transform: rotate(45deg) scale(0.7); border-radius: 1px; width: 10px; height: 10px; }
+.shape-preview-sm.hexagon { clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); }
+.shape-preview-sm.circle { border-radius: 50%; width: 10px; }
+.shape-preview-sm.cylinder { border-radius: 2px 2px 50% 50%; }
+.shape-preview-sm.subroutine { border-left: 3px double currentColor; border-right: 3px double currentColor; }
+
+.edge-type-symbol {
+  font-size: 14px;
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+}

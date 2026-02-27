@@ -47,10 +47,8 @@ export function generateMermaidCode(
         shapeSyntax = `[(${label})]`
         break
       case 'circle':
-        shapeSyntax = `((${label}))`
-        break
       case 'doublecircle':
-        shapeSyntax = `(((${label})))`
+        shapeSyntax = `((${label}))`
         break
       case 'hexagon':
         shapeSyntax = `{{${label}}}`
@@ -67,7 +65,7 @@ export function generateMermaidCode(
       default:
         shapeSyntax = `[${label}]`
     }
-    
+
     lines.push(`    ${node.id}${shapeSyntax}`)
   })
 
@@ -141,10 +139,8 @@ export function parsedDiagramToCode(parsed: ParsedMermaidDiagram): string {
         shapeSyntax = `[(${node.label})]`
         break
       case 'circle':
-        shapeSyntax = `((${node.label}))`
-        break
       case 'doublecircle':
-        shapeSyntax = `(((${node.label})))`
+        shapeSyntax = `((${node.label}))`
         break
       case 'hexagon':
         shapeSyntax = `{{${node.label}}}`
