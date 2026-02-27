@@ -1,8 +1,8 @@
-import { useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import EditorComponent, { loader } from '@monaco-editor/react'
 import { useTheme } from '../hooks/useTheme'
-import { extractMermaidCode } from '../utils/mermaidCodeBlock'
 import { isAppThemeDark } from '../utils/mermaidThemes'
+import type { MermaidBlock } from '../utils/mermaidCodeBlock'
 import './Editor.css'
 
 // Register Mermaid language
@@ -81,12 +81,20 @@ interface EditorProps {
   code: string
   setCode: (code: string) => void
   error: string | null
+  mermaidBlocks: MermaidBlock[]
+  selectedBlockIndex: number
+  setSelectedBlockIndex: (index: number) => void
 }
 
-export default function Editor({ code, setCode, error }: EditorProps) {
+export default function Editor({
+  code, setCode, error,
+  mermaidBlocks, selectedBlockIndex, setSelectedBlockIndex,
+}: EditorProps) {
   const { mermaidTheme } = useTheme()
   const debounceTimer = useRef<NodeJS.Timeout>()
   const editorRef = useRef<any>(null)
+  const decorationIdsRef = useRef<string[]>([])
+  const [editorReady, setEditorReady] = useState(false)
 
   // Update Monaco editor when code changes externally (e.g., from AI Fix)
   useEffect(() => {
@@ -115,6 +123,7 @@ export default function Editor({ code, setCode, error }: EditorProps) {
 
   const handleEditorDidMount = (editor: any) => {
     editorRef.current = editor
+    setEditorReady(true)
   }
 
   // Set up paste handler once editor is mounted
@@ -125,16 +134,16 @@ export default function Editor({ code, setCode, error }: EditorProps) {
     const handlePaste = (e: ClipboardEvent) => {
       try {
         const pastedText = e.clipboardData?.getData('text') || ''
-        const extractedCode = extractMermaidCode(pastedText)
-        
-        // If the pasted text was a code block and we extracted different content
-        if (pastedText !== extractedCode) {
+        // Only unwrap if the entire pasted text is a single ```mermaid code block
+        const singleBlockRegex = /^```mermaid\s*\n([\s\S]*?)\n```\s*$/i
+        const match = pastedText.trim().match(singleBlockRegex)
+
+        if (match && match[1]) {
           e.preventDefault()
           e.stopPropagation()
-          // Replace the entire editor content with the extracted code
-          editor.setValue(extractedCode)
-          // Update the state
-          setCode(extractedCode)
+          const extracted = match[1].trim()
+          editor.setValue(extracted)
+          setCode(extracted)
         }
       } catch (err) {
         console.error('Error handling paste:', err)
@@ -149,6 +158,75 @@ export default function Editor({ code, setCode, error }: EditorProps) {
       }
     }
   }, [setCode]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Apply decorations to highlight the selected mermaid block
+  useEffect(() => {
+    const editor = editorRef.current
+    if (!editor) return
+
+    const model = editor.getModel()
+    if (!model) return
+
+    if (mermaidBlocks.length <= 1) {
+      decorationIdsRef.current = editor.deltaDecorations(decorationIdsRef.current, [])
+      return
+    }
+
+    const block = mermaidBlocks[selectedBlockIndex]
+    if (!block) {
+      decorationIdsRef.current = editor.deltaDecorations(decorationIdsRef.current, [])
+      return
+    }
+
+    const startPos = model.getPositionAt(block.start)
+    const endPos = model.getPositionAt(block.end)
+
+    decorationIdsRef.current = editor.deltaDecorations(decorationIdsRef.current, [
+      {
+        range: {
+          startLineNumber: startPos.lineNumber,
+          startColumn: 1,
+          endLineNumber: endPos.lineNumber,
+          endColumn: model.getLineMaxColumn(endPos.lineNumber),
+        },
+        options: {
+          isWholeLine: true,
+          className: 'mermaid-block-highlight',
+          glyphMarginClassName: 'mermaid-block-gutter',
+        },
+      },
+    ])
+
+    editor.revealLineInCenterIfOutsideViewport(startPos.lineNumber)
+  }, [mermaidBlocks, selectedBlockIndex, code, editorReady])
+
+  // Listen for cursor position changes to switch selected block
+  useEffect(() => {
+    const editor = editorRef.current
+    if (!editor || mermaidBlocks.length <= 1) return
+
+    const disposable = editor.onDidChangeCursorPosition(
+      (e: { position: { lineNumber: number; column: number }; reason?: number }) => {
+        if (e.reason === 1) return
+
+        const model = editor.getModel()
+        if (!model) return
+
+        const offset = model.getOffsetAt(e.position)
+
+        for (let i = 0; i < mermaidBlocks.length; i++) {
+          if (offset >= mermaidBlocks[i].start && offset <= mermaidBlocks[i].end) {
+            if (i !== selectedBlockIndex) {
+              setSelectedBlockIndex(i)
+            }
+            return
+          }
+        }
+      }
+    )
+
+    return () => disposable.dispose()
+  }, [mermaidBlocks, selectedBlockIndex, setSelectedBlockIndex, editorReady])
 
   return (
     <div className="editor-container">
@@ -169,6 +247,7 @@ export default function Editor({ code, setCode, error }: EditorProps) {
           tabSize: 2,
           wordWrap: 'on',
           automaticLayout: true,
+          glyphMargin: mermaidBlocks.length > 1,
         }}
       />
       {error && (
