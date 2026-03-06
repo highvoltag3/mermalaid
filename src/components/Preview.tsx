@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { renderMermaid } from 'beautiful-mermaid'
 import { useTheme } from '../hooks/useTheme'
 import { replaceMermaidBlock, type MermaidBlock } from '../utils/mermaidCodeBlock'
@@ -41,7 +41,11 @@ export default function Preview({
   }, [selectedBlockIndex])
 
   const hasMultipleBlocks = mermaidBlocks.length > 1
-  const { code: diagramCode, config: yamlConfig } = parseMermaidWithConfig(activeCode.trim())
+  const parsed = useMemo(
+    () => parseMermaidWithConfig(activeCode.trim()),
+    [activeCode]
+  )
+  const { code: diagramCode, config: yamlConfig } = parsed
   const parsedDiagram = diagramCode ? parseMermaidFlowchart(diagramCode) : null
   const canEdit = parsedDiagram !== null && isEditableDiagram(diagramCode)
 
@@ -97,7 +101,7 @@ export default function Preview({
     }, 500)
 
     return () => clearTimeout(timer)
-  }, [code, setError, mermaidTheme, isEditMode, canEdit, diagramCode, yamlConfig])
+  }, [code, setError, mermaidTheme, isEditMode, canEdit, parsed])
 
   const blockSelector = hasMultipleBlocks && (
     <div className="block-selector">

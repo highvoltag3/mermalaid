@@ -66,9 +66,16 @@ export function parseMermaidWithConfig(raw: string): ParsedMermaidWithConfig {
     // Invalid YAML: treat as no config, keep diagram code as-is
   }
 
+  // Only expose config when we have themeVariables to apply. Theme-only (e.g. theme: dark)
+  // is ignored for rendering so we fall back to app theme; mapMermaidConfigToThemeOptions
+  // does not map Mermaid theme names and would otherwise force light defaults.
+  const hasThemeVariables =
+    config?.themeVariables &&
+    typeof config.themeVariables === 'object' &&
+    Object.keys(config.themeVariables).length > 0
   return {
     code: diagramCode,
-    config: config?.themeVariables || config?.theme ? config : undefined,
+    config: hasThemeVariables ? config : undefined,
     yamlHeader,
   }
 }
