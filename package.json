@@ -1,8 +1,11 @@
 {
   "name": "mermalaid",
-  "version": "1.4.0",
+  "version": "1.4.2",
   "type": "module",
   "license": "CC-BY-NC-SA-4.0",
+  "overrides": {
+    "dompurify": "^3.2.4"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
