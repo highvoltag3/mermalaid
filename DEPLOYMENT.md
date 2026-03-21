@@ -118,6 +118,34 @@ The preview server will serve the built files from the `dist` directory, allowin
 
 Automated deployment via GitHub Actions is configured and ready to use.
 
+#### One-command safe release
+
+Use the release command from a clean local `main` branch:
+
+```bash
+npm run release -- patch
+```
+
+You can also use shortcuts:
+
+```bash
+npm run release:patch
+npm run release:minor
+npm run release:major
+```
+
+The release script performs pre-checks before versioning:
+
+- Working tree must be clean
+- Current branch must be `main`
+- Local `main` must be fully synced with `origin/main`
+- Bump type must be one of `patch`, `minor`, or `major`
+
+If checks pass, it runs `npm version`, creates a `v*` tag, and pushes commit + tag (`git push origin main --follow-tags`), which triggers both workflows:
+
+- `.github/workflows/release.yml` (tag push `v*`)
+- `.github/workflows/deploy-appwrite.yml` (push to `main`)
+
 **Setup:**
 
 1. Add the following secrets to your GitHub repository (Settings → Secrets and variables → Actions):
@@ -182,6 +210,19 @@ appwrite deploy sites --siteId YOUR_SITE_ID --entrypoint dist/index.html --outpu
 ### 404 Errors on Routes
 
 - Ensure Appwrite Sites routing is configured to serve `index.html` for all routes (see `.appwrite.json`)
+
+### Release Command Fails Pre-checks
+
+- **Not on `main`**: switch branches with `git checkout main`
+- **Working tree not clean**: commit or stash changes, then re-run
+- **Behind remote**: run `git pull --ff-only origin main`
+- **Ahead of remote**: run `git push origin main`, then re-run release
+
+### Rollback Guidance
+
+- If release was already pushed, create a follow-up patch release instead of rewriting git history
+- If you must remove an accidental local tag before push, delete it locally with `git tag -d vX.Y.Z`
+- Avoid force-pushing release history on `main`
 
 ## Build Optimization
 
