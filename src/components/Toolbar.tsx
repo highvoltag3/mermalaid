@@ -4,6 +4,7 @@ import { renderMermaidAscii, renderMermaid } from 'beautiful-mermaid'
 import { useTheme } from '../hooks/useTheme'
 import { useToast } from '../hooks/useToast'
 import { extractMermaidCode, type MermaidBlock } from '../utils/mermaidCodeBlock'
+import { normalizeMermaidForBeautifulMermaid } from '../utils/normalizeMermaidForBeautifulMermaid'
 import { fixMermaidErrorWithAI, getStoredApiKey } from '../utils/aiErrorFixer'
 import {
   MERMAID_THEME_IDS,
@@ -179,7 +180,9 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({ code, setCode, error, ac
       return
     }
     try {
-      const ascii = renderMermaidAscii(diagramCode)
+      const ascii = renderMermaidAscii(
+        normalizeMermaidForBeautifulMermaid(diagramCode),
+      )
       const blob = new Blob([ascii], { type: 'text/plain' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -219,7 +222,10 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({ code, setCode, error, ac
         ? mapMermaidConfigToThemeOptions(blockConfig)
         : defaultThemeOptions
       try {
-        const svg = await renderMermaid(diagramCode, themeOptions)
+        const svg = await renderMermaid(
+          normalizeMermaidForBeautifulMermaid(diagramCode),
+          themeOptions,
+        )
         svgs.push(svg)
       } catch (err) {
         console.error(`Failed to render block ${i + 1}:`, err)
