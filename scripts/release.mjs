@@ -1,8 +1,11 @@
 #!/usr/bin/env node
 
 import { execSync } from "node:child_process";
+import { readFileSync, writeFileSync } from "node:fs";
 
 const VALID_BUMPS = new Set(["patch", "minor", "major"]);
+const TAURI_CARGO_TOML_PATH = "src-tauri/Cargo.toml";
+const TAURI_CONF_PATH = "src-tauri/tauri.conf.json";
 
 function run(command, options = {}) {
   const output = execSync(command, {
@@ -31,6 +34,70 @@ function fail(message, nextSteps = []) {
     }
   }
   process.exit(1);
+}
+
+function updateTauriVersions(version) {
+  let cargoToml = "";
+  try {
+    cargoToml = readFileSync(TAURI_CARGO_TOML_PATH, "utf8");
+  } catch {
+    fail(`Unable to read ${TAURI_CARGO_TOML_PATH}.`, [
+      "Verify the file exists and is readable.",
+      "Fix repository state, then retry release.",
+    ]);
+  }
+
+  const updatedCargoToml = cargoToml.replace(
+    /^version = "([^"]+)"$/m,
+    `version = "${version}"`,
+  );
+
+  if (updatedCargoToml === cargoToml) {
+    fail(`Unable to update version in ${TAURI_CARGO_TOML_PATH}.`, [
+      "Ensure [package] version is present in Cargo.toml.",
+      "Update the file manually, then retry release.",
+    ]);
+  }
+
+  try {
+    writeFileSync(TAURI_CARGO_TOML_PATH, updatedCargoToml, "utf8");
+  } catch {
+    fail(`Unable to write ${TAURI_CARGO_TOML_PATH}.`, [
+      "Verify filesystem permissions.",
+      "Fix the issue, then retry release.",
+    ]);
+  }
+
+  let tauriConfigRaw = "";
+  try {
+    tauriConfigRaw = readFileSync(TAURI_CONF_PATH, "utf8");
+  } catch {
+    fail(`Unable to read ${TAURI_CONF_PATH}.`, [
+      "Verify the file exists and is readable.",
+      "Fix repository state, then retry release.",
+    ]);
+  }
+
+  let tauriConfig;
+  try {
+    tauriConfig = JSON.parse(tauriConfigRaw);
+  } catch {
+    fail(`Unable to parse JSON in ${TAURI_CONF_PATH}.`, [
+      "Fix JSON syntax in tauri config.",
+      "Retry the release command.",
+    ]);
+  }
+
+  tauriConfig.version = version;
+
+  try {
+    writeFileSync(TAURI_CONF_PATH, `${JSON.stringify(tauriConfig, null, 2)}\n`, "utf8");
+  } catch {
+    fail(`Unable to write ${TAURI_CONF_PATH}.`, [
+      "Verify filesystem permissions.",
+      "Fix the issue, then retry release.",
+    ]);
+  }
 }
 
 function assertToolExists(toolName) {
@@ -117,8 +184,31 @@ function assertUpToDateWithOriginMain() {
 
 function release(bump) {
   console.log(`\nStarting release (${bump})...`);
-  const newVersion = run(`npm version ${bump}`);
-  console.log(`Version bumped and tag created: ${newVersion}`);
+  let rawVersion = "";
+  try {
+    rawVersion = run(`npm version ${bump} --no-git-tag-version`);
+  } catch {
+    fail("Failed to bump npm version.", [
+      "Check package.json/package-lock.json state.",
+      "Resolve npm errors, then retry release.",
+    ]);
+  }
+
+  const version = rawVersion.replace(/^v/, "");
+  updateTauriVersions(version);
+
+  try {
+    run("git add package.json package-lock.json src-tauri/Cargo.toml src-tauri/tauri.conf.json");
+    run(`git commit -m "v${version}"`);
+    run(`git tag "v${version}"`);
+  } catch {
+    fail("Failed to create release commit/tag.", [
+      "Check git status for conflicted or unstaged files.",
+      "Resolve git errors, then retry release.",
+    ]);
+  }
+
+  console.log(`Version bumped and tag created: v${version}`);
   try {
     run("git push origin main --follow-tags", { stdio: "inherit" });
   } catch {
