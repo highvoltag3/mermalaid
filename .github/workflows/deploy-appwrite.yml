@@ -25,10 +25,6 @@ jobs:
 
       - name: Build project
         run: npm run build
-        env:
-          # Add any build-time environment variables here
-          # VITE_APP_NAME: ${{ secrets.VITE_APP_NAME }}
-          # VITE_APP_VERSION: ${{ secrets.VITE_APP_VERSION }}
 
       - name: Setup Appwrite CLI
         uses: appwrite/setup-for-appwrite@v2
