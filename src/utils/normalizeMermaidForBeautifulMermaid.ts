@@ -11,6 +11,20 @@ const FLOWCHART_START = /^\s*(?:graph|flowchart)\s+/i
 const SKIP_LINE =
   /^\s*(?:subgraph\b|end\s*$|classDef\b|class\s|style\s|direction\s|linkStyle\b|click\b|%%)/i
 
+function normalizeHtmlLabel(label: string): string {
+  // Keep basic formatting readable while dropping unsupported HTML.
+  const withoutHtml = label
+    .replace(/<br\s*\/?>/gi, ' ')
+    .replace(/<li\b[^>]*>/gi, ' - ')
+    .replace(/<\/li>/gi, ' ')
+    .replace(/<\/?(?:ul|ol)\b[^>]*>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+  return withoutHtml
+    .replace(/[|]/g, '/')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
 function isFlowchartDocument(code: string): boolean {
   for (const line of code.split('\n')) {
     const t = line.trim()
@@ -23,7 +37,7 @@ function isFlowchartDocument(code: string): boolean {
 function replaceQuotedLabels(line: string, pattern: RegExp, arrow: string): string {
   return line.replace(pattern, (full, label: string) => {
     if (label.includes('|')) return full
-    return `${arrow}|${label}|`
+    return `${arrow}|${normalizeHtmlLabel(label)}|`
   })
 }
 
@@ -61,6 +75,11 @@ function normalizeFlowchartLine(line: string): string {
 
   s = replaceQuotedLabels(s, /--\s*"([^"]*)"\s*---/g, '---')
   s = replaceQuotedLabels(s, /--\s*'([^']*)'\s*---/g, '---')
+
+  // Clean HTML in pipe labels and quoted labels (for node text such as A["x<br>y"]).
+  s = s.replace(/\|([^|]*)\|/g, (_full, label: string) => `|${normalizeHtmlLabel(label)}|`)
+  s = s.replace(/"([^"]*)"/g, (_full, label: string) => `"${normalizeHtmlLabel(label)}"`)
+  s = s.replace(/'([^']*)'/g, (_full, label: string) => `'${normalizeHtmlLabel(label)}'`)
 
   return s
 }
