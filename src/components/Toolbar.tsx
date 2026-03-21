@@ -34,7 +34,13 @@ export interface ToolbarRef {
   handleSave: () => void
 }
 
-const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({ code, setCode, error, activeCode, mermaidBlocks }, ref) => {
+const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
+  code,
+  setCode,
+  error,
+  activeCode,
+  mermaidBlocks,
+}, ref) => {
   const { mermaidTheme, setMermaidTheme } = useTheme()
   const { showToast } = useToast()
   const isDark = isAppThemeDark(mermaidTheme)

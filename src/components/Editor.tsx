@@ -84,11 +84,34 @@ interface EditorProps {
   mermaidBlocks: MermaidBlock[]
   selectedBlockIndex: number
   setSelectedBlockIndex: (index: number) => void
+  isCollapsed: boolean
+  onToggleCollapsed: () => void
+}
+
+function CollapseEditorIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M19 21L5 21C3.89543 21 3 20.1046 3 19L3 5C3 3.89543 3.89543 3 5 3L19 3C20.1046 3 21 3.89543 21 5L21 19C21 20.1046 20.1046 21 19 21Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M7.25 10L5.5 12L7.25 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M9.5 21V3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function ExpandEditorIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M19 21L5 21C3.89543 21 3 20.1046 3 19L3 5C3 3.89543 3.89543 3 5 3L19 3C20.1046 3 21 3.89543 21 5L21 19C21 20.1046 20.1046 21 19 21Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M9.5 21V3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M5.5 10L7.25 12L5.5 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
 }
 
 export default function Editor({
   code, setCode, error,
   mermaidBlocks, selectedBlockIndex, setSelectedBlockIndex,
+  isCollapsed, onToggleCollapsed,
 }: EditorProps) {
   const { mermaidTheme } = useTheme()
   const debounceTimer = useRef<NodeJS.Timeout>()
@@ -229,31 +252,46 @@ export default function Editor({
   }, [mermaidBlocks, selectedBlockIndex, setSelectedBlockIndex, editorReady])
 
   return (
-    <div className="editor-container">
+    <div className={`editor-container ${isCollapsed ? 'collapsed' : ''}`}>
       <div className="editor-header">
-        <span>Editor</span>
-        {error && <span className="error-indicator">⚠️ Syntax Error</span>}
-      </div>
-      <EditorComponent
-        height="100%"
-        defaultLanguage="mermaid"
-        value={code}
-        onChange={(value) => setCode(value || '')}
-        onMount={handleEditorDidMount}
-        theme={isAppThemeDark(mermaidTheme) ? 'vs-dark' : 'vs'}
-        options={{
-          minimap: { enabled: false },
-          fontSize: 14,
-          tabSize: 2,
-          wordWrap: 'on',
-          automaticLayout: true,
-          glyphMargin: mermaidBlocks.length > 1,
-        }}
-      />
-      {error && (
-        <div className="error-message">
-          {error}
+        {!isCollapsed && <span>Editor</span>}
+        <div className="editor-header-controls">
+          {!isCollapsed && error && <span className="error-indicator">⚠️ Syntax Error</span>}
+          <button
+            type="button"
+            className="editor-toggle-btn"
+            onClick={onToggleCollapsed}
+            title={isCollapsed ? 'Expand editor' : 'Collapse editor'}
+            aria-label={isCollapsed ? 'Expand editor panel' : 'Collapse editor panel'}
+          >
+            {isCollapsed ? <ExpandEditorIcon /> : <CollapseEditorIcon />}
+          </button>
         </div>
+      </div>
+      {!isCollapsed && (
+        <>
+          <EditorComponent
+            height="100%"
+            defaultLanguage="mermaid"
+            value={code}
+            onChange={(value) => setCode(value || '')}
+            onMount={handleEditorDidMount}
+            theme={isAppThemeDark(mermaidTheme) ? 'vs-dark' : 'vs'}
+            options={{
+              minimap: { enabled: false },
+              fontSize: 14,
+              tabSize: 2,
+              wordWrap: 'on',
+              automaticLayout: true,
+              glyphMargin: mermaidBlocks.length > 1,
+            }}
+          />
+          {error && (
+            <div className="error-message">
+              {error}
+            </div>
+          )}
+        </>
       )}
     </div>
   )

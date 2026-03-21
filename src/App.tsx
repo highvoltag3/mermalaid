@@ -15,6 +15,7 @@ function EditorView() {
   const { mermaidTheme } = useTheme()
   const [code, setCode] = useState('graph TD\n    A[Start] --> B{Decision}\n    B -->|Yes| C[Action 1]\n    B -->|No| D[Action 2]\n    C --> E[End]\n    D --> E')
   const [error, setError] = useState<string | null>(null)
+  const [isEditorCollapsed, setIsEditorCollapsed] = useState(false)
   const [selectedBlockIndex, setSelectedBlockIndex] = useState(0)
   const toolbarRef = useRef<{ handleNew: () => void; handleOpen: () => void; handleSave: () => void }>(null)
 
@@ -105,6 +106,8 @@ function EditorView() {
           mermaidBlocks={mermaidBlocks}
           selectedBlockIndex={selectedBlockIndex}
           setSelectedBlockIndex={setSelectedBlockIndex}
+          isCollapsed={isEditorCollapsed}
+          onToggleCollapsed={() => setIsEditorCollapsed((collapsed) => !collapsed)}
         />
         <Preview
           code={code}
