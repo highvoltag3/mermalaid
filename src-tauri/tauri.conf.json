@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Mermalaid",
-  "version": "1.4.2",
+  "version": "1.5.1",
   "identifier": "com.mermalaid.app",
   "build": {
     "frontendDist": "../dist",
@@ -28,7 +28,10 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["app", "dmg"],
+    "targets": [
+      "app",
+      "dmg"
+    ],
     "icon": [
       "icons/icon_16x16.png",
       "icons/icon_16x16@2x.png",
