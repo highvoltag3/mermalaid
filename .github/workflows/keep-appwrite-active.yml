@@ -15,10 +15,18 @@ jobs:
           APPWRITE_PROJECT_ID: ${{ secrets.APPWRITE_PROJECT_ID }}
           APPWRITE_API_KEY: ${{ secrets.APPWRITE_API_KEY }}
         run: |
-          BASE="${APPWRITE_ENDPOINT:-https://cloud.appwrite.io/v1}"
+          if [ -z "${APPWRITE_ENDPOINT}" ]; then
+            echo "::error::Set APPWRITE_ENDPOINT secret to your project region endpoint, e.g. https://<REGION>.cloud.appwrite.io/v1"
+            exit 1
+          fi
+          BASE="${APPWRITE_ENDPOINT}"
           BASE="${BASE%/}"
           if [ -z "${APPWRITE_PROJECT_ID}" ] || [ -z "${APPWRITE_API_KEY}" ]; then
             echo "::error::Set APPWRITE_PROJECT_ID and APPWRITE_API_KEY repository secrets (same as deploy). Appwrite Cloud /v1/health requires them."
+            exit 1
+          fi
+          if [ "${BASE}" = "https://cloud.appwrite.io/v1" ] || [ "${BASE}" = "https://cloud.appwrite.io" ]; then
+            echo "::error::APPWRITE_ENDPOINT must include your region host, e.g. https://<REGION>.cloud.appwrite.io/v1"
             exit 1
           fi
           curl -sf \

@@ -37,8 +37,20 @@ jobs:
           APPWRITE_PROJECT_ID: ${{ secrets.APPWRITE_PROJECT_ID }}
           APPWRITE_API_KEY: ${{ secrets.APPWRITE_API_KEY }}
         run: |
-          EP="${APPWRITE_ENDPOINT:-https://cloud.appwrite.io/v1}"
+          if [ -z "${APPWRITE_ENDPOINT}" ]; then
+            echo "::error::Set APPWRITE_ENDPOINT secret to your project region endpoint, e.g. https://<REGION>.cloud.appwrite.io/v1"
+            exit 1
+          fi
+          if [ -z "${APPWRITE_PROJECT_ID}" ] || [ -z "${APPWRITE_API_KEY}" ]; then
+            echo "::error::Set APPWRITE_PROJECT_ID and APPWRITE_API_KEY repository secrets."
+            exit 1
+          fi
+          EP="${APPWRITE_ENDPOINT}"
           EP="${EP%/}"
+          if [ "${EP}" = "https://cloud.appwrite.io/v1" ] || [ "${EP}" = "https://cloud.appwrite.io" ]; then
+            echo "::error::APPWRITE_ENDPOINT must include your region host, e.g. https://<REGION>.cloud.appwrite.io/v1"
+            exit 1
+          fi
           appwrite client \
             --endpoint "${EP}" \
             --project-id "${APPWRITE_PROJECT_ID}" \
