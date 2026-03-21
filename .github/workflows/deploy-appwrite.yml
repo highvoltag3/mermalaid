@@ -29,27 +29,29 @@ jobs:
       # setup-for-appwrite@v1 calls `appwrite init --locale=...`, which CLI v16+ rejects.
       # Use `appwrite client` for CI: https://appwrite.io/docs/tooling/command-line/non-interactive
       - name: Install Appwrite CLI
-        run: curl -sL https://appwrite.io/cli/install.sh | bash
+        run: npm install -g appwrite-cli
 
       - name: Configure Appwrite CLI (non-interactive)
         env:
-          APPWRITE_ENDPOINT: ${{ secrets.APPWRITE_ENDPOINT || 'https://cloud.appwrite.io/v1' }}
+          APPWRITE_ENDPOINT: ${{ secrets.APPWRITE_ENDPOINT }}
           APPWRITE_PROJECT_ID: ${{ secrets.APPWRITE_PROJECT_ID }}
           APPWRITE_API_KEY: ${{ secrets.APPWRITE_API_KEY }}
         run: |
-          EP="${APPWRITE_ENDPOINT%/}"
+          EP="${APPWRITE_ENDPOINT:-https://cloud.appwrite.io/v1}"
+          EP="${EP%/}"
           appwrite client \
             --endpoint "${EP}" \
             --project-id "${APPWRITE_PROJECT_ID}" \
             --key "${APPWRITE_API_KEY}"
-          appwrite version
+          appwrite --version
 
       - name: Deploy to Appwrite Sites
         run: |
-          appwrite deploy sites \
-            --siteId ${{ secrets.APPWRITE_SITE_ID }} \
-            --entrypoint dist/index.html \
-            --output dist
+          # `appwrite deploy` was removed in modern CLI; upload pre-built `dist/` via Sites API.
+          appwrite sites create-deployment \
+            --site-id "${{ secrets.APPWRITE_SITE_ID }}" \
+            --code dist \
+            --activate true
 
       - name: Deployment Status
         run: |
