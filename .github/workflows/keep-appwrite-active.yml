@@ -12,7 +12,16 @@ jobs:
       - name: Ping Appwrite health
         env:
           APPWRITE_ENDPOINT: ${{ secrets.APPWRITE_ENDPOINT }}
+          APPWRITE_PROJECT_ID: ${{ secrets.APPWRITE_PROJECT_ID }}
+          APPWRITE_API_KEY: ${{ secrets.APPWRITE_API_KEY }}
         run: |
           BASE="${APPWRITE_ENDPOINT:-https://cloud.appwrite.io/v1}"
           BASE="${BASE%/}"
-          curl -sf "${BASE}/health" || exit 1
+          if [ -z "${APPWRITE_PROJECT_ID}" ] || [ -z "${APPWRITE_API_KEY}" ]; then
+            echo "::error::Set APPWRITE_PROJECT_ID and APPWRITE_API_KEY repository secrets (same as deploy). Appwrite Cloud /v1/health requires them."
+            exit 1
+          fi
+          curl -sf \
+            -H "X-Appwrite-Project: ${APPWRITE_PROJECT_ID}" \
+            -H "X-Appwrite-Key: ${APPWRITE_API_KEY}" \
+            "${BASE}/health"

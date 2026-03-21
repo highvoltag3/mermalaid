@@ -31,9 +31,8 @@ jobs:
           # VITE_APP_VERSION: ${{ secrets.VITE_APP_VERSION }}
 
       - name: Setup Appwrite CLI
-        uses: appwrite/setup-for-appwrite@v2
+        uses: appwrite/setup-for-appwrite@v1
         with:
-          method: key
           key: ${{ secrets.APPWRITE_API_KEY }}
           project: ${{ secrets.APPWRITE_PROJECT_ID }}
           endpoint: ${{ secrets.APPWRITE_ENDPOINT || 'https://cloud.appwrite.io/v1' }}
