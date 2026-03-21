@@ -5,11 +5,21 @@ import { execSync } from "node:child_process";
 const VALID_BUMPS = new Set(["patch", "minor", "major"]);
 
 function run(command, options = {}) {
-  return execSync(command, {
+  const output = execSync(command, {
     stdio: ["ignore", "pipe", "pipe"],
     encoding: "utf8",
     ...options,
-  }).trim();
+  });
+
+  if (typeof output === "string") {
+    return output.trim();
+  }
+
+  if (Buffer.isBuffer(output)) {
+    return output.toString("utf8").trim();
+  }
+
+  return "";
 }
 
 function fail(message, nextSteps = []) {
