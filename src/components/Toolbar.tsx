@@ -13,6 +13,10 @@ import {
   isAppThemeDark,
   type MermaidThemeId,
 } from '../utils/mermaidThemes'
+import {
+  parseMermaidWithConfig,
+  mapMermaidConfigToThemeOptions,
+} from '../utils/mermaidYamlConfig'
 import Settings from './Settings'
 import './Toolbar.css'
 
@@ -170,13 +174,15 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({ code, setCode, error, ac
   }
 
   const handleExportASCII = () => {
-    const plainCode = activeCode.trim()
-    if (!plainCode) {
+    const { code: diagramCode } = parseMermaidWithConfig(activeCode.trim())
+    if (!diagramCode) {
       showToast('No diagram to export', 'error')
       return
     }
     try {
-      const ascii = renderMermaidAscii(normalizeMermaidForBeautifulMermaid(plainCode))
+      const ascii = renderMermaidAscii(
+        normalizeMermaidForBeautifulMermaid(diagramCode),
+      )
       const blob = new Blob([ascii], { type: 'text/plain' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -205,13 +211,19 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({ code, setCode, error, ac
       return
     }
 
-    const themeOptions = getMermaidThemeOptions(mermaidTheme)
+    const defaultThemeOptions = getMermaidThemeOptions(mermaidTheme)
     const svgs: string[] = []
 
     for (let i = 0; i < mermaidBlocks.length; i++) {
+      const { code: diagramCode, config: blockConfig } = parseMermaidWithConfig(
+        mermaidBlocks[i].code
+      )
+      const themeOptions = blockConfig
+        ? mapMermaidConfigToThemeOptions(blockConfig)
+        : defaultThemeOptions
       try {
         const svg = await renderMermaid(
-          normalizeMermaidForBeautifulMermaid(mermaidBlocks[i].code),
+          normalizeMermaidForBeautifulMermaid(diagramCode),
           themeOptions,
         )
         svgs.push(svg)
