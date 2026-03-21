@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type RefObject } from 'react'
+import { useEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import { renderMermaid } from 'beautiful-mermaid'
 import {
   TransformComponent,
@@ -11,6 +11,7 @@ import { useTheme } from '../hooks/useTheme'
 import { replaceMermaidBlock, type MermaidBlock } from '../utils/mermaidCodeBlock'
 import { getMermaidThemeOptions } from '../utils/mermaidThemes'
 import { isEditableDiagram, parseMermaidFlowchart } from '../utils/mermaidParser'
+import { normalizeMermaidForBeautifulMermaid } from '../utils/normalizeMermaidForBeautifulMermaid'
 import VisualEditor from './VisualEditor'
 import './Preview.css'
 
@@ -158,8 +159,15 @@ export default function Preview({
 
   const hasMultipleBlocks = mermaidBlocks.length > 1
   const trimmedCode = activeCode.trim()
-  const parsedDiagram = trimmedCode ? parseMermaidFlowchart(trimmedCode) : null
-  const canEdit = parsedDiagram !== null && isEditableDiagram(trimmedCode)
+  const codeForBeautifulMermaid = useMemo(
+    () => (trimmedCode ? normalizeMermaidForBeautifulMermaid(trimmedCode) : ''),
+    [trimmedCode],
+  )
+  const parsedDiagram = codeForBeautifulMermaid
+    ? parseMermaidFlowchart(codeForBeautifulMermaid)
+    : null
+  const canEdit =
+    parsedDiagram !== null && isEditableDiagram(codeForBeautifulMermaid)
 
   const handleCodeChange = (newCode: string) => {
     if (!onCodeChange) return
@@ -183,7 +191,7 @@ export default function Preview({
         return
       }
 
-      if (!trimmedCode) {
+      if (!codeForBeautifulMermaid) {
         if (renderIdRef.current === currentId) {
           container.innerHTML = '<div class="empty-preview">Start typing your Mermaid diagram...</div>'
           setError(null)
@@ -194,7 +202,7 @@ export default function Preview({
 
       try {
         const themeOptions = getMermaidThemeOptions(mermaidTheme)
-        const svg = await renderMermaid(trimmedCode, themeOptions)
+        const svg = await renderMermaid(codeForBeautifulMermaid, themeOptions)
 
         if (renderIdRef.current === currentId && container) {
           container.innerHTML = svg
@@ -213,7 +221,7 @@ export default function Preview({
     }, 500)
 
     return () => clearTimeout(timer)
-  }, [code, setError, mermaidTheme, isEditMode, canEdit, trimmedCode])
+  }, [code, setError, mermaidTheme, isEditMode, canEdit, codeForBeautifulMermaid])
 
   // Run fit in useEffect (not useLayoutEffect): TransformWrapper applies `disabled` via instance.update
   // in useEffect. Child effects run before parent effects, so this runs after `disabled` is false.
