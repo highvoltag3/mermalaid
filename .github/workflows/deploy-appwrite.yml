@@ -26,12 +26,23 @@ jobs:
       - name: Build project
         run: npm run build
 
-      - name: Setup Appwrite CLI
-        uses: appwrite/setup-for-appwrite@v1
-        with:
-          key: ${{ secrets.APPWRITE_API_KEY }}
-          project: ${{ secrets.APPWRITE_PROJECT_ID }}
-          endpoint: ${{ secrets.APPWRITE_ENDPOINT || 'https://cloud.appwrite.io/v1' }}
+      # setup-for-appwrite@v1 calls `appwrite init --locale=...`, which CLI v16+ rejects.
+      # Use `appwrite client` for CI: https://appwrite.io/docs/tooling/command-line/non-interactive
+      - name: Install Appwrite CLI
+        run: curl -sL https://appwrite.io/cli/install.sh | bash
+
+      - name: Configure Appwrite CLI (non-interactive)
+        env:
+          APPWRITE_ENDPOINT: ${{ secrets.APPWRITE_ENDPOINT || 'https://cloud.appwrite.io/v1' }}
+          APPWRITE_PROJECT_ID: ${{ secrets.APPWRITE_PROJECT_ID }}
+          APPWRITE_API_KEY: ${{ secrets.APPWRITE_API_KEY }}
+        run: |
+          EP="${APPWRITE_ENDPOINT%/}"
+          appwrite client \
+            --endpoint "${EP}" \
+            --project-id "${APPWRITE_PROJECT_ID}" \
+            --key "${APPWRITE_API_KEY}"
+          appwrite version
 
       - name: Deploy to Appwrite Sites
         run: |
