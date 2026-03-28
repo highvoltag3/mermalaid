@@ -28,6 +28,23 @@
   },
   "bundle": {
     "active": true,
+    "category": "DeveloperTool",
+    "fileAssociations": [
+      {
+        "ext": ["mmd"],
+        "name": "Mermaid diagram",
+        "description": "Mermaid diagram source",
+        "role": "Editor",
+        "mimeType": "text/plain"
+      },
+      {
+        "ext": ["md", "markdown", "txt"],
+        "name": "Text document",
+        "description": "Markdown or text document",
+        "role": "Editor",
+        "mimeType": "text/plain"
+      }
+    ],
     "targets": [
       "app",
       "dmg"
