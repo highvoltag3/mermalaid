@@ -270,22 +270,24 @@ export default function Editor({
       </div>
       {!isCollapsed && (
         <>
-          <EditorComponent
-            height="100%"
-            defaultLanguage="mermaid"
-            value={code}
-            onChange={(value) => setCode(value || '')}
-            onMount={handleEditorDidMount}
-            theme={isAppThemeDark(mermaidTheme) ? 'vs-dark' : 'vs'}
-            options={{
-              minimap: { enabled: false },
-              fontSize: 14,
-              tabSize: 2,
-              wordWrap: 'on',
-              automaticLayout: true,
-              glyphMargin: mermaidBlocks.length > 1,
-            }}
-          />
+          <div className="editor-monaco-host">
+            <EditorComponent
+              height="100%"
+              defaultLanguage="mermaid"
+              value={code}
+              onChange={(value) => setCode(value || '')}
+              onMount={handleEditorDidMount}
+              theme={isAppThemeDark(mermaidTheme) ? 'vs-dark' : 'vs'}
+              options={{
+                minimap: { enabled: false },
+                fontSize: 14,
+                tabSize: 2,
+                wordWrap: 'on',
+                automaticLayout: true,
+                glyphMargin: mermaidBlocks.length > 1,
+              }}
+            />
+          </div>
           {error && (
             <div className="error-message">
               {error}
