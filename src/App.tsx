@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Routes, Route } from 'react-router-dom'
-import { isTauri } from '@tauri-apps/api/core'
+import { invoke, isTauri } from '@tauri-apps/api/core'
+import { listen } from '@tauri-apps/api/event'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { ToastProvider } from './contexts/ToastContext'
 import { useTheme } from './hooks/useTheme'
@@ -43,9 +44,42 @@ function EditorView() {
   }, [])
 
   useEffect(() => {
+    if (isTauri()) return
     const saved = localStorage.getItem('mermalaid-draft')
-    if (saved) {
-      setCode(saved)
+    if (saved) setCode(saved)
+  }, [])
+
+  /** Finder / Explorer / argv: open the requested file instead of restoring draft (issue #41). */
+  useEffect(() => {
+    if (!isTauri()) return
+
+    const openQueuedPaths = async () => {
+      const paths = await invoke<string[]>('take_open_files')
+      if (paths.length === 0) return false
+      for (const p of paths) {
+        await toolbarRef.current?.openPath(p)
+      }
+      return true
+    }
+
+    const restoreDraftIfNoOsFile = async () => {
+      const opened = await openQueuedPaths()
+      if (opened) return
+      const saved = localStorage.getItem('mermalaid-draft')
+      if (saved) setCode(saved)
+    }
+
+    void restoreDraftIfNoOsFile()
+
+    let unlisten: (() => void) | undefined
+    void listen('open-files', () => {
+      void openQueuedPaths()
+    }).then((fn) => {
+      unlisten = fn
+    })
+
+    return () => {
+      unlisten?.()
     }
   }, [])
 
