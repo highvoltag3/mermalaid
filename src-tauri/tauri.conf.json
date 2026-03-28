@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Mermalaid",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "identifier": "com.mermalaid.app",
   "build": {
     "frontendDist": "../dist",
@@ -31,14 +31,20 @@
     "category": "DeveloperTool",
     "fileAssociations": [
       {
-        "ext": ["mmd"],
+        "ext": [
+          "mmd"
+        ],
         "name": "Mermaid diagram",
         "description": "Mermaid diagram source",
         "role": "Editor",
         "mimeType": "text/plain"
       },
       {
-        "ext": ["md", "markdown", "txt"],
+        "ext": [
+          "md",
+          "markdown",
+          "txt"
+        ],
         "name": "Text document",
         "description": "Markdown or text document",
         "role": "Editor",
