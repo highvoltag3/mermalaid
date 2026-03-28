@@ -41,6 +41,21 @@ function replaceQuotedLabels(line: string, pattern: RegExp, arrow: string): stri
   })
 }
 
+function replaceBareLabels(line: string, pattern: RegExp, arrow: string): string {
+  return line.replace(pattern, (full, label: string) => {
+    const normalized = normalizeHtmlLabel(label)
+    if (
+      normalized.length === 0 ||
+      normalized.includes('|') ||
+      normalized.startsWith('"') ||
+      normalized.startsWith("'")
+    ) {
+      return full
+    }
+    return `${arrow}|${normalized}|`
+  })
+}
+
 function normalizeFlowchartLine(line: string): string {
   const trimmed = line.trim()
   if (trimmed.length === 0 || SKIP_LINE.test(trimmed)) {
@@ -54,15 +69,20 @@ function normalizeFlowchartLine(line: string): string {
   s = replaceQuotedLabels(s, /==\s*'([^']*)'\s*===/g, '===')
   s = replaceQuotedLabels(s, /==\s*"([^"]*)"\s*==>/g, '==>')
   s = replaceQuotedLabels(s, /==\s*'([^']*)'\s*==>/g, '==>')
+  s = replaceBareLabels(s, /==\s+(.+?)\s*===/g, '===')
+  s = replaceBareLabels(s, /==\s+(.+?)\s*==>/g, '==>')
 
   s = replaceQuotedLabels(s, /-\.\s*"([^"]*)"\s*\.->/g, '-.->')
   s = replaceQuotedLabels(s, /-\.\s*'([^']*)'\s*\.->/g, '-.->')
+  s = replaceBareLabels(s, /-\.\s+(.+?)\s*\.->/g, '-.->')
   // `-. "x" -.-` is nonstandard; treat as dotted arrow with label (same as `.->`).
   s = replaceQuotedLabels(s, /-\.\s*"([^"]*)"\s*-\.-/g, '-.->')
   s = replaceQuotedLabels(s, /-\.\s*'([^']*)'\s*-\.-/g, '-.->')
+  s = replaceBareLabels(s, /-\.\s+(.+?)\s*-\.-/g, '-.->')
 
   s = replaceQuotedLabels(s, /--\s*"([^"]*)"\s*-->/g, '-->')
   s = replaceQuotedLabels(s, /--\s*'([^']*)'\s*-->/g, '-->')
+  s = replaceBareLabels(s, /--\s+(.+?)\s*-->/g, '-->')
 
   s = s.replace(/<--\s*"([^"]*)"\s*-->/g, (full, label: string) => {
     if (label.includes('|')) return full
@@ -72,9 +92,11 @@ function normalizeFlowchartLine(line: string): string {
     if (label.includes('|')) return full
     return `<-->|${label}|`
   })
+  s = replaceBareLabels(s, /<--\s+(.+?)\s*-->/g, '<-->')
 
   s = replaceQuotedLabels(s, /--\s*"([^"]*)"\s*---/g, '---')
   s = replaceQuotedLabels(s, /--\s*'([^']*)'\s*---/g, '---')
+  s = replaceBareLabels(s, /--\s+(.+?)\s*---/g, '---')
 
   // Clean HTML in pipe labels and quoted labels (for node text such as A["x<br>y"]).
   s = s.replace(/\|([^|]*)\|/g, (_full, label: string) => `|${normalizeHtmlLabel(label)}|`)
