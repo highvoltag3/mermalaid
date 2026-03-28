@@ -218,6 +218,26 @@ function release(bump) {
       "Resolve push errors, then re-run release.",
     ]);
   }
+
+  let remoteTagRef = "";
+  try {
+    remoteTagRef = run(`git ls-remote --tags origin "refs/tags/v${version}"`);
+  } catch {
+    fail("Unable to verify release tag on remote origin.", [
+      "Check your network connection and git remote access.",
+      `Confirm tag exists remotely: git ls-remote --tags origin "refs/tags/v${version}"`,
+      "Retry the release command if verification fails due to transient errors.",
+    ]);
+  }
+
+  if (remoteTagRef === "") {
+    fail(`Release tag v${version} was not found on origin after push.`, [
+      `Push the tag explicitly: git push origin "v${version}"`,
+      "Confirm remote tags are visible, then retry release if needed.",
+    ]);
+  }
+
+  console.log(`Verified remote tag: v${version}`);
   console.log("\nRelease push completed.");
   console.log("GitHub Actions should now trigger:");
   console.log("- Release (tag push: v*)");
