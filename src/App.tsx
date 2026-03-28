@@ -8,7 +8,7 @@ import Preview from './components/Preview'
 import Toolbar from './components/Toolbar'
 import LandingPage from './components/LandingPage'
 import { extractMermaidCode, extractAllMermaidBlocks } from './utils/mermaidCodeBlock'
-import { getAppThemeCssVars } from './utils/mermaidThemes'
+import { getAppThemeCssVars, isAppThemeDark } from './utils/mermaidThemes'
 import './App.css'
 
 function EditorView() {
@@ -85,7 +85,7 @@ function EditorView() {
 
   return (
     <div
-      className="app"
+      className={`app ${isAppThemeDark(mermaidTheme) ? 'app-theme-dark' : 'app-theme-light'}`}
       style={getAppThemeCssVars(mermaidTheme) as React.CSSProperties}
       onDrop={handleDrop}
       onDragOver={handleDragOver}

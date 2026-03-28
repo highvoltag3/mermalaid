@@ -8,9 +8,10 @@
   overflow: hidden;
 }
 
+/* Row layout: flex-basis is column width. Match header height so the rail fits the 48px bar (40px was too narrow vs --panel-header-height; overflow:hidden could clip focus/hover). */
 .editor-container.collapsed {
-  flex: 0 0 40px;
-  min-width: 40px;
+  flex: 0 0 var(--panel-header-height, 48px);
+  min-width: var(--panel-header-height, 48px);
 }
 
 .editor-header {
