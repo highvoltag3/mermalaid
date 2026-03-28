@@ -1,4 +1,7 @@
 .app {
+  /* Editor + preview column headers share this height (see Editor.css, Preview.css) */
+  --panel-header-height: 48px;
+
   width: 100vw;
   height: 100vh;
   display: flex;
@@ -12,4 +15,58 @@
   display: flex;
   flex: 1;
   overflow: hidden;
+}
+
+/* Native controls + scrollbars follow theme (helps <select> / focus rings on dark UI) */
+.app-theme-dark {
+  color-scheme: dark;
+}
+
+.app-theme-light {
+  color-scheme: light;
+}
+
+/*
+ * GitHub #38 — dark diagram themes: hover/focus use accent-colored label + tinted fill so
+ * text is not lost against the background (toolbar uses --app-surface === --app-bg on many themes).
+ */
+.app-theme-dark .toolbar-btn:hover:not(.ai-fix-btn):not(.github-btn) {
+  color: var(--app-accent);
+  background-color: color-mix(in srgb, var(--app-accent) 16%, var(--app-bg));
+}
+
+.app-theme-dark .toolbar-btn:focus-visible:not(.ai-fix-btn):not(.github-btn) {
+  outline: 2px solid var(--app-accent);
+  outline-offset: 2px;
+}
+
+.app-theme-dark .toolbar-select:hover,
+.app-theme-dark .toolbar-select:focus {
+  border-color: var(--app-accent);
+  color: var(--app-accent);
+}
+
+.app-theme-dark .preview-zoom-btn:hover {
+  color: var(--app-accent);
+  background-color: color-mix(in srgb, var(--app-accent) 16%, var(--app-bg));
+}
+
+.app-theme-dark .mode-toggle-btn:hover {
+  color: var(--app-accent);
+  background-color: color-mix(in srgb, var(--app-accent) 16%, var(--app-bg));
+}
+
+.app-theme-dark .block-selector-btn:hover:not(:disabled) {
+  color: var(--app-accent);
+  background-color: color-mix(in srgb, var(--app-accent) 16%, var(--app-bg));
+}
+
+.app-theme-dark .editor-toggle-btn:hover {
+  color: var(--app-accent);
+  background-color: color-mix(in srgb, var(--app-accent) 16%, var(--app-bg));
+}
+
+.app-theme-dark .editor-container.collapsed .editor-toggle-btn:hover {
+  color: var(--app-accent);
+  background-color: color-mix(in srgb, var(--app-accent) 12%, var(--app-bg));
 }

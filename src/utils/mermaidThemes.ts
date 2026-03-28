@@ -9,6 +9,54 @@ const FALLBACK_THEMES = {
   'github-light': { bg: '#ffffff', fg: '#1f2328', line: '#d1d9e0', accent: '#0969da', muted: '#59636e' },
 } as const
 
+/** Expand #rgb → #rrggbb for comparison */
+function normalizeHexColor(hex: string): string | null {
+  const m = hex.trim().match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i)
+  if (!m) return null
+  const h = m[1]
+  if (h.length === 3) {
+    return `#${h[0]}${h[0]}${h[1]}${h[1]}${h[2]}${h[2]}`.toLowerCase()
+  }
+  return `#${h}`.toLowerCase()
+}
+
+/** sRGB relative luminance (0–1); used to pick a contrasting UI accent */
+function luminanceFromHex(hex: string): number | null {
+  const norm = normalizeHexColor(hex)
+  if (!norm) return null
+  const r = parseInt(norm.slice(1, 3), 16) / 255
+  const g = parseInt(norm.slice(3, 5), 16) / 255
+  const b = parseInt(norm.slice(5, 7), 16) / 255
+  const lin = (c: number) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)
+  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
+}
+
+/**
+ * Accent for app chrome (--app-accent). Diagram rendering still uses raw theme from getMermaidThemeOptions.
+ * Themes with no accent (e.g. zinc-dark) previously used fg, so hovers looked like white-on-white borders (#38).
+ */
+function resolveAppUiAccent(t: {
+  bg?: string
+  fg?: string
+  accent?: string
+}): string {
+  const bg = typeof t.bg === 'string' ? t.bg : ''
+  const fg = typeof t.fg === 'string' ? t.fg : ''
+  const accent = typeof t.accent === 'string' ? t.accent.trim() : ''
+  const L = luminanceFromHex(bg)
+
+  if (accent && fg && normalizeHexColor(accent) === normalizeHexColor(fg)) {
+    if (L !== null && L < 0.45) return '#7aa2f7'
+    if (L !== null && L >= 0.45) return '#0969da'
+  }
+
+  if (accent) return accent
+
+  if (L !== null && L < 0.45) return '#7aa2f7'
+  if (L !== null && L >= 0.45) return '#0969da'
+  return fg || '#0969da'
+}
+
 const THEMES =
   BEAUTIFUL_MERMAID_THEMES && Object.keys(BEAUTIFUL_MERMAID_THEMES).length > 0
     ? BEAUTIFUL_MERMAID_THEMES
@@ -66,7 +114,7 @@ export function getAppThemeCssVars(themeId: string): Record<string, string> {
     '--app-bg': t.bg,
     '--app-fg': t.fg,
     '--app-border': t.border ?? t.line ?? t.fg,
-    '--app-accent': t.accent ?? t.fg,
+    '--app-accent': resolveAppUiAccent(t),
     '--app-muted': t.muted ?? t.fg,
     '--app-surface': t.surface ?? t.bg,
   }

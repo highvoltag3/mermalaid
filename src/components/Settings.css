@@ -217,3 +217,15 @@
   background: var(--border-color);
 }
 
+/* #38 — keep secondary actions readable on dark modal chrome */
+.settings-modal.dark .button-secondary:hover {
+  color: #ffffff;
+  background: #454545;
+  border-color: var(--input-focus);
+}
+
+.settings-modal.dark .close-button:hover {
+  color: var(--text-primary);
+  background: var(--border-color);
+}
+
