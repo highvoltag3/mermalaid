@@ -1,14 +1,16 @@
 import { useState, useEffect, useRef } from 'react'
 import { Routes, Route } from 'react-router-dom'
+import { isTauri } from '@tauri-apps/api/core'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { ToastProvider } from './contexts/ToastContext'
 import { useTheme } from './hooks/useTheme'
 import Editor from './components/Editor'
 import Preview from './components/Preview'
-import Toolbar from './components/Toolbar'
+import Toolbar, { type ToolbarRef } from './components/Toolbar'
 import LandingPage from './components/LandingPage'
 import { extractMermaidCode, extractAllMermaidBlocks } from './utils/mermaidCodeBlock'
 import { getAppThemeCssVars, isAppThemeDark } from './utils/mermaidThemes'
+import { initNativeAppMenu, setNativeMenuHandlerSource } from './nativeAppMenu'
 import './App.css'
 
 function EditorView() {
@@ -17,7 +19,8 @@ function EditorView() {
   const [error, setError] = useState<string | null>(null)
   const [isEditorCollapsed, setIsEditorCollapsed] = useState(false)
   const [selectedBlockIndex, setSelectedBlockIndex] = useState(0)
-  const toolbarRef = useRef<{ handleNew: () => void; handleOpen: () => void; handleSave: () => void }>(null)
+  const documentPathRef = useRef<string | null>(null)
+  const toolbarRef = useRef<ToolbarRef>(null)
 
   // Compute mermaid blocks from the code
   const mermaidBlocks = extractAllMermaidBlocks(code)
@@ -53,15 +56,34 @@ function EditorView() {
         toolbarRef.current?.handleNew()
       } else if ((e.metaKey || e.ctrlKey) && e.key === 'o') {
         e.preventDefault()
-        toolbarRef.current?.handleOpen()
+        void toolbarRef.current?.handleOpen()
       } else if ((e.metaKey || e.ctrlKey) && e.key === 's') {
         e.preventDefault()
-        toolbarRef.current?.handleSave()
+        if (e.shiftKey) {
+          void toolbarRef.current?.handleSaveAs()
+        } else {
+          void toolbarRef.current?.handleSave()
+        }
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
+  useEffect(() => {
+    if (!isTauri()) return
+    setNativeMenuHandlerSource(() => ({
+      onNew: () => toolbarRef.current?.handleNew(),
+      onOpen: () => void toolbarRef.current?.handleOpen(),
+      onSave: () => void toolbarRef.current?.handleSave(),
+      onSaveAs: () => void toolbarRef.current?.handleSaveAs(),
+      onPrint: () => toolbarRef.current?.handlePrint(),
+      onShare: () => void toolbarRef.current?.handleShare(),
+      onDuplicate: () => void toolbarRef.current?.handleDuplicate(),
+      onOpenRecent: (path) => void toolbarRef.current?.openPath(path),
+    }))
+    void initNativeAppMenu()
   }, [])
 
   const handleDrop = (e: React.DragEvent) => {
@@ -97,6 +119,7 @@ function EditorView() {
         error={error}
         activeCode={activeCode}
         mermaidBlocks={mermaidBlocks}
+        documentPathRef={documentPathRef}
       />
       <div className="app-content">
         <Editor

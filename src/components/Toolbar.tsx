@@ -1,4 +1,13 @@
-import { useState, useRef, useImperativeHandle, forwardRef } from 'react'
+import {
+  useState,
+  useRef,
+  useImperativeHandle,
+  forwardRef,
+  type MutableRefObject,
+} from 'react'
+import { isTauri } from '@tauri-apps/api/core'
+import { open, save } from '@tauri-apps/plugin-dialog'
+import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs'
 import html2canvas from 'html2canvas'
 import { renderMermaidAscii, renderMermaid } from 'beautiful-mermaid'
 import { useTheme } from '../hooks/useTheme'
@@ -18,7 +27,13 @@ import {
   mapMermaidConfigToThemeOptions,
 } from '../utils/mermaidYamlConfig'
 import Settings from './Settings'
+import { rebuildNativeAppMenu } from '../nativeAppMenu'
+import { addRecentFile, recentFileLabel, removeRecentFile } from '../utils/recentFiles'
 import './Toolbar.css'
+
+const OPEN_FILTERS = [
+  { name: 'Mermaid / Text', extensions: ['mmd', 'txt', 'md', 'markdown'] as string[] },
+]
 
 interface ToolbarProps {
   code: string
@@ -26,12 +41,19 @@ interface ToolbarProps {
   error: string | null
   activeCode: string
   mermaidBlocks: MermaidBlock[]
+  /** Tauri: path of the file last opened or saved (null = unsaved) */
+  documentPathRef: MutableRefObject<string | null>
 }
 
 export interface ToolbarRef {
   handleNew: () => void
   handleOpen: () => void
   handleSave: () => void
+  handleSaveAs: () => void
+  handlePrint: () => void
+  handleShare: () => void
+  handleDuplicate: () => void
+  openPath: (path: string) => Promise<void>
 }
 
 const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
@@ -40,6 +62,7 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
   error,
   activeCode,
   mermaidBlocks,
+  documentPathRef,
 }, ref) => {
   const { mermaidTheme, setMermaidTheme } = useTheme()
   const { showToast } = useToast()
@@ -52,10 +75,27 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
   const handleNew = () => {
     if (confirm('Create a new diagram? Unsaved changes will be lost.')) {
       setCode('graph TD\n    A[Start] --> B[End]')
+      documentPathRef.current = null
     }
   }
 
-  const handleOpen = () => {
+  const handleOpen = async () => {
+    if (isTauri()) {
+      try {
+        const selected = await open({
+          multiple: false,
+          directory: false,
+          filters: OPEN_FILTERS,
+        })
+        const path = Array.isArray(selected) ? selected[0] : selected
+        if (!path || typeof path !== 'string') return
+        await openPath(path)
+      } catch (err) {
+        console.error('Open dialog error:', err)
+        showToast('Failed to open file.', 'error')
+      }
+      return
+    }
     try {
       if (fileInputRef.current) {
         fileInputRef.current.click()
@@ -66,6 +106,23 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
     } catch (err) {
       console.error('Error opening file dialog:', err)
       showToast('Failed to open file dialog. Please ensure your browser supports file selection.', 'error')
+    }
+  }
+
+  const openPath = async (path: string) => {
+    if (!isTauri()) return
+    try {
+      const content = await readTextFile(path)
+      setCode(content)
+      documentPathRef.current = path
+      addRecentFile(path)
+      await rebuildNativeAppMenu()
+      showToast(`Loaded ${recentFileLabel(path)}`)
+    } catch (err) {
+      console.error('Read file error:', err)
+      showToast('Could not read that file. It may have been moved or deleted.', 'error')
+      removeRecentFile(path)
+      await rebuildNativeAppMenu()
     }
   }
 
@@ -110,7 +167,17 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
     reader.readAsText(file)
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (isTauri() && documentPathRef.current) {
+      try {
+        await writeTextFile(documentPathRef.current, code)
+        showToast(`Saved ${recentFileLabel(documentPathRef.current)}`)
+      } catch (err) {
+        console.error('Save error:', err)
+        showToast('Could not save to that location.', 'error')
+      }
+      return
+    }
     const blob = new Blob([code], { type: 'text/plain' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -119,6 +186,83 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
     a.click()
     URL.revokeObjectURL(url)
     showToast('Saved diagram.mmd')
+  }
+
+  const handleSaveAs = async () => {
+    if (!isTauri()) {
+      await handleSave()
+      return
+    }
+    try {
+      const path = await save({
+        filters: OPEN_FILTERS,
+        defaultPath: documentPathRef.current ?? 'diagram.mmd',
+      })
+      if (!path) return
+      await writeTextFile(path, code)
+      documentPathRef.current = path
+      addRecentFile(path)
+      await rebuildNativeAppMenu()
+      showToast(`Saved ${recentFileLabel(path)}`)
+    } catch (err) {
+      console.error('Save As error:', err)
+      showToast('Could not save file.', 'error')
+    }
+  }
+
+  const handleDuplicate = async () => {
+    if (!isTauri()) {
+      await handleSave()
+      return
+    }
+    const base = documentPathRef.current
+    const suggested =
+      base && /\.(mmd|txt|md|markdown)$/i.test(base)
+        ? base.replace(/(\.[^.]+)$/, '-copy$1')
+        : 'diagram-copy.mmd'
+    try {
+      const path = await save({
+        filters: OPEN_FILTERS,
+        defaultPath: suggested,
+      })
+      if (!path) return
+      await writeTextFile(path, code)
+      documentPathRef.current = path
+      addRecentFile(path)
+      await rebuildNativeAppMenu()
+      showToast(`Saved ${recentFileLabel(path)}`)
+    } catch (err) {
+      console.error('Duplicate save error:', err)
+      showToast('Could not save duplicate.', 'error')
+    }
+  }
+
+  const handlePrint = () => {
+    window.print()
+  }
+
+  const handleShare = async () => {
+    const body = code.trim()
+    if (!body) {
+      showToast('Nothing to share yet.', 'error')
+      return
+    }
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'Mermaid diagram', text: body })
+      } else {
+        await navigator.clipboard.writeText(body)
+        showToast('Diagram text copied — paste it into Mail, Messages, etc.')
+      }
+    } catch (err) {
+      if ((err as Error).name === 'AbortError') return
+      try {
+        await navigator.clipboard.writeText(body)
+        showToast('Diagram text copied — paste it into Mail, Messages, etc.')
+      } catch {
+        showToast('Sharing is not available here.', 'error')
+      }
+    }
   }
 
   const handleExportSVG = async () => {
@@ -293,6 +437,11 @@ ${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</di
     handleNew,
     handleOpen,
     handleSave,
+    handleSaveAs,
+    handlePrint,
+    handleShare,
+    handleDuplicate,
+    openPath,
   }))
 
   return (
