@@ -20,5 +20,6 @@ tauri-build = { version = "2.5.1", features = [] }
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 tauri = { version = "2.9.2", features = [] }
-tauri-plugin-dialog = "2"
-tauri-plugin-fs = "2"
+# Keep major.minor in sync with @tauri-apps/plugin-* in package.json (Tauri CLI checks this).
+tauri-plugin-dialog = "2.6"
+tauri-plugin-fs = "2.4"
