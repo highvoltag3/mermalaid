@@ -1,5 +1,4 @@
 import { isTauri } from '@tauri-apps/api/core'
-import { resolveResource } from '@tauri-apps/api/path'
 import { Menu, MenuItem, PredefinedMenuItem, Submenu } from '@tauri-apps/api/menu'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { openUrl } from '@tauri-apps/plugin-opener'
@@ -35,6 +34,8 @@ let getHandlers: () => NativeMenuHandlers = () => ({
   onShowLicense: () => {},
   onOpenRecent: () => {},
 })
+
+let menuInitPromise: Promise<void> | null = null
 
 export function setNativeMenuHandlerSource(next: () => NativeMenuHandlers): void {
   getHandlers = next
@@ -82,15 +83,10 @@ async function buildAndSetAppMenu(): Promise<void> {
     name: string
     version: string
     copyright: string
-    icon?: string
   } = {
     name: 'Mermalaid',
     version: packageJson.version,
     copyright: 'Mermalaid contributors',
-  }
-  const resolvedAboutIconPath = await resolveResource('icons/icon_512x512.png').catch(() => null)
-  if (resolvedAboutIconPath) {
-    aboutMetadata.icon = resolvedAboutIconPath
   }
 
   const recentEntries = await Promise.all(
@@ -399,7 +395,29 @@ async function buildAndSetAppMenu(): Promise<void> {
 /** Install menu once; call {@link rebuildNativeAppMenu} after recent files change. */
 export async function initNativeAppMenu(): Promise<void> {
   if (!isTauri()) return
-  await buildAndSetAppMenu()
+  if (!menuInitPromise) {
+    menuInitPromise = buildAndSetAppMenu()
+  }
+  const currentInitPromise = menuInitPromise
+  try {
+    await currentInitPromise
+  } catch (error) {
+    console.error('buildAndSetAppMenu failed, falling back to default menu:', error)
+    try {
+      const fallback = await Menu.default()
+      await fallback.setAsAppMenu()
+      console.info('Fallback default app menu installed.')
+    } catch (fallbackError) {
+      console.error('Fallback menu installation failed:', fallbackError)
+    }
+    console.error('initNativeAppMenu failed:', error)
+    throw error
+  } finally {
+    // Release the lock once this init run settles, so future calls can rebuild.
+    if (menuInitPromise === currentInitPromise) {
+      menuInitPromise = null
+    }
+  }
 }
 
 export async function rebuildNativeAppMenu(): Promise<void> {

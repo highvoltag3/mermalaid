@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { invoke, isTauri } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { ToastProvider } from './contexts/ToastContext'
 import { useTheme } from './hooks/useTheme'
 import { useUpdateCheck } from './hooks/useUpdateCheck'
+import { useMountEffect } from './hooks/useMountEffect'
 import Editor from './components/Editor'
 import Preview from './components/Preview'
 import Toolbar, { type ToolbarRef } from './components/Toolbar'
@@ -47,18 +48,18 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
     }
   }, [mermaidBlocks.length])
 
-  useEffect(() => {
+  useMountEffect(() => {
     try { localStorage.setItem('mermalaid-has-used-editor', '1') } catch {}
-  }, [])
+  })
 
-  useEffect(() => {
+  useMountEffect(() => {
     if (isTauri()) return
     const saved = localStorage.getItem('mermalaid-draft')
     if (saved) setCode(saved)
-  }, [])
+  })
 
   /** Finder / Explorer / argv: open the requested file instead of restoring draft (issue #41). */
-  useEffect(() => {
+  useMountEffect(() => {
     if (!isTauri()) return
 
     const openQueuedPaths = async () => {
@@ -89,9 +90,9 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
     return () => {
       unlisten?.()
     }
-  }, [])
+  })
 
-  useEffect(() => {
+  useMountEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
         e.preventDefault()
@@ -111,9 +112,9 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
+  })
 
-  useEffect(() => {
+  useMountEffect(() => {
     if (!isTauri()) return
     setNativeMenuHandlerSource(() => ({
       onNew: () => toolbarRef.current?.handleNew(),
@@ -128,7 +129,7 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
       onOpenRecent: (path) => void toolbarRef.current?.openPath(path),
     }))
     void initNativeAppMenu()
-  }, [])
+  })
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
@@ -200,10 +201,10 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
 function App() {
   const { update: pendingRelease, dismiss: dismissPendingRelease } = useUpdateCheck()
 
-  useEffect(() => {
+  useMountEffect(() => {
     if (!isTauri()) return
     void initNativeAppMenu()
-  }, [])
+  })
 
   return (
     <ThemeProvider>
@@ -212,10 +213,14 @@ function App() {
           <Route
             path="/"
             element={
-              <LandingPage
-                pendingRelease={pendingRelease}
-                onDismissPendingRelease={dismissPendingRelease}
-              />
+              isTauri()
+                ? <Navigate to="/editor" replace />
+                : (
+                  <LandingPage
+                    pendingRelease={pendingRelease}
+                    onDismissPendingRelease={dismissPendingRelease}
+                  />
+                )
             }
           />
           <Route
