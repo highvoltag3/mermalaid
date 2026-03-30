@@ -31,6 +31,8 @@ Visit [Mermalaid](https://mermalaid.com) to start creating Mermaid diagrams inst
 1. Download the latest release from [GitHub Releases](https://github.com/highvoltag3/mermalaid/releases)
 2. Install the `.dmg` file
 3. Start creating unlimited free Mermaid diagrams
+4. 🏴‍☠️ IMPORTANT: Follow this step: [Installing the Desktop App](#installing-the-desktop-app).
+
 
 ## ✨ Features - Professional Mermaid Editor, Zero Cost
 
