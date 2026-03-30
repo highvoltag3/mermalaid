@@ -5,16 +5,24 @@ import { listen } from '@tauri-apps/api/event'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { ToastProvider } from './contexts/ToastContext'
 import { useTheme } from './hooks/useTheme'
+import { useUpdateCheck } from './hooks/useUpdateCheck'
 import Editor from './components/Editor'
 import Preview from './components/Preview'
 import Toolbar, { type ToolbarRef } from './components/Toolbar'
 import LandingPage from './components/LandingPage'
+import UpdateAvailableBanner from './components/UpdateAvailableBanner'
+import type { LatestReleaseInfo } from './utils/githubRelease'
 import { extractMermaidCode, extractAllMermaidBlocks } from './utils/mermaidCodeBlock'
 import { getAppThemeCssVars, isAppThemeDark } from './utils/mermaidThemes'
 import { initNativeAppMenu, setNativeMenuHandlerSource } from './nativeAppMenu'
 import './App.css'
 
-function EditorView() {
+interface ReleaseBannerRouteProps {
+  pendingRelease: LatestReleaseInfo | null
+  onDismissPendingRelease: () => void
+}
+
+function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRouteProps) {
   const { mermaidTheme } = useTheme()
   const [code, setCode] = useState('graph TD\n    A[Start] --> B{Decision}\n    B -->|Yes| C[Action 1]\n    B -->|No| D[Action 2]\n    C --> E[End]\n    D --> E')
   const [error, setError] = useState<string | null>(null)
@@ -148,6 +156,13 @@ function EditorView() {
       onDrop={handleDrop}
       onDragOver={handleDragOver}
     >
+      {pendingRelease && (
+        <UpdateAvailableBanner
+          update={pendingRelease}
+          onDismiss={onDismissPendingRelease}
+          variant="editor"
+        />
+      )}
       <Toolbar
         ref={toolbarRef}
         code={code}
@@ -183,6 +198,8 @@ function EditorView() {
 }
 
 function App() {
+  const { update: pendingRelease, dismiss: dismissPendingRelease } = useUpdateCheck()
+
   useEffect(() => {
     if (!isTauri()) return
     void initNativeAppMenu()
@@ -192,8 +209,24 @@ function App() {
     <ThemeProvider>
       <ToastProvider>
         <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/editor" element={<EditorView />} />
+          <Route
+            path="/"
+            element={
+              <LandingPage
+                pendingRelease={pendingRelease}
+                onDismissPendingRelease={dismissPendingRelease}
+              />
+            }
+          />
+          <Route
+            path="/editor"
+            element={
+              <EditorView
+                pendingRelease={pendingRelease}
+                onDismissPendingRelease={dismissPendingRelease}
+              />
+            }
+          />
         </Routes>
       </ToastProvider>
     </ThemeProvider>
