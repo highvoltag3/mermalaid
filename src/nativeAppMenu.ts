@@ -77,7 +77,6 @@ function attachWindowHideShowMenuSync(): void {
 }
 
 async function buildAndSetAppMenu(): Promise<void> {
-  const h = getHandlers()
   const recents = getRecentPaths()
   const aboutMetadata: {
     name: string
@@ -100,7 +99,7 @@ async function buildAndSetAppMenu(): Promise<void> {
         id: `recent_${i}`,
         text: recentFileLabel(path),
         action: () => {
-          h.onOpenRecent(path)
+          getHandlers().onOpenRecent(path)
         },
       }),
     ),
@@ -160,13 +159,13 @@ async function buildAndSetAppMenu(): Promise<void> {
         id: 'file_new',
         text: 'New',
         accelerator: 'CmdOrCtrl+N',
-        action: () => h.onNew(),
+        action: () => getHandlers().onNew(),
       }),
       await MenuItem.new({
         id: 'file_open',
         text: 'Open…',
         accelerator: 'CmdOrCtrl+O',
-        action: () => h.onOpen(),
+        action: () => getHandlers().onOpen(),
       }),
       openRecent,
       await PredefinedMenuItem.new({ item: 'Separator' }),
@@ -174,30 +173,30 @@ async function buildAndSetAppMenu(): Promise<void> {
         id: 'file_save',
         text: 'Save',
         accelerator: 'CmdOrCtrl+S',
-        action: () => h.onSave(),
+        action: () => getHandlers().onSave(),
       }),
       await MenuItem.new({
         id: 'file_save_as',
         text: 'Save As…',
         accelerator: 'CmdOrCtrl+Shift+S',
-        action: () => h.onSaveAs(),
+        action: () => getHandlers().onSaveAs(),
       }),
       await MenuItem.new({
         id: 'file_duplicate',
         text: 'Duplicate…',
-        action: () => h.onDuplicate(),
+        action: () => getHandlers().onDuplicate(),
       }),
       await PredefinedMenuItem.new({ item: 'Separator' }),
       await MenuItem.new({
         id: 'file_share',
         text: 'Share…',
-        action: () => h.onShare(),
+        action: () => getHandlers().onShare(),
       }),
       await MenuItem.new({
         id: 'file_print',
         text: 'Print…',
         accelerator: 'CmdOrCtrl+P',
-        action: () => h.onPrint(),
+        action: () => getHandlers().onPrint(),
       }),
       await PredefinedMenuItem.new({ item: 'Separator' }),
       await MenuItem.new({
@@ -352,12 +351,12 @@ async function buildAndSetAppMenu(): Promise<void> {
       await MenuItem.new({
         id: 'help_engine_version',
         text: 'Mermalaid Engine Version',
-        action: () => h.onEngineVersion(),
+        action: () => getHandlers().onEngineVersion(),
       }),
       await MenuItem.new({
         id: 'help_license',
         text: 'License',
-        action: () => h.onShowLicense(),
+        action: () => getHandlers().onShowLicense(),
       }),
       await PredefinedMenuItem.new({ item: 'Separator' }),
       await MenuItem.new({
