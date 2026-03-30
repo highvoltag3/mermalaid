@@ -304,6 +304,7 @@ export default function Preview({
     canEdit,
     diagramCode,
     codeForBeautifulMermaid,
+    yamlConfig,
     mermaidTheme,
     previewThemeOptions,
     officialYamlConfig,

@@ -183,6 +183,11 @@ function EditorView() {
 }
 
 function App() {
+  useEffect(() => {
+    if (!isTauri()) return
+    void initNativeAppMenu()
+  }, [])
+
   return (
     <ThemeProvider>
       <ToastProvider>

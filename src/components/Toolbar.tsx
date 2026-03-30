@@ -28,6 +28,7 @@ import {
   mapMermaidConfigToThemeOptions,
 } from '../utils/mermaidYamlConfig'
 import { renderOfficialMermaidPreview } from '../utils/officialMermaidPreview'
+import packageJson from '../../package.json'
 import Settings from './Settings'
 import { rebuildNativeAppMenu } from '../nativeAppMenu'
 import { addRecentFile, recentFileLabel, removeRecentFile } from '../utils/recentFiles'
@@ -55,6 +56,10 @@ https://github.com/highvoltag3/mermalaid/blob/main/LICENSE
 
 Full license text:
 https://creativecommons.org/licenses/by-nc-sa/4.0/`
+
+const ENGINE_VERSION_INFO_TEXT = `Mermalaid ${packageJson.version}
+Official Mermaid engine: ${packageJson.dependencies?.mermaid ?? 'unknown'}
+Visual editor/export engine: ${packageJson.dependencies?.['beautiful-mermaid'] ?? 'unknown'}`
 
 interface ToolbarProps {
   code: string
@@ -289,9 +294,17 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
   }
 
   const handleEngineVersionInfo = () => {
-    setCode('info')
-    documentPathRef.current = null
-    showToast('Showing Mermaid engine info')
+    const show = async () => {
+      if (isTauri()) {
+        await message(ENGINE_VERSION_INFO_TEXT, { title: 'Mermalaid Engine Version', kind: 'info' })
+      } else {
+        window.alert(ENGINE_VERSION_INFO_TEXT)
+      }
+    }
+    void show().catch((err) => {
+      console.error('Failed to show engine version info:', err)
+      showToast('Failed to show engine version info.', 'error')
+    })
   }
 
   const handleShowLicenseInfo = () => {
