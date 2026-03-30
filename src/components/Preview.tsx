@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type RefObject } from 'react'
-import { renderMermaid } from 'beautiful-mermaid'
+import { renderMermaid as renderBeautifulMermaid } from 'beautiful-mermaid'
 import {
   TransformComponent,
   TransformWrapper,
@@ -9,14 +9,16 @@ import {
 } from 'react-zoom-pan-pinch'
 import { useTheme } from '../hooks/useTheme'
 import { replaceMermaidBlock, type MermaidBlock } from '../utils/mermaidCodeBlock'
-import { getMermaidThemeOptions } from '../utils/mermaidThemes'
+import { getMermaidThemeOptions, isAppThemeDark } from '../utils/mermaidThemes'
 import { isEditableDiagram, parseMermaidFlowchart } from '../utils/mermaidParser'
 import { normalizeMermaidForBeautifulMermaid } from '../utils/normalizeMermaidForBeautifulMermaid'
 import {
-  parseMermaidWithConfig,
   mapMermaidConfigToThemeOptions,
+  parseMermaidWithConfig,
+  parseMermaidConfigForOfficialRenderer,
   replaceDiagramInBlock,
 } from '../utils/mermaidYamlConfig'
+import { renderOfficialMermaidPreview } from '../utils/officialMermaidPreview'
 import VisualEditor from './VisualEditor'
 import './Preview.css'
 
@@ -77,6 +79,30 @@ function fitPreviewToScreen(
     api.setTransform(positionX, positionY, clamped, 200)
   }
   requestAnimationFrame(run)
+}
+
+function normalizePreviewSvgDimensions(svgMarkup: string): string {
+  const doc = new DOMParser().parseFromString(svgMarkup, 'image/svg+xml')
+  const svg = doc.documentElement
+  if (!svg || svg.nodeName.toLowerCase() !== 'svg') return svgMarkup
+
+  const viewBox = svg.getAttribute('viewBox')
+  if (!viewBox) return svgMarkup
+
+  const [, , width, height] = viewBox
+    .trim()
+    .split(/\s+/)
+    .map(Number)
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+    return svgMarkup
+  }
+
+  svg.setAttribute('width', String(width))
+  svg.setAttribute('height', String(height))
+  svg.style.maxWidth = 'none'
+  svg.style.width = `${width}px`
+  svg.style.height = `${height}px`
+  return svg.outerHTML
 }
 
 function PreviewZoomToolbar({
@@ -168,6 +194,14 @@ export default function Preview({
     [activeCode],
   )
   const { code: diagramCode, config: yamlConfig } = parsed
+  const officialYamlConfig = useMemo(
+    () => parseMermaidConfigForOfficialRenderer(activeCode.trim()),
+    [activeCode],
+  )
+  const previewThemeOptions = useMemo(
+    () => getMermaidThemeOptions(mermaidTheme),
+    [mermaidTheme],
+  )
   const codeForBeautifulMermaid = useMemo(
     () => (diagramCode ? normalizeMermaidForBeautifulMermaid(diagramCode) : ''),
     [diagramCode],
@@ -202,7 +236,7 @@ export default function Preview({
         return
       }
 
-      if (!codeForBeautifulMermaid) {
+      if (!diagramCode) {
         if (renderIdRef.current === currentId) {
           container.innerHTML = '<div class="empty-preview">Start typing your Mermaid diagram...</div>'
           setError(null)
@@ -212,13 +246,42 @@ export default function Preview({
       }
 
       try {
-        const themeOptions = yamlConfig
-          ? mapMermaidConfigToThemeOptions(yamlConfig)
-          : getMermaidThemeOptions(mermaidTheme)
-        const svg = await renderMermaid(codeForBeautifulMermaid, themeOptions)
+        let svg: string
+        const normalizedForCompat = normalizeMermaidForBeautifulMermaid(diagramCode)
+        try {
+          svg = await renderOfficialMermaidPreview(
+            diagramCode,
+            isAppThemeDark(mermaidTheme),
+            previewThemeOptions,
+            officialYamlConfig,
+          )
+        } catch (primaryErr) {
+          // Compatibility fallback: keep official Mermaid as the default path,
+          // but retry with legacy flowchart normalization to avoid regressions
+          // on diagrams that previously rendered in Mermalaid.
+          try {
+            if (normalizedForCompat !== diagramCode) {
+              svg = await renderOfficialMermaidPreview(
+                normalizedForCompat,
+                isAppThemeDark(mermaidTheme),
+                previewThemeOptions,
+                officialYamlConfig,
+              )
+            } else {
+              throw primaryErr
+            }
+          } catch {
+            // Last-resort legacy renderer fallback for pre-existing diagrams.
+            const themeOptions = yamlConfig
+              ? mapMermaidConfigToThemeOptions(yamlConfig)
+              : previewThemeOptions
+            svg = await renderBeautifulMermaid(normalizedForCompat, themeOptions)
+          }
+        }
+        const normalizedSvg = normalizePreviewSvgDimensions(svg)
 
         if (renderIdRef.current === currentId && container) {
-          container.innerHTML = svg
+          container.innerHTML = normalizedSvg
           setError(null)
           setDiagramReady(true)
           setPreviewFitTick((t) => t + 1)
@@ -237,11 +300,13 @@ export default function Preview({
   }, [
     code,
     setError,
-    mermaidTheme,
     isEditMode,
     canEdit,
+    diagramCode,
     codeForBeautifulMermaid,
-    yamlConfig,
+    mermaidTheme,
+    previewThemeOptions,
+    officialYamlConfig,
   ])
 
   // Run fit in useEffect (not useLayoutEffect): TransformWrapper applies `disabled` via instance.update

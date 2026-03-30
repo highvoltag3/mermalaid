@@ -115,6 +115,8 @@ function EditorView() {
       onPrint: () => toolbarRef.current?.handlePrint(),
       onShare: () => void toolbarRef.current?.handleShare(),
       onDuplicate: () => void toolbarRef.current?.handleDuplicate(),
+      onEngineVersion: () => toolbarRef.current?.handleEngineVersionInfo(),
+      onShowLicense: () => toolbarRef.current?.handleShowLicenseInfo(),
       onOpenRecent: (path) => void toolbarRef.current?.openPath(path),
     }))
     void initNativeAppMenu()
