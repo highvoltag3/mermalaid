@@ -241,7 +241,9 @@ function release(bump) {
   console.log("\nRelease push completed.");
   console.log("GitHub Actions should now trigger:");
   console.log("- Release (tag push: v*)");
-  console.log("- Deploy to Appwrite Sites (push to main)");
+  console.log(
+    "- Appwrite Sites: only if the site is linked to this repo with auto deploy on main",
+  );
 }
 
 function main() {

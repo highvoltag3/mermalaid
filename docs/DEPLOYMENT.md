@@ -5,7 +5,7 @@ This guide explains how to deploy Mermalaid to Appwrite Sites.
 ## Prerequisites
 
 - An Appwrite account and project
-- Git repository connected to Appwrite (optional but recommended)
+- Git repository connected to Appwrite (recommended — this is how deploys run)
 - Node.js 18+ (for local testing)
 
 ## Build Configuration
@@ -85,14 +85,14 @@ VITE_ENABLE_AI_FIXER=true
 - For security, never commit `.env` files with actual API keys
 - Use `env.example` as a template (without sensitive data)
 
-### VCS Integration (Optional but Recommended)
+### GitHub (recommended)
 
-If deploying from a Git repository:
+Deploys are expected to run **inside Appwrite** after you connect the repo — not via GitHub Actions in this repository.
 
-1. **Repository Provider**: Connect your Git provider (GitHub, GitLab, etc.)
-2. **Repository**: Select your repository
-3. **Production Branch**: `main` (or your main branch)
-4. **Auto Deploy**: Enable to automatically deploy on pushes
+1. **Repository provider**: Connect GitHub (or GitLab, etc.)
+2. **Repository**: Select this project’s repository
+3. **Production branch**: `main` (or your default branch)
+4. **Auto deploy**: Enable so pushes to that branch start a build on Appwrite’s builders (`npm install` → `npm run build` → serve `dist`)
 
 ### Custom Domain (Optional)
 
@@ -112,50 +112,19 @@ npm run preview
 
 The preview server will serve the built files from the `dist` directory, allowing you to verify everything works correctly.
 
-## Deployment Methods
+## How deployment runs
 
-### Method 1: GitHub Actions (Recommended)
+1. **Git integration (default path)** — Connect GitHub under your site in the Appwrite Console (see **GitHub** above). Pushes to the production branch trigger builds on Appwrite. Check the site’s **Deployments** tab in Appwrite.
 
-Automated deployment via GitHub Actions is configured and ready to use.
+2. **Console-only** — You can also deploy from the console (branch picker or manual `.tar.gz` upload), using the same build settings as above.
 
-**Setup:**
-
-1. Add the following secrets to your GitHub repository (Settings → Secrets and variables → Actions):
-   - `APPWRITE_API_KEY` - Your Appwrite API key with Sites permissions
-   - `APPWRITE_PROJECT_ID` - Your Appwrite Project ID
-   - `APPWRITE_SITE_ID` - Your Appwrite Site ID
-   - `APPWRITE_ENDPOINT` (required for Cloud) - Regional URL, e.g. `https://<REGION>.cloud.appwrite.io/v1` (not the bare `cloud.appwrite.io` host)
-
-2. Push to `main` or `feature/appwrite-sites` branch to trigger automatic deployment
-
-3. Monitor deployment in the **Actions** tab
-
-**Benefits:**
-- ✅ Automatic deployment on every push
-- ✅ Consistent build environment
-- ✅ Deployment history in GitHub Actions
-- ✅ No manual steps required
-
-See [.github/workflows/README.md](.github/workflows/README.md) for detailed setup instructions.
-
-### Method 2: Appwrite Console (Manual)
-
-Once configured in the Appwrite Console:
-
-1. Click "Deploy" in your site settings
-2. Appwrite will:
-   - Install dependencies (`npm install`)
-   - Build the project (`npm run build`)
-   - Deploy the `dist` directory
-3. Your site will be available at the Appwrite-provided URL
-
-**Note:** This project does not document local Appwrite CLI deploys. Use **GitHub Actions** (above) or the **console** (Git / manual `.tar.gz`). The Action uploads `dist/` via the Sites REST API.
+This repo does **not** use GitHub Actions for Appwrite deploys. See [.github/workflows/README.md](../.github/workflows/README.md) for workflows that *do* run on GitHub (e.g. Tauri release).
 
 ## Troubleshooting
 
 ### Git deployments show Ready but are not live until you activate
 
-Appwrite Sites often creates a deployment in **Ready** first; **Active** is the version served to visitors. In the console you may need to **Activate** the deployment unless something (for example the GitHub Action’s `activate=true` on upload or a site setting for auto-activation) does it for you. The **Deploy to Appwrite Sites** workflow sends `activate=true` with the deployment request so uploads from GitHub should go live without a manual step.
+Appwrite Sites often creates a deployment in **Ready** first; **Active** is what visitors get. Activate in the Appwrite Console if needed, or use Appwrite’s options to auto-activate Git deployments when available.
 
 ### Build Fails
 

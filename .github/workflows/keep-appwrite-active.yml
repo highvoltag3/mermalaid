@@ -25,7 +25,7 @@ jobs:
           BASE="${APPWRITE_ENDPOINT}"
           BASE="${BASE%/}"
           if [ -z "${APPWRITE_PROJECT_ID}" ] || [ -z "${APPWRITE_API_KEY}" ]; then
-            echo "::error::Set APPWRITE_PROJECT_ID and APPWRITE_API_KEY repository secrets (same as deploy). Appwrite Cloud /v1/health requires them."
+            echo "::error::Set APPWRITE_PROJECT_ID and APPWRITE_API_KEY repository secrets. Appwrite Cloud /v1/health requires them."
             exit 1
           fi
           if [ "${BASE}" = "https://cloud.appwrite.io/v1" ] || [ "${BASE}" = "https://cloud.appwrite.io" ]; then
