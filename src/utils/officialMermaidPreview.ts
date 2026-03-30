@@ -3,6 +3,13 @@ import type { BeautifulMermaidThemeOptions, MermaidYamlConfig } from './mermaidY
 
 let renderCounter = 0
 
+/**
+ * Mermaid shares global config and DOM scratch nodes across `initialize` + `render`.
+ * Concurrent calls (e.g. preview debounce + block switch) can interleave and break the
+ * first render or leave the engine in a bad state — serialize all official renders.
+ */
+let renderQueue: Promise<unknown> = Promise.resolve()
+
 const OFFICIAL_MERMAID_THEMES = new Set([
   'default',
   'base',
@@ -78,7 +85,10 @@ function buildPreviewConfig(
   const baseThemeVariables = buildThemeVariablesFromBeautifulTheme(themeOptions)
   return {
     startOnLoad: false,
-    securityLevel: 'strict',
+    // User-authored diagrams often use <br/>, <i>, etc. in flowchart labels. `strict`
+    // sanitizes/rewrites HTML aggressively and breaks many real-world graphs; `loose`
+    // matches typical editor behavior (e.g. mermaid.live) for trusted local input.
+    securityLevel: 'loose',
     // Use Mermaid "base" when no explicit Mermaid theme is requested so we can
     // project the selected beautiful-mermaid palette into Mermaid variables.
     theme: yamlConfig?.theme
@@ -97,9 +107,15 @@ export async function renderOfficialMermaidPreview(
   themeOptions: BeautifulMermaidThemeOptions | undefined,
   yamlConfig?: MermaidYamlConfig,
 ): Promise<string> {
-  renderCounter += 1
-  mermaid.initialize(buildPreviewConfig(isDarkTheme, themeOptions, yamlConfig))
-  const renderId = `mermalaid-preview-${renderCounter}`
-  const { svg } = await mermaid.render(renderId, diagramCode)
-  return svg
+  const run = renderQueue.then(async () => {
+    renderCounter += 1
+    mermaid.initialize(buildPreviewConfig(isDarkTheme, themeOptions, yamlConfig))
+    const renderId = `mermalaid-preview-${renderCounter}`
+    const { svg } = await mermaid.render(renderId, diagramCode)
+    return svg
+  })
+  renderQueue = run.catch(() => {
+    /* keep the queue alive even when a render throws */
+  })
+  return run
 }
