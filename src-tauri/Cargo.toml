@@ -24,3 +24,4 @@ url = "2.5"
 # Keep major.minor in sync with @tauri-apps/plugin-* in package.json (Tauri CLI checks this).
 tauri-plugin-dialog = "2.6"
 tauri-plugin-fs = "2.4"
+tauri-plugin-opener = "2.5"

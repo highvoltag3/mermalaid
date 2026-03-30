@@ -119,6 +119,24 @@ export default function Editor({
   const decorationIdsRef = useRef<string[]>([])
   const [editorReady, setEditorReady] = useState(false)
 
+  const readClipboardText = (clipboardData: DataTransfer | null): string => {
+    if (!clipboardData) return ''
+
+    const plainTextTypes = ['text/plain', 'text', 'Text']
+    for (const type of plainTextTypes) {
+      const value = clipboardData.getData(type)
+      if (value) return value
+    }
+
+    const html = clipboardData.getData('text/html')
+    if (!html) return ''
+
+    const doc = new DOMParser().parseFromString(html, 'text/html')
+    const preformatted = doc.querySelector('pre, code')?.textContent
+    const content = preformatted ?? doc.body?.textContent ?? ''
+    return content.replace(/\u00a0/g, ' ')
+  }
+
   // Update Monaco editor when code changes externally (e.g., from AI Fix)
   useEffect(() => {
     if (editorRef.current) {
@@ -156,10 +174,14 @@ export default function Editor({
 
     const handlePaste = (e: ClipboardEvent) => {
       try {
-        const pastedText = e.clipboardData?.getData('text') || ''
+        const pastedText = readClipboardText(e.clipboardData ?? null)
+        if (!pastedText) return
+
+        const normalizedText = pastedText.replace(/\r\n/g, '\n')
+
         // Only unwrap if the entire pasted text is a single ```mermaid code block
         const singleBlockRegex = /^```mermaid\s*\n([\s\S]*?)\n```\s*$/i
-        const match = pastedText.trim().match(singleBlockRegex)
+        const match = normalizedText.trim().match(singleBlockRegex)
 
         if (match && match[1]) {
           e.preventDefault()
@@ -167,6 +189,28 @@ export default function Editor({
           const extracted = match[1].trim()
           editor.setValue(extracted)
           setCode(extracted)
+          return
+        }
+
+        const hasPlainText = ['text/plain', 'text', 'Text'].some(
+          (type) => Boolean(e.clipboardData?.getData(type)),
+        )
+
+        // Firefox + native WebView can expose only HTML clipboard payloads.
+        // In that case Monaco may not paste anything by default, so insert text manually.
+        if (!hasPlainText) {
+          e.preventDefault()
+          const selection = editor.getSelection()
+          if (selection) {
+            editor.executeEdits('clipboard-fallback', [
+              {
+                range: selection,
+                text: normalizedText,
+                forceMoveMarkers: true,
+              },
+            ])
+            setCode(editor.getValue())
+          }
         }
       } catch (err) {
         console.error('Error handling paste:', err)

@@ -8,6 +8,14 @@
   "permissions": [
     "core:default",
     "dialog:default",
+    "opener:default",
+    "core:window:allow-maximize",
+    "core:window:allow-unminimize",
+    "core:window:allow-show",
+    "core:window:allow-set-focus",
+    "core:window:allow-set-simple-fullscreen",
+    "core:window:allow-center",
+    "core:window:allow-hide",
     "fs:default",
     {
       "identifier": "fs:allow-read-text-file",
