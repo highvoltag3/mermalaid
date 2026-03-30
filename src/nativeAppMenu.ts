@@ -1,4 +1,5 @@
 import { isTauri } from '@tauri-apps/api/core'
+import { resolveResource } from '@tauri-apps/api/path'
 import { Menu, MenuItem, PredefinedMenuItem, Submenu } from '@tauri-apps/api/menu'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { openUrl } from '@tauri-apps/plugin-opener'
@@ -17,6 +18,8 @@ export type NativeMenuHandlers = {
   onPrint: () => void
   onShare: () => void
   onDuplicate: () => void
+  onEngineVersion: () => void
+  onShowLicense: () => void
   onOpenRecent: (path: string) => void
 }
 
@@ -28,6 +31,8 @@ let getHandlers: () => NativeMenuHandlers = () => ({
   onPrint: () => {},
   onShare: () => {},
   onDuplicate: () => {},
+  onEngineVersion: () => {},
+  onShowLicense: () => {},
   onOpenRecent: () => {},
 })
 
@@ -74,6 +79,20 @@ function attachWindowHideShowMenuSync(): void {
 async function buildAndSetAppMenu(): Promise<void> {
   const h = getHandlers()
   const recents = getRecentPaths()
+  const aboutMetadata: {
+    name: string
+    version: string
+    copyright: string
+    icon?: string
+  } = {
+    name: 'Mermalaid',
+    version: packageJson.version,
+    copyright: 'Mermalaid contributors',
+  }
+  const resolvedAboutIconPath = await resolveResource('icons/icon_512x512.png').catch(() => null)
+  if (resolvedAboutIconPath) {
+    aboutMetadata.icon = resolvedAboutIconPath
+  }
 
   const recentEntries = await Promise.all(
     recents.map((path, i) =>
@@ -121,11 +140,7 @@ async function buildAndSetAppMenu(): Promise<void> {
     items: [
       await PredefinedMenuItem.new({
         item: {
-          About: {
-            name: 'Mermalaid',
-            version: packageJson.version,
-            copyright: 'Mermalaid contributors',
-          },
+          About: aboutMetadata,
         },
       }),
       await PredefinedMenuItem.new({ item: 'Separator' }),
@@ -334,6 +349,17 @@ async function buildAndSetAppMenu(): Promise<void> {
     id: 'submenu_help',
     text: 'Help',
     items: [
+      await MenuItem.new({
+        id: 'help_engine_version',
+        text: 'Mermalaid Engine Version',
+        action: () => h.onEngineVersion(),
+      }),
+      await MenuItem.new({
+        id: 'help_license',
+        text: 'License',
+        action: () => h.onShowLicense(),
+      }),
+      await PredefinedMenuItem.new({ item: 'Separator' }),
       await MenuItem.new({
         id: 'help_docs',
         text: 'Mermalaid on GitHub',

@@ -6,7 +6,7 @@ import {
   type MutableRefObject,
 } from 'react'
 import { isTauri } from '@tauri-apps/api/core'
-import { open, save } from '@tauri-apps/plugin-dialog'
+import { message, open, save } from '@tauri-apps/plugin-dialog'
 import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs'
 import html2canvas from 'html2canvas'
 import { renderMermaidAscii, renderMermaid } from 'beautiful-mermaid'
@@ -24,8 +24,10 @@ import {
 } from '../utils/mermaidThemes'
 import {
   parseMermaidWithConfig,
+  parseMermaidConfigForOfficialRenderer,
   mapMermaidConfigToThemeOptions,
 } from '../utils/mermaidYamlConfig'
+import { renderOfficialMermaidPreview } from '../utils/officialMermaidPreview'
 import Settings from './Settings'
 import { rebuildNativeAppMenu } from '../nativeAppMenu'
 import { addRecentFile, recentFileLabel, removeRecentFile } from '../utils/recentFiles'
@@ -34,6 +36,25 @@ import './Toolbar.css'
 const OPEN_FILTERS = [
   { name: 'Mermaid / Text', extensions: ['mmd', 'txt', 'md', 'markdown'] as string[] },
 ]
+
+const LICENSE_INFO_TEXT = `Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)
+
+Copyright © 2025-present Dario Novoa (highvoltag3)
+
+You are free to:
+- Share — copy and redistribute the material in any medium or format
+- Adapt — remix, transform, and build upon the material
+
+Under the following terms:
+- Attribution — Give credit, provide a license link, and indicate changes.
+- NonCommercial — No commercial use.
+- ShareAlike — Distribute contributions under the same license.
+
+Project license file:
+https://github.com/highvoltag3/mermalaid/blob/main/LICENSE
+
+Full license text:
+https://creativecommons.org/licenses/by-nc-sa/4.0/`
 
 interface ToolbarProps {
   code: string
@@ -53,6 +74,8 @@ export interface ToolbarRef {
   handlePrint: () => void
   handleShare: () => void
   handleDuplicate: () => void
+  handleEngineVersionInfo: () => void
+  handleShowLicenseInfo: () => void
   openPath: (path: string) => Promise<void>
 }
 
@@ -265,6 +288,26 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
     }
   }
 
+  const handleEngineVersionInfo = () => {
+    setCode('info')
+    documentPathRef.current = null
+    showToast('Showing Mermaid engine info')
+  }
+
+  const handleShowLicenseInfo = () => {
+    const show = async () => {
+      if (isTauri()) {
+        await message(LICENSE_INFO_TEXT, { title: 'Mermalaid License', kind: 'info' })
+      } else {
+        window.alert(LICENSE_INFO_TEXT)
+      }
+    }
+    void show().catch((err) => {
+      console.error('Failed to show license info:', err)
+      showToast('Failed to show license info.', 'error')
+    })
+  }
+
   const handleExportSVG = async () => {
     const svgElement = document.querySelector('.preview-content svg')
     if (!svgElement) {
@@ -365,17 +408,43 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
     const svgs: string[] = []
 
     for (let i = 0; i < mermaidBlocks.length; i++) {
+      const rawBlock = mermaidBlocks[i].code
       const { code: diagramCode, config: blockConfig } = parseMermaidWithConfig(
-        mermaidBlocks[i].code
+        rawBlock
       )
+      const officialYamlConfig = parseMermaidConfigForOfficialRenderer(rawBlock)
       const themeOptions = blockConfig
         ? mapMermaidConfigToThemeOptions(blockConfig)
         : defaultThemeOptions
+      const normalizedForCompat = normalizeMermaidForBeautifulMermaid(diagramCode)
       try {
-        const svg = await renderMermaid(
-          normalizeMermaidForBeautifulMermaid(diagramCode),
-          themeOptions,
-        )
+        let svg: string
+        try {
+          svg = await renderOfficialMermaidPreview(
+            diagramCode,
+            isDark,
+            themeOptions,
+            officialYamlConfig,
+          )
+        } catch (primaryErr) {
+          try {
+            if (normalizedForCompat !== diagramCode) {
+              svg = await renderOfficialMermaidPreview(
+                normalizedForCompat,
+                isDark,
+                themeOptions,
+                officialYamlConfig,
+              )
+            } else {
+              throw primaryErr
+            }
+          } catch {
+            svg = await renderMermaid(
+              normalizedForCompat,
+              themeOptions,
+            )
+          }
+        }
         svgs.push(svg)
       } catch (err) {
         console.error(`Failed to render block ${i + 1}:`, err)
@@ -441,6 +510,8 @@ ${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</di
     handlePrint,
     handleShare,
     handleDuplicate,
+    handleEngineVersionInfo,
+    handleShowLicenseInfo,
     openPath,
   }))
 

@@ -37,18 +37,20 @@ export function isEditableDiagram(code: string): boolean {
 }
 
 // Node shape patterns ordered from most specific to least specific
+const MERMAID_ID_PATTERN = '[A-Za-z0-9_][A-Za-z0-9_.:-]*'
+
 const NODE_SHAPE_PATTERNS: { regex: RegExp; shape: NodeShapeType; labelGroup: number }[] = [
-  { regex: /(\w+)\{\{([^}]+)\}\}/, shape: 'hexagon', labelGroup: 2 },
-  { regex: /(\w+)\[\[([^\]]+)\]\]/, shape: 'subroutine', labelGroup: 2 },
-  { regex: /(\w+)\(\(([^)]+)\)\)/, shape: 'doublecircle', labelGroup: 2 },
-  { regex: /(\w+)\[\(([^)\]]*)\)\]/, shape: 'cylinder', labelGroup: 2 },
-  { regex: /(\w+)\(\[([^\]]*)\]\)/, shape: 'stadium', labelGroup: 2 },
-  { regex: /(\w+)\[\/([^\]\\]+)\\]/, shape: 'trapezoid', labelGroup: 2 },
-  { regex: /(\w+)\[\\([^\]\/]+)\/]/, shape: 'trapezoidAlt', labelGroup: 2 },
-  { regex: /(\w+)\[\/([^\]\/]+)\/]/, shape: 'parallelogram', labelGroup: 2 },
-  { regex: /(\w+)\{([^}]+)\}/, shape: 'diamond', labelGroup: 2 },
-  { regex: /(\w+)\[([^\]]+)\]/, shape: 'rect', labelGroup: 2 },
-  { regex: /(\w+)\(([^)]+)\)/, shape: 'rounded', labelGroup: 2 },
+  { regex: new RegExp(`(${MERMAID_ID_PATTERN})\\{\\{([^}]+)\\}\\}`), shape: 'hexagon', labelGroup: 2 },
+  { regex: new RegExp(`(${MERMAID_ID_PATTERN})\\[\\[([^\\]]+)\\]\\]`), shape: 'subroutine', labelGroup: 2 },
+  { regex: new RegExp(`(${MERMAID_ID_PATTERN})\\(\\(([^)]+)\\)\\)`), shape: 'doublecircle', labelGroup: 2 },
+  { regex: new RegExp(`(${MERMAID_ID_PATTERN})\\[\\(([^)\\]]*)\\)\\]`), shape: 'cylinder', labelGroup: 2 },
+  { regex: new RegExp(`(${MERMAID_ID_PATTERN})\\(\\[([^\\]]*)\\]\\)`), shape: 'stadium', labelGroup: 2 },
+  { regex: new RegExp(`(${MERMAID_ID_PATTERN})\\[\\/([^\\]\\\\]+)\\\\]`), shape: 'trapezoid', labelGroup: 2 },
+  { regex: new RegExp(`(${MERMAID_ID_PATTERN})\\[\\\\([^\\]\\/]+)\\/]`), shape: 'trapezoidAlt', labelGroup: 2 },
+  { regex: new RegExp(`(${MERMAID_ID_PATTERN})\\[\\/([^\\]\\/]+)\\/]`), shape: 'parallelogram', labelGroup: 2 },
+  { regex: new RegExp(`(${MERMAID_ID_PATTERN})\\{([^}]+)\\}`), shape: 'diamond', labelGroup: 2 },
+  { regex: new RegExp(`(${MERMAID_ID_PATTERN})\\[([^\\]]+)\\]`), shape: 'rect', labelGroup: 2 },
+  { regex: new RegExp(`(${MERMAID_ID_PATTERN})\\(([^)]+)\\)`), shape: 'rounded', labelGroup: 2 },
 ]
 
 /**
@@ -87,7 +89,7 @@ function extractNodesFromLine(
 }
 
 // Edge arrow pattern: captures source ID, skips optional node syntax, matches arrow, optional label, target ID
-const ARROW_PATTERN = /(\w+)\s*(?:\{\{[^}]+\}\}|\[\[[^\]]+\]\]|\(\(\([^)]+\)\)\)|\(\([^)]+\)\)|\[\([^\]]*\)\]|\(\[[^\]]*\]\)|\[\/[^\]]+\\]|\[\\[^\]]+\/]|\[\/[^\]]+\/]|\{[^}]+\}|\[[^\]]+\]|\([^)]+\))?\s*([-=.]+>|==>|-->|---?|-.->)\s*(?:\|([^|]+)\|)?\s*(\w+)/
+const ARROW_PATTERN = new RegExp(`(${MERMAID_ID_PATTERN})\\s*(?:\\{\\{[^}]+\\}\\}|\\[\\[[^\\]]+\\]\\]|\\(\\(\\([^)]+\\)\\)\\)|\\(\\([^)]+\\)\\)|\\[\\([^\\]]*\\)\\]|\\(\\[[^\\]]*\\]\\)|\\[\\/[^\\]]+\\\\]|\\[\\\\[^\\]]+\\/]|\\[\\/[^\\]]+\\/]|\\{[^}]+\\}|\\[[^\\]]+\\]|\\([^)]+\\))?\\s*([-=.]+>|==>|-->|---?|-.->)\\s*(?:\\|([^|]+)\\|)?\\s*(${MERMAID_ID_PATTERN})`)
 
 /**
  * Parses Mermaid flowchart/graph code into structured data.
@@ -123,7 +125,7 @@ export function parseMermaidFlowchart(code: string): ParsedMermaidDiagram | null
   for (const line of lines) {
     if (/^(flowchart|graph)\s+(TD|BT|LR|RL|TB|DT)/i.test(line)) continue
 
-    const subgraphMatch = line.match(/subgraph\s+(\w+)(?:\s+"([^"]+)")?/i)
+    const subgraphMatch = line.match(new RegExp(`subgraph\\s+(${MERMAID_ID_PATTERN})(?:\\s+"([^"]+)")?`, 'i'))
     if (subgraphMatch) {
       subgraphs.push({ id: subgraphMatch[1], label: subgraphMatch[2], nodes: [] })
       continue

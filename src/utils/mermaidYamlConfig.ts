@@ -80,6 +80,34 @@ export function parseMermaidWithConfig(raw: string): ParsedMermaidWithConfig {
   }
 }
 
+/**
+ * Parses Mermaid YAML frontmatter strictly for official Mermaid rendering.
+ * Unlike parseMermaidWithConfig(), this keeps theme-only config blocks.
+ */
+export function parseMermaidConfigForOfficialRenderer(
+  raw: string
+): MermaidYamlConfig | undefined {
+  const trimmed = raw.trim()
+  const match = trimmed.match(FRONTMATTER_REGEX)
+  if (!match) return undefined
+
+  const yamlBlock = match[1]
+  try {
+    const parsed = parseYaml(yamlBlock) as Record<string, unknown> | null
+    if (!parsed || typeof parsed !== 'object' || !parsed.config) return undefined
+    const c = parsed.config as Record<string, unknown>
+    const theme = typeof c.theme === 'string' ? c.theme : undefined
+    const themeVariables =
+      c.themeVariables && typeof c.themeVariables === 'object'
+        ? (c.themeVariables as MermaidThemeVariables)
+        : undefined
+    if (!theme && !themeVariables) return undefined
+    return { theme, themeVariables }
+  } catch {
+    return undefined
+  }
+}
+
 /** beautiful-mermaid theme options (bg, fg, line, accent, etc.) */
 export interface BeautifulMermaidThemeOptions {
   bg?: string
