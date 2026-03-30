@@ -7,6 +7,8 @@ interface ImportMetaEnv {
   // Application Configuration
   readonly VITE_APP_NAME?: string
   readonly VITE_APP_VERSION?: string
+  /** Optional `owner/repo` for GitHub releases API (defaults to highvoltag3/mermalaid) */
+  readonly VITE_GITHUB_REPO?: string
 
   // Analytics
   readonly VITE_ANALYTICS_ID?: string

@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
+import UpdateAvailableBanner from './UpdateAvailableBanner'
+import type { LatestReleaseInfo } from '../utils/githubRelease'
 import './LandingPage.css'
+
+interface LandingPageProps {
+  pendingRelease: LatestReleaseInfo | null
+  onDismissPendingRelease: () => void
+}
 
 /* ─── Theme Switcher ─── */
 const THEMES = ['system', 'light', 'dark'] as const
@@ -166,7 +173,10 @@ const faqs = [
   },
 ]
 
-export default function LandingPage() {
+export default function LandingPage({
+  pendingRelease,
+  onDismissPendingRelease,
+}: LandingPageProps) {
   const shouldSkipLanding = (() => {
     try { return !!localStorage.getItem('mermalaid-has-used-editor') } catch { return false }
   })()
@@ -228,6 +238,14 @@ export default function LandingPage() {
 
   return (
     <div className={`landing${resolvedDark ? ' landing-dark' : ''}`} ref={rootRef}>
+      {pendingRelease && (
+        <UpdateAvailableBanner
+          update={pendingRelease}
+          onDismiss={onDismissPendingRelease}
+          variant="landing"
+          dark={resolvedDark}
+        />
+      )}
       {/* Navigation */}
       <nav className="landing-nav">
         <div className="landing-nav-inner">
