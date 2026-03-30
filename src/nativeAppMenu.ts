@@ -41,6 +41,36 @@ const runMenuAction = (label: string, action: () => Promise<void>) => {
   })
 }
 
+/** Window ▸ Hide/Show item; recreated on each menu rebuild. */
+let hideShowWindowMenuItem: MenuItem | null = null
+let windowMenuVisibilitySyncAttached = false
+
+async function syncWindowHideShowMenuLabel(): Promise<void> {
+  const item = hideShowWindowMenuItem
+  if (!item) return
+  try {
+    const appWindow = getCurrentWindow()
+    const visible = await appWindow.isVisible()
+    await item.setText(visible ? 'Hide' : 'Show')
+    await item.setAccelerator(visible ? 'CmdOrCtrl+H' : null)
+  } catch (err) {
+    console.error('syncWindowHideShowMenuLabel failed:', err)
+  }
+}
+
+function attachWindowHideShowMenuSync(): void {
+  if (windowMenuVisibilitySyncAttached || !isTauri()) return
+  windowMenuVisibilitySyncAttached = true
+
+  void getCurrentWindow().onFocusChanged(() => {
+    void syncWindowHideShowMenuLabel()
+  })
+
+  document.addEventListener('visibilitychange', () => {
+    void syncWindowHideShowMenuLabel()
+  })
+}
+
 async function buildAndSetAppMenu(): Promise<void> {
   const h = getHandlers()
   const recents = getRecentPaths()
@@ -205,6 +235,25 @@ async function buildAndSetAppMenu(): Promise<void> {
     ],
   })
 
+  const windowHideShowItem = await MenuItem.new({
+    id: 'window_hide',
+    text: 'Hide',
+    accelerator: 'CmdOrCtrl+H',
+    action: () => {
+      runMenuAction('Hide or show window', async () => {
+        const appWindow = getCurrentWindow()
+        if (await appWindow.isVisible()) {
+          await appWindow.hide()
+        } else {
+          await appWindow.show()
+          await appWindow.setFocus()
+        }
+        await syncWindowHideShowMenuLabel()
+      })
+    },
+  })
+  hideShowWindowMenuItem = windowHideShowItem
+
   const windowMenu = await Submenu.new({
     id: 'submenu_window',
     text: 'Window',
@@ -222,6 +271,7 @@ async function buildAndSetAppMenu(): Promise<void> {
             }
             await appWindow.maximize()
             await appWindow.setFocus()
+            await syncWindowHideShowMenuLabel()
           })
         },
       }),
@@ -238,6 +288,7 @@ async function buildAndSetAppMenu(): Promise<void> {
               await appWindow.setSimpleFullscreen(true)
             }
             await appWindow.setFocus()
+            await syncWindowHideShowMenuLabel()
           })
         },
       }),
@@ -255,6 +306,7 @@ async function buildAndSetAppMenu(): Promise<void> {
             }
             await appWindow.center()
             await appWindow.setFocus()
+            await syncWindowHideShowMenuLabel()
           })
         },
       }),
@@ -270,20 +322,11 @@ async function buildAndSetAppMenu(): Promise<void> {
             }
             await appWindow.show()
             await appWindow.setFocus()
+            await syncWindowHideShowMenuLabel()
           })
         },
       }),
-      await MenuItem.new({
-        id: 'window_hide',
-        text: 'Hide',
-        accelerator: 'CmdOrCtrl+H',
-        action: () => {
-          runMenuAction('Hide', async () => {
-            const appWindow = getCurrentWindow()
-            await appWindow.hide()
-          })
-        },
-      }),
+      windowHideShowItem,
     ],
   })
 
@@ -324,6 +367,8 @@ async function buildAndSetAppMenu(): Promise<void> {
     items: [appMenu, fileMenu, editMenu, viewMenu, windowMenu, helpMenu],
   })
   await menu.setAsAppMenu()
+  await syncWindowHideShowMenuLabel()
+  attachWindowHideShowMenuSync()
 }
 
 /** Install menu once; call {@link rebuildNativeAppMenu} after recent files change. */
