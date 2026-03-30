@@ -24,8 +24,8 @@ Automatically builds and deploys the web application to Appwrite Sites.
 - Manual workflow dispatch
 
 **Behavior:**
-- Runs `npm ci`, `npm run build`, then uploads the **`dist/`** folder with `appwrite sites create-deployment` (modern CLI — not the removed `appwrite deploy sites` command).
-- Uses **`--activate true`** so the new deployment becomes **Active** without a manual activate step in the Appwrite console.
+- Runs `npm ci`, `npm run build`, then packages **`dist/`** as **`site-code.tar.gz`** and uploads it with **`curl`** to the Appwrite Sites REST API (`POST /v1/sites/{siteId}/deployments`). No Appwrite CLI is used.
+- Sends **`activate=true`** in the multipart request so the deployment becomes **Active** when ready, without a manual activate step in the Appwrite console.
 - **Concurrency:** only one run per branch at a time; newer pushes cancel an in-progress deploy on the same branch.
 
 **Required Secrets:**
@@ -45,7 +45,6 @@ Configure these in your GitHub repository settings → Secrets and variables →
 
 4. **`APPWRITE_ENDPOINT`** (required for Appwrite Cloud)
    - Must be your **regional** API base URL, e.g. `https://fra.cloud.appwrite.io/v1` (see Appwrite Console → your project).
-   - Do **not** use the bare `https://cloud.appwrite.io/v1` host — the workflow will fail validation (same as local CLI and `keep-appwrite-active`).
    - For self-hosted Appwrite, set this to your instance’s `/v1` URL.
 
 **Optional Build-Time Environment Variables:**
@@ -99,11 +98,11 @@ You can manually trigger the deployment:
 - Verify project ID is correct
 - Confirm **`APPWRITE_ENDPOINT`** uses your **region** host (`https://<REGION>.cloud.appwrite.io/v1`), not the generic `cloud.appwrite.io` URL
 
-### CLI vs GitHub in Appwrite console
-- Deployments **from this Action** are labeled by source depending on how Appwrite records the API upload; they are not the same as **Git-connected builds** inside Appwrite. This workflow always uploads a full pre-built **`dist/`** after `npm run build`. If a local CLI deploy fails fast with a small artifact, see [DEPLOYMENT.md](../../DEPLOYMENT.md) — usually wrong CLI command, missing build, or wrong endpoint.
+### API upload vs Git-connected builds in the Appwrite console
+- Deployments **from this Action** use the **REST upload** path; Appwrite may label the source differently from **Git-connected builds** that run install/build on Appwrite’s side. This workflow always uploads a full pre-built **`dist/`** (as `.tar.gz`) after `npm run build`.
 
 ### Site stuck on Ready (not Active)
-- This workflow passes **`--activate true`** so GitHub-triggered uploads should go live without clicking Activate. If you deploy only via **Appwrite’s Git integration**, you may still need to activate in the console unless Appwrite enables auto-activation for that site.
+- This workflow sends **`activate=true`** on create so GitHub-triggered uploads should go live without clicking Activate. If you deploy only via **Appwrite’s Git integration**, you may still need to activate in the console unless Appwrite enables auto-activation for that site.
 
 ### Site Not Updating
 - Appwrite Sites may take a few minutes to update
