@@ -152,7 +152,7 @@ If checks pass, it runs `npm version`, creates a `v*` tag, and pushes commit + t
    - `APPWRITE_API_KEY` - Your Appwrite API key with Sites permissions
    - `APPWRITE_PROJECT_ID` - Your Appwrite Project ID
    - `APPWRITE_SITE_ID` - Your Appwrite Site ID
-   - `APPWRITE_ENDPOINT` (optional) - Default: `https://cloud.appwrite.io/v1`
+   - `APPWRITE_ENDPOINT` (required for Cloud) - Regional URL, e.g. `https://<REGION>.cloud.appwrite.io/v1` (not the bare `cloud.appwrite.io` host)
 
 2. Push to `main` or `feature/appwrite-sites` branch to trigger automatic deployment
 
@@ -179,21 +179,46 @@ Once configured in the Appwrite Console:
 
 ### Method 3: Appwrite CLI (Local)
 
-Deploy from your local machine using Appwrite CLI:
+Modern Appwrite CLI no longer supports `appwrite deploy sites`. Upload a **pre-built** `dist/` folder (same approach as `.github/workflows/deploy-appwrite.yml`).
+
+1. **Use your region endpoint** — not the bare `https://cloud.appwrite.io/v1` host. It looks like `https://<REGION>.cloud.appwrite.io/v1` (see Appwrite Console → your project).
+
+2. **Build before deploying** — the CLI uploads files only; it does not run `npm run build` for you.
 
 ```bash
-# Install Appwrite CLI
 npm install -g appwrite-cli
 
-# Login and setup
+# Option A — interactive (local): after login, select the correct project in the CLI
 appwrite login
-appwrite init project
 
-# Deploy
-appwrite deploy sites --siteId YOUR_SITE_ID --entrypoint dist/index.html --output dist
+# Option B — non-interactive (matches CI): API key with Sites permissions
+appwrite client \
+  --endpoint "https://<REGION>.cloud.appwrite.io/v1" \
+  --project-id YOUR_PROJECT_ID \
+  --key YOUR_API_KEY
+
+npm ci
+npm run build
+
+appwrite sites create-deployment \
+  --site-id YOUR_SITE_ID \
+  --code dist \
+  --activate true
 ```
 
+`--activate true` makes the new deployment **Active** immediately so you do not have to click **Activate** in the console.
+
 ## Troubleshooting
+
+### CLI deployments fail quickly; GitHub builds succeed
+
+- **Wrong or deprecated CLI flow** — If you still use `appwrite deploy sites`, the command is removed in current CLI versions; use `appwrite sites create-deployment` with a built `dist/` as above.
+- **Missing or stale build** — Deploying without `npm run build` (or pointing `--code` at the wrong folder) produces a tiny bundle and often fails during Appwrite’s processing. The working GitHub integration runs a full install + build on Appwrite’s builders, which is why it is larger and slower.
+- **Endpoint** — Cloud projects need the **regional** `/v1` URL; a generic endpoint can break auth or routing.
+
+### Git deployments show Ready but are not live until you activate
+
+Appwrite Sites often creates a deployment in **Ready** first; **Active** is the version served to visitors. In the console you may need to **Activate** the deployment unless something (for example `create-deployment --activate true` or a site setting for auto-activation) does it for you. This repo’s GitHub Action passes `--activate true` so Action-triggered uploads should go live without a manual step.
 
 ### Build Fails
 

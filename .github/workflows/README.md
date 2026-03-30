@@ -23,6 +23,11 @@ Automatically builds and deploys the web application to Appwrite Sites.
 - Push to `feature/appwrite-sites` branch
 - Manual workflow dispatch
 
+**Behavior:**
+- Runs `npm ci`, `npm run build`, then uploads the **`dist/`** folder with `appwrite sites create-deployment` (modern CLI — not the removed `appwrite deploy sites` command).
+- Uses **`--activate true`** so the new deployment becomes **Active** without a manual activate step in the Appwrite console.
+- **Concurrency:** only one run per branch at a time; newer pushes cancel an in-progress deploy on the same branch.
+
 **Required Secrets:**
 Configure these in your GitHub repository settings → Secrets and variables → Actions:
 
@@ -38,10 +43,10 @@ Configure these in your GitHub repository settings → Secrets and variables →
    - Your Appwrite Site ID
    - Get from: Appwrite Console → Sites → Your Site → Settings
 
-4. **`APPWRITE_ENDPOINT`** (optional)
-   - Your Appwrite endpoint URL
-   - Default: `https://cloud.appwrite.io/v1`
-   - Only needed if using self-hosted Appwrite
+4. **`APPWRITE_ENDPOINT`** (required for Appwrite Cloud)
+   - Must be your **regional** API base URL, e.g. `https://fra.cloud.appwrite.io/v1` (see Appwrite Console → your project).
+   - Do **not** use the bare `https://cloud.appwrite.io/v1` host — the workflow will fail validation (same as local CLI and `keep-appwrite-active`).
+   - For self-hosted Appwrite, set this to your instance’s `/v1` URL.
 
 **Optional Build-Time Environment Variables:**
 You can also add these as secrets if you want to use them during build:
@@ -53,6 +58,8 @@ You can also add these as secrets if you want to use them during build:
 - `VITE_ENABLE_ANALYTICS` - Enable analytics
 
 **Note:** Do NOT add `VITE_OPENAI_API_KEY` as a GitHub secret for build-time embedding. API keys should be handled client-side through Appwrite's environment variables feature or other secure methods.
+
+---
 
 ## Setting Up Secrets
 
@@ -86,10 +93,17 @@ You can manually trigger the deployment:
 - Review build logs for specific errors
 
 ### Deployment Fails
-- Verify all required secrets are set correctly
+- Verify all required secrets are set correctly (including non-empty **`APPWRITE_SITE_ID`**)
 - Check API key has proper permissions (Sites deployment)
 - Ensure Site ID matches your Appwrite Console
 - Verify project ID is correct
+- Confirm **`APPWRITE_ENDPOINT`** uses your **region** host (`https://<REGION>.cloud.appwrite.io/v1`), not the generic `cloud.appwrite.io` URL
+
+### CLI vs GitHub in Appwrite console
+- Deployments **from this Action** are labeled by source depending on how Appwrite records the API upload; they are not the same as **Git-connected builds** inside Appwrite. This workflow always uploads a full pre-built **`dist/`** after `npm run build`. If a local CLI deploy fails fast with a small artifact, see [DEPLOYMENT.md](../../DEPLOYMENT.md) — usually wrong CLI command, missing build, or wrong endpoint.
+
+### Site stuck on Ready (not Active)
+- This workflow passes **`--activate true`** so GitHub-triggered uploads should go live without clicking Activate. If you deploy only via **Appwrite’s Git integration**, you may still need to activate in the console unless Appwrite enables auto-activation for that site.
 
 ### Site Not Updating
 - Appwrite Sites may take a few minutes to update

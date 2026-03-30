@@ -7,9 +7,15 @@ on:
       - feature/appwrite-sites
   workflow_dispatch:
 
+concurrency:
+  group: appwrite-sites-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -26,16 +32,26 @@ jobs:
       - name: Build project
         run: npm run build
 
+      - name: Verify build output
+        run: |
+          if [ ! -f dist/index.html ]; then
+            echo "::error::dist/index.html missing after npm run build"
+            exit 1
+          fi
+          echo "Build output size:"
+          du -sh dist
+
       # setup-for-appwrite@v1 calls `appwrite init --locale=...`, which CLI v16+ rejects.
       # Use `appwrite client` for CI: https://appwrite.io/docs/tooling/command-line/non-interactive
       - name: Install Appwrite CLI
-        run: npm install -g appwrite-cli
+        run: npm install -g appwrite-cli@17
 
       - name: Configure Appwrite CLI (non-interactive)
         env:
           APPWRITE_ENDPOINT: ${{ secrets.APPWRITE_ENDPOINT }}
           APPWRITE_PROJECT_ID: ${{ secrets.APPWRITE_PROJECT_ID }}
           APPWRITE_API_KEY: ${{ secrets.APPWRITE_API_KEY }}
+          APPWRITE_SITE_ID: ${{ secrets.APPWRITE_SITE_ID }}
         run: |
           if [ -z "${APPWRITE_ENDPOINT}" ]; then
             echo "::error::Set APPWRITE_ENDPOINT secret to your project region endpoint, e.g. https://<REGION>.cloud.appwrite.io/v1"
@@ -43,6 +59,10 @@ jobs:
           fi
           if [ -z "${APPWRITE_PROJECT_ID}" ] || [ -z "${APPWRITE_API_KEY}" ]; then
             echo "::error::Set APPWRITE_PROJECT_ID and APPWRITE_API_KEY repository secrets."
+            exit 1
+          fi
+          if [ -z "${APPWRITE_SITE_ID}" ]; then
+            echo "::error::Set APPWRITE_SITE_ID repository secret (Sites → your site → Settings)."
             exit 1
           fi
           EP="${APPWRITE_ENDPOINT}"
@@ -58,10 +78,13 @@ jobs:
           appwrite --version
 
       - name: Deploy to Appwrite Sites
+        env:
+          APPWRITE_SITE_ID: ${{ secrets.APPWRITE_SITE_ID }}
         run: |
           # `appwrite deploy` was removed in modern CLI; upload pre-built `dist/` via Sites API.
+          # --activate true skips manual "Activate" in the Appwrite console for this deployment.
           appwrite sites create-deployment \
-            --site-id "${{ secrets.APPWRITE_SITE_ID }}" \
+            --site-id "${APPWRITE_SITE_ID}" \
             --code dist \
             --activate true
 
