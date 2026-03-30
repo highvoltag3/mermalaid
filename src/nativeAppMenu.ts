@@ -403,15 +403,19 @@ export async function initNativeAppMenu(): Promise<void> {
     await currentInitPromise
   } catch (error) {
     console.error('buildAndSetAppMenu failed, falling back to default menu:', error)
+    let fallbackInstalled = false
     try {
       const fallback = await Menu.default()
       await fallback.setAsAppMenu()
+      fallbackInstalled = true
       console.info('Fallback default app menu installed.')
     } catch (fallbackError) {
       console.error('Fallback menu installation failed:', fallbackError)
     }
-    console.error('initNativeAppMenu failed:', error)
-    throw error
+    if (!fallbackInstalled) {
+      console.error('initNativeAppMenu failed:', error)
+      throw error
+    }
   } finally {
     // Release the lock once this init run settles, so future calls can rebuild.
     if (menuInitPromise === currentInitPromise) {
