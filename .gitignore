@@ -33,6 +33,9 @@ dist
 dist-ssr
 *.local
 
+# Cursor: agent skills are personal (~/.cursor/skills/), not per-repo
+.cursor/skills/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
