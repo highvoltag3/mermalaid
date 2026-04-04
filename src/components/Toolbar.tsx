@@ -28,7 +28,11 @@ import {
   mapMermaidConfigToThemeOptions,
 } from '../utils/mermaidYamlConfig'
 import { renderOfficialMermaidPreview } from '../utils/officialMermaidPreview'
-import packageJson from '../../package.json'
+import {
+  buildMermalaidAboutPreviewHtml,
+  buildMermalaidInfoText,
+  isMermaidAboutKeywordOnly,
+} from '../utils/mermalaidInfoText'
 import Settings from './Settings'
 import { rebuildNativeAppMenu } from '../nativeAppMenu'
 import { addRecentFile, recentFileLabel, removeRecentFile } from '../utils/recentFiles'
@@ -56,10 +60,6 @@ https://github.com/highvoltag3/mermalaid/blob/main/LICENSE
 
 Full license text:
 https://creativecommons.org/licenses/by-nc-sa/4.0/`
-
-const ENGINE_VERSION_INFO_TEXT = `Mermalaid ${packageJson.version}
-Official Mermaid engine: ${packageJson.dependencies?.mermaid ?? 'unknown'}
-Visual editor/export engine: ${packageJson.dependencies?.['beautiful-mermaid'] ?? 'unknown'}`
 
 interface ToolbarProps {
   code: string
@@ -295,15 +295,16 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
 
   const handleEngineVersionInfo = () => {
     const show = async () => {
+      const text = await buildMermalaidInfoText()
       if (isTauri()) {
-        await message(ENGINE_VERSION_INFO_TEXT, { title: 'Mermalaid Engine Version', kind: 'info' })
+        await message(text, { title: 'About Mermalaid', kind: 'info' })
       } else {
-        window.alert(ENGINE_VERSION_INFO_TEXT)
+        window.alert(text)
       }
     }
     void show().catch((err) => {
-      console.error('Failed to show engine version info:', err)
-      showToast('Failed to show engine version info.', 'error')
+      console.error('Failed to show Mermalaid info:', err)
+      showToast('Failed to show Mermalaid info.', 'error')
     })
   }
 
@@ -385,6 +386,25 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
       showToast('No diagram to export', 'error')
       return
     }
+    if (isMermaidAboutKeywordOnly(diagramCode)) {
+      void (async () => {
+        try {
+          const text = await buildMermalaidInfoText()
+          const blob = new Blob([text], { type: 'text/plain' })
+          const url = URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = url
+          a.download = 'diagram.txt'
+          a.click()
+          URL.revokeObjectURL(url)
+          showToast('Exported diagram.txt')
+        } catch (err) {
+          console.error('ASCII export error:', err)
+          showToast('Failed to export Mermalaid info.', 'error')
+        }
+      })()
+      return
+    }
     try {
       const ascii = renderMermaidAscii(
         normalizeMermaidForBeautifulMermaid(diagramCode),
@@ -431,6 +451,10 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
         : defaultThemeOptions
       const normalizedForCompat = normalizeMermaidForBeautifulMermaid(diagramCode)
       try {
+        if (isMermaidAboutKeywordOnly(diagramCode)) {
+          svgs.push(await buildMermalaidAboutPreviewHtml())
+          continue
+        }
         let svg: string
         try {
           svg = await renderOfficialMermaidPreview(
@@ -472,7 +496,8 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
 <style>body{background:${bg};color:${fg};font-family:system-ui;padding:2rem}
 .diagram{margin:2rem 0;padding:1rem;border:1px solid ${isDark ? '#444' : '#ddd'};border-radius:8px}
 .diagram h2{margin:0 0 1rem;font-size:1rem}
-.diagram svg{max-width:100%;height:auto}</style></head><body>
+.diagram svg{max-width:100%;height:auto}
+.preview-about-mermalaid{white-space:pre-wrap;word-break:break-word;font-family:ui-monospace,Menlo,Monaco,Consolas,monospace;font-size:13px;line-height:1.45;margin:0}</style></head><body>
 <h1>Mermaid Diagrams (${svgs.length})</h1>
 ${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</div>`).join('\n')}
 </body></html>`

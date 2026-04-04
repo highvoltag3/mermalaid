@@ -18,6 +18,10 @@ import {
   parseMermaidConfigForOfficialRenderer,
   replaceDiagramInBlock,
 } from '../utils/mermaidYamlConfig'
+import {
+  buildMermalaidAboutPreviewHtml,
+  isMermaidAboutKeywordOnly,
+} from '../utils/mermalaidInfoText'
 import { renderOfficialMermaidPreview } from '../utils/officialMermaidPreview'
 import VisualEditor from './VisualEditor'
 import './Preview.css'
@@ -232,6 +236,26 @@ export default function Preview({
       const currentId = ++renderIdRef.current
       const container = previewRef.current
 
+      const applyMermalaidAboutPanel = async () => {
+        try {
+          const html = await buildMermalaidAboutPreviewHtml()
+          if (renderIdRef.current === currentId && container) {
+            container.innerHTML = html
+            setError(null)
+            setDiagramReady(true)
+            setPreviewFitTick((t) => t + 1)
+          }
+        } catch (err) {
+          const errorMsg =
+            err instanceof Error ? err.message : 'Could not load Mermalaid info'
+          setError(errorMsg)
+          if (renderIdRef.current === currentId && container) {
+            container.innerHTML = `<div class="error-preview">${errorMsg}</div>`
+            setDiagramReady(false)
+          }
+        }
+      }
+
       if (isEditMode && canEdit) {
         return
       }
@@ -242,6 +266,11 @@ export default function Preview({
           setError(null)
           setDiagramReady(false)
         }
+        return
+      }
+
+      if (isMermaidAboutKeywordOnly(diagramCode)) {
+        await applyMermalaidAboutPanel()
         return
       }
 
@@ -272,6 +301,10 @@ export default function Preview({
             }
           } catch {
             // Last-resort legacy renderer fallback for pre-existing diagrams.
+            if (isMermaidAboutKeywordOnly(normalizedForCompat)) {
+              await applyMermalaidAboutPanel()
+              return
+            }
             const themeOptions = yamlConfig
               ? mapMermaidConfigToThemeOptions(yamlConfig)
               : previewThemeOptions
