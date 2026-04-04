@@ -23,6 +23,7 @@ import {
   isMermaidAboutKeywordOnly,
 } from '../utils/mermalaidInfoText'
 import { renderOfficialMermaidPreview } from '../utils/officialMermaidPreview'
+import { MERMLAID_PREVIEW_DEBOUNCE_MS } from '../constants/mermalaidTiming'
 import VisualEditor from './VisualEditor'
 import './Preview.css'
 
@@ -327,7 +328,7 @@ export default function Preview({
           setDiagramReady(false)
         }
       }
-    }, 500)
+    }, MERMLAID_PREVIEW_DEBOUNCE_MS)
 
     return () => clearTimeout(timer)
   }, [

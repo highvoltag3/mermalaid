@@ -13,6 +13,7 @@ import Toolbar, { type ToolbarRef } from './components/Toolbar'
 import LandingPage from './components/LandingPage'
 import UpdateAvailableBanner from './components/UpdateAvailableBanner'
 import type { LatestReleaseInfo } from './utils/githubRelease'
+import { isDiagramImportFileName } from './utils/diagramImportFiles'
 import { extractMermaidCode, extractAllMermaidBlocks } from './utils/mermaidCodeBlock'
 import { getAppThemeCssVars, isAppThemeDark } from './utils/mermaidThemes'
 import { initNativeAppMenu, setNativeMenuHandlerSource } from './nativeAppMenu'
@@ -134,7 +135,7 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
     const file = e.dataTransfer.files[0]
-    if (!file || (!file.name.endsWith('.mmd') && !file.name.endsWith('.txt') && !file.name.endsWith('.md'))) {
+    if (!file || !isDiagramImportFileName(file.name)) {
       return
     }
 

@@ -2,6 +2,12 @@
 logs
 *.log
 .env
+
+# Playwright
+/playwright-report/
+/test-results/
+/blob-report/
+/playwright/.cache/
 .env.local
 .env.*.local
 *.app
