@@ -89,6 +89,26 @@
   height: auto;
 }
 
+.preview-svg-host .preview-about-mermalaid {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 12px 16px;
+  max-width: min(100%, 42rem);
+  max-height: 100%;
+  text-align: left;
+  align-self: center;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--app-fg);
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: 6px;
+  overflow: auto;
+}
+
 .empty-preview {
   color: var(--app-muted);
   font-size: 14px;

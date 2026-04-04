@@ -346,7 +346,7 @@ async function buildAndSetAppMenu(): Promise<void> {
     items: [
       await MenuItem.new({
         id: 'help_engine_version',
-        text: 'Mermalaid Engine Version',
+        text: 'About Mermalaid',
         action: () => getHandlers().onEngineVersion(),
       }),
       await MenuItem.new({
