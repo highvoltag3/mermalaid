@@ -56,7 +56,7 @@ test.describe('Editor toolbar (web)', () => {
 
   test('Ctrl+N confirms and keeps a valid preview', async ({ page }) => {
     page.once('dialog', (d) => d.accept())
-    await page.keyboard.press('Control+KeyN')
+    await page.keyboard.press('Control+N')
     await expect(page.locator('.error-indicator')).toHaveCount(0)
     await expect(page.locator('.preview-svg-host')).toBeVisible({ timeout: 30_000 })
   })
