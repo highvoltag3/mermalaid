@@ -36,6 +36,13 @@ import {
 import Settings from './Settings'
 import { rebuildNativeAppMenu } from '../nativeAppMenu'
 import { addRecentFile, recentFileLabel, removeRecentFile } from '../utils/recentFiles'
+import {
+  assertPrivateShareUrlFits,
+  buildPrivateShareUrl,
+  encodePrivateShareHash,
+  getPrivateShareErrorMessage,
+  PrivateShareError,
+} from '../utils/privateUrlShare'
 import './Toolbar.css'
 
 const OPEN_FILTERS = [
@@ -431,6 +438,26 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
     showToast('Code copied to clipboard')
   }
 
+  const handleCopyPrivateLink = async () => {
+    if (!code.trim()) {
+      showToast('Nothing to share yet.', 'error')
+      return
+    }
+    try {
+      const hash = await encodePrivateShareHash({ code })
+      const fullUrl = buildPrivateShareUrl(hash)
+      assertPrivateShareUrlFits(fullUrl)
+      await navigator.clipboard.writeText(fullUrl)
+      showToast('Private link copied. The diagram is in the URL fragment only; it is not sent to servers.')
+    } catch (err) {
+      if (err instanceof PrivateShareError && err.kind === 'oversized') {
+        showToast(err.message, 'error')
+        return
+      }
+      showToast(getPrivateShareErrorMessage(err), 'error')
+    }
+  }
+
   const handleExportAllSVG = async () => {
     if (mermaidBlocks.length === 0) {
       showToast('No diagrams to export', 'error')
@@ -592,6 +619,13 @@ ${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</di
           )}
           <button onClick={handleCopyCode} className="toolbar-btn" title="Copy Code">
             Copy Code
+          </button>
+          <button
+            onClick={() => void handleCopyPrivateLink()}
+            className="toolbar-btn"
+            title="Copy a private link (encrypted in the URL fragment only)"
+          >
+            Copy private link
           </button>
           {error && (
             <button
