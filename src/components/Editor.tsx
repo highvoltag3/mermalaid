@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import EditorComponent, { loader } from '@monaco-editor/react'
 import { useTheme } from '../hooks/useTheme'
 import { isAppThemeDark } from '../utils/mermaidThemes'
+import { MERMLAID_EDITOR_AUTOSAVE_DEBOUNCE_MS } from '../constants/mermalaidTiming'
 import type { MermaidBlock } from '../utils/mermaidCodeBlock'
 import './Editor.css'
 
@@ -154,7 +155,7 @@ export default function Editor({
     }
     debounceTimer.current = setTimeout(() => {
       localStorage.setItem('mermalaid-draft', code)
-    }, 500)
+    }, MERMLAID_EDITOR_AUTOSAVE_DEBOUNCE_MS)
     return () => {
       if (debounceTimer.current) {
         clearTimeout(debounceTimer.current)
