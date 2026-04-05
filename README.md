@@ -16,9 +16,9 @@ Looking for a **free Mermaid editor**? Tired of **Mermaid diagram tools** with l
 - ✅ **Completely Open Source** - Full source code available, modify as you need
 - ✅ **No Sign-Up Required** - Start creating Mermaid diagrams instantly
 - ✅ **Unlimited Diagrams** - Create as many Mermaid charts as you need
-- ✅ **Professional Features** - Live preview, visual editor, syntax highlighting, SVG/PNG/ASCII export
-- ✅ **Web & Desktop** - Use in browser or download native macOS app
+- ✅ **Professional Features** - Live preview, visual editor, syntax highlighting, SVG/PNG/ASCII export, *Private Share Link*
 - ✅ **Privacy-First** - All data stays local, no cloud sync required
+- ✅ **Web & Desktop** - Use in browser or download native macOS app
 
 ## 🚀 Quick Start - Create Your First Mermaid Diagram
 
