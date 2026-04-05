@@ -13,8 +13,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # Universal binary: Intel (x86_64) + Apple Silicon (aarch64) in one DMG
           - platform: 'macos-latest'
-            args: ''
+            args: '--target universal-apple-darwin'
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -27,6 +28,9 @@ jobs:
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Rust targets for universal macOS build
+        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
 
       - name: Install frontend dependencies
         run: npm install
@@ -76,11 +80,12 @@ jobs:
       - name: Verify DMG was created
         run: |
           echo "Checking for DMG file..."
-          DMG_PATH=$(find src-tauri/target/release/bundle -name "*.dmg" 2>/dev/null | head -n 1)
+          # universal-apple-darwin outputs under target/universal-apple-darwin/release/bundle/
+          DMG_PATH=$(find src-tauri/target -name "*.dmg" 2>/dev/null | head -n 1)
           if [ -z "$DMG_PATH" ]; then
             echo "❌ ERROR: DMG file not found!"
-            echo "Contents of bundle directory:"
-            ls -la src-tauri/target/release/bundle/ || echo "Bundle directory not found"
+            echo "Contents of src-tauri/target:"
+            find src-tauri/target -type d -name bundle 2>/dev/null | head -20 || true
             exit 1
           else
             echo "✅ DMG file found: $DMG_PATH"
