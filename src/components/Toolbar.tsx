@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useState,
   useRef,
   useImperativeHandle,
@@ -96,6 +97,7 @@ interface ToolbarProps {
   mermaidBlocks: MermaidBlock[]
   /** Tauri: path of the file last opened or saved (null = unsaved) */
   documentPathRef: MutableRefObject<string | null>
+  isMobile?: boolean
 }
 
 export interface ToolbarRef {
@@ -118,15 +120,36 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
   activeCode,
   mermaidBlocks,
   documentPathRef,
+  isMobile = false,
 }, ref) => {
   const { mermaidTheme, setMermaidTheme } = useTheme()
   const { showToast } = useToast()
   const isDark = isAppThemeDark(mermaidTheme)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [showSettings, setShowSettings] = useState(false)
+  const [showMobileActions, setShowMobileActions] = useState(false)
   const [isFixing, setIsFixing] = useState(false)
   const [isCopyingPrivateLink, setIsCopyingPrivateLink] = useState(false)
   const hasMultipleBlocks = mermaidBlocks.length > 1
+
+  useEffect(() => {
+    if (!isMobile) {
+      setShowMobileActions(false)
+    }
+  }, [isMobile])
+
+  useEffect(() => {
+    if (!showMobileActions) return
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setShowMobileActions(false)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [showMobileActions])
 
   const openBrowserFilePicker = () => {
     if (fileInputRef.current) {
@@ -636,108 +659,273 @@ ${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</di
     openPath,
   }))
 
-  return (
+  const mobileToolbar = isMobile && (
     <>
-      <div className="toolbar">
-        <div className="toolbar-section">
-          <button type="button" onClick={handleNew} className="toolbar-btn" title="New (⌘N)">
-            New
-          </button>
-          <button type="button" onClick={handleOpen} className="toolbar-btn" title="Open (⌘O)">
-            Open
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".mmd,.txt,.md,.markdown"
-            onChange={handleFileChange}
-            style={{ display: 'none' }}
-          />
-          <button type="button" onClick={handleSave} className="toolbar-btn" title="Save (⌘S)">
-            Save
-          </button>
+      <div className="toolbar toolbar-mobile">
+        <div className="toolbar-mobile-header">
+          <div>
+            <div className="toolbar-mobile-title">Mermalaid</div>
+            <div className="toolbar-mobile-subtitle">Phone-friendly editor</div>
+          </div>
+          {error && <span className="toolbar-mobile-error">Syntax error</span>}
         </div>
 
-        <div className="toolbar-section">
-          <button onClick={handleExportSVG} className="toolbar-btn" title={hasMultipleBlocks ? 'Export selected block as SVG' : 'Export SVG'}>
-            Export SVG
+        <div className="toolbar-mobile-actions" role="toolbar" aria-label="Editor quick actions">
+          <button type="button" onClick={handleOpen} className="toolbar-btn toolbar-mobile-btn" title="Open diagram">
+            Open
           </button>
-          <button onClick={handleExportPNG} className="toolbar-btn" title={hasMultipleBlocks ? 'Export selected block as PNG' : 'Export PNG'}>
-            Export PNG
+          <button type="button" onClick={handleSave} className="toolbar-btn toolbar-mobile-btn" title="Save diagram">
+            Save
           </button>
-          <button onClick={handleExportASCII} className="toolbar-btn" title={hasMultipleBlocks ? 'Export selected block as ASCII' : 'Export ASCII (Unicode box-drawing for terminals)'}>
-            Export ASCII
-          </button>
-          {hasMultipleBlocks && (
-            <button onClick={handleExportAllSVG} className="toolbar-btn" title="Export all mermaid blocks in a single HTML file">
-              Export All
-            </button>
-          )}
-          <button onClick={handleCopyCode} className="toolbar-btn" title="Copy Code">
-            Copy Code
+          <button type="button" onClick={() => void handleShare()} className="toolbar-btn toolbar-mobile-btn" title="Share diagram">
+            Share
           </button>
           <button
             type="button"
-            disabled={isCopyingPrivateLink}
-            aria-busy={isCopyingPrivateLink}
-            onClick={() => {
-              void handleCopyPrivateLink().catch((e) => {
-                console.error('[mermalaid] Copy private link: unexpected error', e)
-                showToast(
-                  e instanceof Error ? e.message : 'Could not create a private link. Please try again.',
-                  'error',
-                )
-              })
-            }}
-            className="toolbar-btn"
-            title="Copy a private link (encrypted in the URL fragment only). The URL also appears in the address bar."
+            onClick={() => setShowMobileActions(true)}
+            className="toolbar-btn toolbar-mobile-btn"
+            title="More actions"
+            aria-haspopup="dialog"
+            aria-expanded={showMobileActions}
           >
-            {isCopyingPrivateLink ? 'Creating link…' : 'Copy private link'}
+            More
           </button>
-          {error && (
-            <button
-              onClick={handleAIFix}
-              className="toolbar-btn ai-fix-btn"
-              title="AI Fix Error (uses OpenAI)"
-              disabled={isFixing}
-            >
-              {isFixing ? '🔄 Fixing...' : '🤖 AI Fix'}
-            </button>
-          )}
-        </div>
-
-        <div className="toolbar-section">
-          <select
-            value={mermaidTheme}
-            onChange={(e) => setMermaidTheme(e.target.value as MermaidThemeId)}
-            className="toolbar-select"
-            title="Theme (diagram + app UI)"
-          >
-            {MERMAID_THEME_IDS.map((id) => (
-              <option key={id} value={id}>
-                {getMermaidThemeLabel(id)}
-              </option>
-            ))}
-          </select>
-          <button onClick={() => setShowSettings(true)} className="toolbar-btn" title="Settings">
-            ⚙️
-          </button>
-        </div>
-
-        <div className="toolbar-section toolbar-section-right">
-          <a
-            href="https://github.com/highvoltag3/mermalaid"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="toolbar-btn github-btn"
-            title="View source code on GitHub"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-            </svg>
-          </a>
         </div>
       </div>
+
+      {showMobileActions && (
+        <div
+          className="toolbar-mobile-sheet-backdrop"
+          onClick={() => setShowMobileActions(false)}
+        >
+          <div
+            className="toolbar-mobile-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-label="More actions"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="toolbar-mobile-sheet-header">
+              <div>
+                <div className="toolbar-mobile-sheet-title">More actions</div>
+                <div className="toolbar-mobile-sheet-subtitle">Everything else you need on a phone</div>
+              </div>
+              <button
+                type="button"
+                className="toolbar-btn toolbar-mobile-close-btn"
+                onClick={() => setShowMobileActions(false)}
+                aria-label="Close more actions"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="toolbar-mobile-sheet-section">
+              <span className="toolbar-mobile-section-label">Workspace</span>
+              <div className="toolbar-mobile-action-grid">
+                <button type="button" onClick={() => { handleNew(); setShowMobileActions(false) }} className="toolbar-btn">
+                  New
+                </button>
+                <button type="button" onClick={() => { handleCopyCode(); setShowMobileActions(false) }} className="toolbar-btn">
+                  Copy Code
+                </button>
+                <button
+                  type="button"
+                  disabled={isCopyingPrivateLink}
+                  aria-busy={isCopyingPrivateLink}
+                  onClick={() => {
+                    void handleCopyPrivateLink().finally(() => setShowMobileActions(false))
+                  }}
+                  className="toolbar-btn"
+                >
+                  {isCopyingPrivateLink ? 'Creating link…' : 'Private Link'}
+                </button>
+                {error && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void handleAIFix().finally(() => setShowMobileActions(false))
+                    }}
+                    className="toolbar-btn ai-fix-btn"
+                    disabled={isFixing}
+                  >
+                    {isFixing ? 'Fixing…' : 'AI Fix'}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="toolbar-mobile-sheet-section">
+              <span className="toolbar-mobile-section-label">Export</span>
+              <div className="toolbar-mobile-action-grid">
+                <button type="button" onClick={() => { void handleExportSVG(); setShowMobileActions(false) }} className="toolbar-btn">
+                  SVG
+                </button>
+                <button type="button" onClick={() => { void handleExportPNG(); setShowMobileActions(false) }} className="toolbar-btn">
+                  PNG
+                </button>
+                <button type="button" onClick={() => { handleExportASCII(); setShowMobileActions(false) }} className="toolbar-btn">
+                  ASCII
+                </button>
+                {hasMultipleBlocks && (
+                  <button type="button" onClick={() => { void handleExportAllSVG(); setShowMobileActions(false) }} className="toolbar-btn">
+                    Export All
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="toolbar-mobile-sheet-section">
+              <label className="toolbar-mobile-section-label" htmlFor="mobile-theme-select">
+                Theme
+              </label>
+              <select
+                id="mobile-theme-select"
+                value={mermaidTheme}
+                onChange={(e) => setMermaidTheme(e.target.value as MermaidThemeId)}
+                className="toolbar-select toolbar-mobile-select"
+                title="Theme (diagram + app UI)"
+              >
+                {MERMAID_THEME_IDS.map((id) => (
+                  <option key={id} value={id}>
+                    {getMermaidThemeLabel(id)}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="toolbar-mobile-sheet-section toolbar-mobile-sheet-footer">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowMobileActions(false)
+                  setShowSettings(true)
+                }}
+                className="toolbar-btn"
+              >
+                Settings
+              </button>
+              <a
+                href="https://github.com/highvoltag3/mermalaid"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="toolbar-btn"
+                onClick={() => setShowMobileActions(false)}
+                title="View source code on GitHub"
+              >
+                GitHub
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  )
+
+  return (
+    <>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".mmd,.txt,.md,.markdown"
+        onChange={handleFileChange}
+        style={{ display: 'none' }}
+      />
+      {isMobile ? mobileToolbar : (
+        <div className="toolbar">
+          <div className="toolbar-section">
+            <button type="button" onClick={handleNew} className="toolbar-btn" title="New (⌘N)">
+              New
+            </button>
+            <button type="button" onClick={handleOpen} className="toolbar-btn" title="Open (⌘O)">
+              Open
+            </button>
+            <button type="button" onClick={handleSave} className="toolbar-btn" title="Save (⌘S)">
+              Save
+            </button>
+          </div>
+
+          <div className="toolbar-section">
+            <button onClick={handleExportSVG} className="toolbar-btn" title={hasMultipleBlocks ? 'Export selected block as SVG' : 'Export SVG'}>
+              Export SVG
+            </button>
+            <button onClick={handleExportPNG} className="toolbar-btn" title={hasMultipleBlocks ? 'Export selected block as PNG' : 'Export PNG'}>
+              Export PNG
+            </button>
+            <button onClick={handleExportASCII} className="toolbar-btn" title={hasMultipleBlocks ? 'Export selected block as ASCII' : 'Export ASCII (Unicode box-drawing for terminals)'}>
+              Export ASCII
+            </button>
+            {hasMultipleBlocks && (
+              <button onClick={handleExportAllSVG} className="toolbar-btn" title="Export all mermaid blocks in a single HTML file">
+                Export All
+              </button>
+            )}
+            <button onClick={handleCopyCode} className="toolbar-btn" title="Copy Code">
+              Copy Code
+            </button>
+            <button
+              type="button"
+              disabled={isCopyingPrivateLink}
+              aria-busy={isCopyingPrivateLink}
+              onClick={() => {
+                void handleCopyPrivateLink().catch((e) => {
+                  console.error('[mermalaid] Copy private link: unexpected error', e)
+                  showToast(
+                    e instanceof Error ? e.message : 'Could not create a private link. Please try again.',
+                    'error',
+                  )
+                })
+              }}
+              className="toolbar-btn"
+              title="Copy a private link (encrypted in the URL fragment only). The URL also appears in the address bar."
+            >
+              {isCopyingPrivateLink ? 'Creating link…' : 'Copy private link'}
+            </button>
+            {error && (
+              <button
+                onClick={handleAIFix}
+                className="toolbar-btn ai-fix-btn"
+                title="AI Fix Error (uses OpenAI)"
+                disabled={isFixing}
+              >
+                {isFixing ? '🔄 Fixing...' : '🤖 AI Fix'}
+              </button>
+            )}
+          </div>
+
+          <div className="toolbar-section">
+            <select
+              value={mermaidTheme}
+              onChange={(e) => setMermaidTheme(e.target.value as MermaidThemeId)}
+              className="toolbar-select"
+              title="Theme (diagram + app UI)"
+            >
+              {MERMAID_THEME_IDS.map((id) => (
+                <option key={id} value={id}>
+                  {getMermaidThemeLabel(id)}
+                </option>
+              ))}
+            </select>
+            <button onClick={() => setShowSettings(true)} className="toolbar-btn" title="Settings">
+              ⚙️
+            </button>
+          </div>
+
+          <div className="toolbar-section toolbar-section-right">
+            <a
+              href="https://github.com/highvoltag3/mermalaid"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="toolbar-btn github-btn"
+              title="View source code on GitHub"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+      )}
       <Settings isOpen={showSettings} onClose={() => setShowSettings(false)} />
     </>
   )

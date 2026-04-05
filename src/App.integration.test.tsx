@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
@@ -38,8 +39,18 @@ vi.mock('@monaco-editor/react', () => ({
 }))
 
 describe('App (web)', () => {
+  const setViewportWidth = (width: number) => {
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      writable: true,
+      value: width,
+    })
+    window.dispatchEvent(new Event('resize'))
+  }
+
   beforeEach(() => {
     localStorage.clear()
+    setViewportWidth(1280)
   })
 
   it('renders landing with editor entry point on /', async () => {
@@ -63,6 +74,55 @@ describe('App (web)', () => {
       expect(container.querySelector('.toolbar')).toBeTruthy()
       expect(container.querySelector('.editor-container')).toBeTruthy()
       expect(container.querySelector('.preview-container')).toBeTruthy()
+    })
+  })
+
+  it('switches between preview and editor in smartphone mode', async () => {
+    setViewportWidth(390)
+    const user = userEvent.setup()
+    const { container } = render(
+      <MemoryRouter initialEntries={['/editor']}>
+        <App />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByRole('tab', { name: 'Code' })).toBeInTheDocument()
+      expect(screen.getByRole('tab', { name: 'Preview' })).toBeInTheDocument()
+      expect(container.querySelector('.toolbar-mobile')).toBeTruthy()
+      expect(container.querySelector('.preview-container')).toBeTruthy()
+      expect(container.querySelector('.editor-container')).toBeFalsy()
+    })
+
+    await user.click(screen.getByRole('tab', { name: 'Code' }))
+
+    await waitFor(() => {
+      expect(container.querySelector('.editor-container')).toBeTruthy()
+      expect(container.querySelector('.preview-container')).toBeFalsy()
+    })
+  })
+
+  it('opens the compact mobile actions sheet on smartphones', async () => {
+    setViewportWidth(412)
+    const user = userEvent.setup()
+
+    render(
+      <MemoryRouter initialEntries={['/editor']}>
+        <App />
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'More' })).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole('button', { name: 'More' }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { name: 'More actions' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Copy Code' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'SVG' })).toBeInTheDocument()
+      expect(screen.getByLabelText('Theme')).toBeInTheDocument()
     })
   })
 })
