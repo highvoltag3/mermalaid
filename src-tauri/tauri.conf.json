@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Mermalaid",
-  "version": "1.5.8",
+  "version": "1.6.0",
   "identifier": "com.mermalaid.desktop",
   "build": {
     "frontendDist": "../dist",
