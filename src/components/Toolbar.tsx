@@ -737,13 +737,21 @@ ${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</di
                   disabled={isCopyingPrivateLink}
                   aria-busy={isCopyingPrivateLink}
                   onClick={() => {
-                    void handleCopyPrivateLink().catch((e) => {
-                      console.error('[mermalaid] Copy private link: unexpected error', e)
-                      showToast(
-                        e instanceof Error ? e.message : 'Could not create a private link. Please try again.',
-                        'error',
-                      )
-                    }).finally(() => setShowMobileActions(false))
+                    // Keep the sheet open so the user can see the busy/disabled state,
+                    // then close it after the operation finishes.
+                    void (async () => {
+                      try {
+                        await handleCopyPrivateLink()
+                      } catch (e) {
+                        console.error('[mermalaid] Copy private link: unexpected error', e)
+                        showToast(
+                          e instanceof Error ? e.message : 'Could not create a private link. Please try again.',
+                          'error',
+                        )
+                      } finally {
+                        setShowMobileActions(false)
+                      }
+                    })()
                   }}
                   className="toolbar-btn"
                   title={PRIVATE_LINK_BUTTON_TITLE}
