@@ -106,6 +106,9 @@ interface ToolbarProps {
   /** Tauri: path of the file last opened or saved (null = unsaved) */
   documentPathRef: MutableRefObject<string | null>
   isMobile?: boolean
+  /** Smartphone bottom bar uses the same sheet; this toggles it. */
+  showMobileActions?: boolean
+  setShowMobileActions?: (open: boolean) => void
 }
 
 export interface ToolbarRef {
@@ -119,6 +122,7 @@ export interface ToolbarRef {
   handleEngineVersionInfo: () => void
   handleShowLicenseInfo: () => void
   openPath: (path: string) => Promise<void>
+  openMobileActions?: () => void
 }
 
 const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
@@ -129,13 +133,17 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
   mermaidBlocks,
   documentPathRef,
   isMobile = false,
+  showMobileActions: showMobileActionsProp,
+  setShowMobileActions: setShowMobileActionsProp,
 }, ref) => {
   const { mermaidTheme, setMermaidTheme } = useTheme()
   const { showToast } = useToast()
   const isDark = isAppThemeDark(mermaidTheme)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [showSettings, setShowSettings] = useState(false)
-  const [showMobileActions, setShowMobileActions] = useState(false)
+  const [showMobileActionsState, setShowMobileActionsState] = useState(false)
+  const showMobileActions = showMobileActionsProp ?? showMobileActionsState
+  const setShowMobileActions = setShowMobileActionsProp ?? setShowMobileActionsState
   const [isFixing, setIsFixing] = useState(false)
   const [isCopyingPrivateLink, setIsCopyingPrivateLink] = useState(false)
   const hasMultipleBlocks = mermaidBlocks.length > 1
@@ -670,54 +678,18 @@ ${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</di
     handleEngineVersionInfo,
     handleShowLicenseInfo,
     openPath,
+    openMobileActions: () => setShowMobileActions(true),
   }))
 
   const mobileToolbar = isMobile && (
     <>
-      <div className="toolbar toolbar-mobile">
+      <div className="toolbar toolbar-mobile toolbar-mobile-sticky">
         <div className="toolbar-mobile-header">
           <div>
             <div className="toolbar-mobile-title">Mermalaid</div>
             <div className="toolbar-mobile-subtitle">Phone-friendly editor</div>
           </div>
           {error && <span className="toolbar-mobile-error">Syntax error</span>}
-        </div>
-
-        <div className="toolbar-mobile-actions" role="toolbar" aria-label="Editor quick actions">
-          <button type="button" onClick={handleOpen} className="toolbar-btn toolbar-mobile-btn" title="Open diagram">
-            Open
-          </button>
-          <button type="button" onClick={handleSave} className="toolbar-btn toolbar-mobile-btn" title="Save diagram">
-            Save
-          </button>
-          <button
-            type="button"
-            disabled={isCopyingPrivateLink}
-            aria-busy={isCopyingPrivateLink}
-            onClick={() => {
-              void handleCopyPrivateLink().catch((e) => {
-                console.error('[mermalaid] Copy private link: unexpected error', e)
-                showToast(
-                  e instanceof Error ? e.message : 'Could not create a private link. Please try again.',
-                  'error',
-                )
-              })
-            }}
-            className="toolbar-btn toolbar-mobile-btn"
-            title={PRIVATE_LINK_BUTTON_TITLE}
-          >
-            {isCopyingPrivateLink ? 'Creating link…' : 'Share'}
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowMobileActions(true)}
-            className="toolbar-btn toolbar-mobile-btn"
-            title="More actions"
-            aria-haspopup="dialog"
-            aria-expanded={showMobileActions}
-          >
-            More
-          </button>
         </div>
       </div>
 
@@ -751,8 +723,32 @@ ${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</di
             <div className="toolbar-mobile-sheet-section">
               <span className="toolbar-mobile-section-label">Workspace</span>
               <div className="toolbar-mobile-action-grid">
+                <button type="button" onClick={() => { void handleOpen(); setShowMobileActions(false) }} className="toolbar-btn">
+                  Open
+                </button>
+                <button type="button" onClick={() => { void handleSave(); setShowMobileActions(false) }} className="toolbar-btn">
+                  Save
+                </button>
                 <button type="button" onClick={() => { handleNew(); setShowMobileActions(false) }} className="toolbar-btn">
                   New
+                </button>
+                <button
+                  type="button"
+                  disabled={isCopyingPrivateLink}
+                  aria-busy={isCopyingPrivateLink}
+                  onClick={() => {
+                    void handleCopyPrivateLink().catch((e) => {
+                      console.error('[mermalaid] Copy private link: unexpected error', e)
+                      showToast(
+                        e instanceof Error ? e.message : 'Could not create a private link. Please try again.',
+                        'error',
+                      )
+                    }).finally(() => setShowMobileActions(false))
+                  }}
+                  className="toolbar-btn"
+                  title={PRIVATE_LINK_BUTTON_TITLE}
+                >
+                  {isCopyingPrivateLink ? 'Creating link…' : 'Share'}
                 </button>
                 <button type="button" onClick={() => { handleCopyCode(); setShowMobileActions(false) }} className="toolbar-btn">
                   Copy Code

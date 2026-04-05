@@ -101,10 +101,22 @@
 
 @media (max-width: 768px) {
   .toolbar-mobile {
+    position: sticky;
+    top: 0;
+    z-index: 1200;
     flex-direction: column;
     align-items: stretch;
     padding: 12px;
     gap: 12px;
+  }
+
+  .toolbar-mobile[data-keyboard-open="true"] {
+    padding-bottom: 8px;
+  }
+
+  /* When keyboard is open, keep header compact. */
+  .app-mobile-keyboard-open .toolbar-mobile {
+    padding-bottom: 8px;
   }
 
   .toolbar-mobile-header {
@@ -136,19 +148,7 @@
     font-weight: 600;
   }
 
-  .toolbar-mobile-actions {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 8px;
-  }
-
-  .toolbar-mobile-btn {
-    min-height: 44px;
-    padding: 0 10px;
-    font-size: 13px;
-    font-weight: 600;
-    border-radius: 10px;
-  }
+  /* Mobile actions moved to the bottom bar. */
 
   .toolbar-mobile-sheet-backdrop {
     position: fixed;

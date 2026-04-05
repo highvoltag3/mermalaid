@@ -17,32 +17,43 @@
   overflow: hidden;
 }
 
-.mobile-workspace-switcher {
+.mobile-bottom-bar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  gap: 10px;
+  padding: 12px 16px calc(14px + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid var(--app-border);
   background-color: var(--app-surface);
 }
 
-.mobile-workspace-btn {
-  flex: 1;
-  min-height: 44px;
+.mobile-bottom-bar-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr 0.9fr;
+  gap: 10px;
+  width: 100%;
+}
+
+.mobile-bottom-bar-btn {
+  min-height: 56px;
+  padding: 0 14px;
   border: 1px solid var(--app-border);
   background-color: var(--app-bg);
   color: var(--app-fg);
   border-radius: 999px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
-.mobile-workspace-btn.active {
+.mobile-bottom-bar-btn.active {
   background-color: color-mix(in srgb, var(--app-accent) 16%, var(--app-bg));
   border-color: var(--app-accent);
   color: var(--app-accent);
+}
+
+.mobile-bottom-bar-more-btn {
+  font-weight: 800;
 }
 
 /* Native controls + scrollbars follow theme (helps <select> / focus rings on dark UI) */
@@ -109,5 +120,15 @@
   .app-content {
     display: flex;
     min-height: 0;
+  }
+
+  /* When the keyboard is open, the visual viewport height shrinks — keep our layout stable. */
+  .app-mobile {
+    height: 100dvh;
+  }
+
+  /* Avoid covering the code editor when the soft keyboard is open. */
+  .app-mobile-keyboard-open .mobile-bottom-bar {
+    display: none;
   }
 }

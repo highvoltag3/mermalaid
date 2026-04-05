@@ -131,7 +131,6 @@ describe('App (web)', () => {
 
     await waitFor(() => {
       expect(queries.getByRole('button', { name: 'More' })).toBeInTheDocument()
-      expect(queries.getByRole('button', { name: 'Share' })).toBeInTheDocument()
     })
 
     await user.click(queries.getByRole('button', { name: 'More' }))
