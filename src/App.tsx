@@ -37,7 +37,7 @@ function PrivateShareHashRedirect() {
 
   useLayoutEffect(() => {
     if (location.pathname !== '/') return
-    const h = window.location.hash
+    const h = location.hash
     if (!isPrivateShareHash(h)) return
     navigate(`/editor${h}`, { replace: true })
   }, [location.pathname, location.hash, navigate])
