@@ -31,6 +31,28 @@ const MIN_PREVIEW_ZOOM = 0.2
 const MAX_PREVIEW_ZOOM = 4
 const FIT_PADDING = 0.92
 
+function useVisualViewportTick(isEnabled: boolean) {
+  const [tick, setTick] = useState(0)
+
+  useEffect(() => {
+    if (!isEnabled) return
+    const vv = window.visualViewport
+    if (!vv) return
+
+    const bump = () => setTick((t) => t + 1)
+    vv.addEventListener('resize', bump)
+    vv.addEventListener('scroll', bump)
+    window.addEventListener('orientationchange', bump)
+    return () => {
+      vv.removeEventListener('resize', bump)
+      vv.removeEventListener('scroll', bump)
+      window.removeEventListener('orientationchange', bump)
+    }
+  }, [isEnabled])
+
+  return tick
+}
+
 /**
  * TransformComponent renders: viewport (wrapper) > transformed layer (content) > children.
  * Measure those DOM nodes explicitly so fit math matches the visible viewport, not any outer stack.
@@ -186,6 +208,7 @@ export default function Preview({
   const [diagramReady, setDiagramReady] = useState(false)
   const [previewFitTick, setPreviewFitTick] = useState(0)
   const prevBlockIndex = useRef(selectedBlockIndex)
+  const vvTick = useVisualViewportTick(isMobile)
 
   // Reset edit mode when switching blocks
   useEffect(() => {
@@ -356,6 +379,17 @@ export default function Preview({
     )
     return () => cancelAnimationFrame(id)
   }, [diagramReady, previewFitTick])
+
+  // Mobile: re-fit on keyboard / URL bar viewport changes so the preview doesn't get stuck
+  // with stale wrapper/content sizes after the visual viewport shifts.
+  useEffect(() => {
+    if (!isMobile) return
+    if (!diagramReady) return
+    const id = requestAnimationFrame(() =>
+      fitPreviewToScreen(transformRef.current, previewRef.current),
+    )
+    return () => cancelAnimationFrame(id)
+  }, [isMobile, diagramReady, vvTick])
 
   const blockSelector = hasMultipleBlocks && (
     <div className="block-selector">

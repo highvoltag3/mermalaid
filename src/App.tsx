@@ -63,10 +63,12 @@ function useVisualViewportCssVars(isSmartphoneLayout: boolean) {
     vv.addEventListener('resize', apply)
     vv.addEventListener('scroll', apply)
     window.addEventListener('orientationchange', apply)
+    window.addEventListener('resize', apply)
     return () => {
       vv.removeEventListener('resize', apply)
       vv.removeEventListener('scroll', apply)
       window.removeEventListener('orientationchange', apply)
+      window.removeEventListener('resize', apply)
     }
   }, [isSmartphoneLayout])
 }
@@ -88,7 +90,17 @@ function useIsKeyboardOpen(isSmartphoneLayout: boolean) {
       // Heuristic: a sizable reduction from the *layout* viewport height implies a soft keyboard.
       // Using current values (not initial height) avoids “stuck open” on iOS when the URL bar collapses/expands.
       const delta = window.innerHeight - vv.height
-      setIsKeyboardOpen(delta > KEYBOARD_THRESHOLD_PX)
+      // If nothing is focused, be more eager to declare the keyboard closed.
+      const active = document.activeElement as HTMLElement | null
+      const isTextFocus =
+        Boolean(active) &&
+        (active?.tagName === 'INPUT' ||
+          active?.tagName === 'TEXTAREA' ||
+          active?.isContentEditable)
+
+      const shouldBeOpen = delta > KEYBOARD_THRESHOLD_PX && isTextFocus
+      const shouldBeMaybeOpen = delta > KEYBOARD_THRESHOLD_PX && !isTextFocus
+      setIsKeyboardOpen(shouldBeOpen || shouldBeMaybeOpen)
     }
 
     update()
@@ -96,7 +108,16 @@ function useIsKeyboardOpen(isSmartphoneLayout: boolean) {
     vv.addEventListener('scroll', update)
     window.addEventListener('focusin', update)
     window.addEventListener('focusout', update)
-    return () => vv.removeEventListener('resize', update)
+    window.addEventListener('resize', update)
+    window.addEventListener('orientationchange', update)
+    return () => {
+      vv.removeEventListener('resize', update)
+      vv.removeEventListener('scroll', update)
+      window.removeEventListener('focusin', update)
+      window.removeEventListener('focusout', update)
+      window.removeEventListener('resize', update)
+      window.removeEventListener('orientationchange', update)
+    }
   }, [isSmartphoneLayout])
 
   return isKeyboardOpen
