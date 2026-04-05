@@ -46,6 +46,31 @@ function useIsSmartphoneLayout() {
   return isSmartphoneLayout
 }
 
+function useVisualViewportCssVars(isSmartphoneLayout: boolean) {
+  useEffect(() => {
+    if (!isSmartphoneLayout) return
+
+    const vv = window.visualViewport
+    if (!vv) return
+
+    const apply = () => {
+      // Use px so layout always matches the visual viewport (iOS Safari address bar + keyboard).
+      document.documentElement.style.setProperty('--vvh', `${vv.height}px`)
+      document.documentElement.style.setProperty('--vvw', `${vv.width}px`)
+    }
+
+    apply()
+    vv.addEventListener('resize', apply)
+    vv.addEventListener('scroll', apply)
+    window.addEventListener('orientationchange', apply)
+    return () => {
+      vv.removeEventListener('resize', apply)
+      vv.removeEventListener('scroll', apply)
+      window.removeEventListener('orientationchange', apply)
+    }
+  }, [isSmartphoneLayout])
+}
+
 function useIsKeyboardOpen(isSmartphoneLayout: boolean) {
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false)
 
@@ -58,15 +83,19 @@ function useIsKeyboardOpen(isSmartphoneLayout: boolean) {
     const vv = window.visualViewport
     if (!vv) return
 
-    const initialHeight = vv.height
+    const KEYBOARD_THRESHOLD_PX = 140
     const update = () => {
-      // Heuristic: a sizable reduction from the initial viewport height implies a soft keyboard.
-      const delta = initialHeight - vv.height
-      setIsKeyboardOpen(delta > 140)
+      // Heuristic: a sizable reduction from the *layout* viewport height implies a soft keyboard.
+      // Using current values (not initial height) avoids “stuck open” on iOS when the URL bar collapses/expands.
+      const delta = window.innerHeight - vv.height
+      setIsKeyboardOpen(delta > KEYBOARD_THRESHOLD_PX)
     }
 
     update()
     vv.addEventListener('resize', update)
+    vv.addEventListener('scroll', update)
+    window.addEventListener('focusin', update)
+    window.addEventListener('focusout', update)
     return () => vv.removeEventListener('resize', update)
   }, [isSmartphoneLayout])
 
@@ -97,6 +126,7 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
   const { showToast } = useToast()
   const location = useLocation()
   const isSmartphoneLayout = useIsSmartphoneLayout()
+  useVisualViewportCssVars(isSmartphoneLayout)
   const isKeyboardOpen = useIsKeyboardOpen(isSmartphoneLayout)
   const [code, setCode] = useState('graph TD\n    A[Start] --> B{Decision}\n    B -->|Yes| C[Action 1]\n    B -->|No| D[Action 2]\n    C --> E[End]\n    D --> E')
   const [error, setError] = useState<string | null>(null)
