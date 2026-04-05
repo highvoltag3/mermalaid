@@ -685,9 +685,17 @@ ${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</di
     <>
       <div className="toolbar toolbar-mobile toolbar-mobile-sticky">
         <div className="toolbar-mobile-header">
-          <div>
+          <div className="toolbar-mobile-brand">
+            <img
+              className="toolbar-mobile-logo"
+              src="/apple-touch-icon.png"
+              width={28}
+              height={28}
+              alt="Mermalaid"
+              loading="eager"
+              decoding="async"
+            />
             <div className="toolbar-mobile-title">Mermalaid</div>
-            <div className="toolbar-mobile-subtitle">Phone-friendly editor</div>
           </div>
           {error && <span className="toolbar-mobile-error">Syntax error</span>}
         </div>
