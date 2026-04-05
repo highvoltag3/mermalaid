@@ -52,7 +52,7 @@ for (const profile of smartphoneProfiles) {
       await expect(page.locator('.preview-container')).toHaveCount(0)
       await expect(page.locator('.editor-monaco-host .view-lines')).toContainText('graph TD')
 
-      await page.locator('.mobile-bottom-bar').getByRole('tab', { name: 'More' }).click()
+      await page.locator('.mobile-bottom-bar').getByRole('button', { name: 'More' }).click()
       await expect(page.getByRole('dialog', { name: 'More actions' })).toBeVisible()
       const shareButton = page.getByRole('button', { name: 'Share' })
       await shareButton.click()
@@ -62,7 +62,7 @@ for (const profile of smartphoneProfiles) {
 
       await page.locator('.mobile-bottom-bar').getByRole('tab', { name: 'Preview' }).click()
       await expect(page.locator('.preview-container')).toBeVisible({ timeout: 30_000 })
-      await page.locator('.mobile-bottom-bar').getByRole('tab', { name: 'More' }).click()
+      await page.locator('.mobile-bottom-bar').getByRole('button', { name: 'More' }).click()
       await expect(page.getByRole('dialog', { name: 'More actions' })).toBeVisible()
       await expect(page.getByRole('button', { name: 'Copy Code' })).toBeVisible()
       await expect(page.getByRole('button', { name: 'SVG' })).toBeVisible()

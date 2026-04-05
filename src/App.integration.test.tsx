@@ -162,6 +162,13 @@ describe('App (web)', () => {
       </MemoryRouter>,
     )
 
+    const moreButton = await screen.findByRole('button', { name: 'More' })
+    await user.click(moreButton)
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { name: 'More actions' })).toBeInTheDocument()
+    })
+
     const shareButton = await screen.findByRole('button', { name: 'Share' })
     await user.click(shareButton)
 

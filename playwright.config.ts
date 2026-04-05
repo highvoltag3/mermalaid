@@ -13,6 +13,7 @@ export default defineConfig({
   use: {
     baseURL,
     trace: 'on-first-retry',
+    video: 'on',
     // Copy Code / clipboard E2E
     permissions: ['clipboard-read', 'clipboard-write'],
   },
