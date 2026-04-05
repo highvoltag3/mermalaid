@@ -57,8 +57,8 @@ for (const profile of smartphoneProfiles) {
       const shareButton = page.getByRole('button', { name: 'Share' })
       await shareButton.click()
       await expect(page.getByRole('button', { name: 'Creating link…' })).toBeDisabled()
-      await expect(page.getByRole('button', { name: 'Share' })).toBeEnabled()
-      await page.keyboard.press('Escape')
+      // When the private link flow completes, the sheet closes (so the Share button disappears).
+      await expect(page.getByRole('dialog', { name: 'More actions' })).toHaveCount(0)
 
       await page.locator('.mobile-bottom-bar').getByRole('tab', { name: 'Preview' }).click()
       await expect(page.locator('.preview-container')).toBeVisible({ timeout: 30_000 })
