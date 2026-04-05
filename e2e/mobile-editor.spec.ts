@@ -32,6 +32,15 @@ for (const profile of smartphoneProfiles) {
     })
 
     test('uses the smartphone workspace switcher and compact actions', async ({ page }) => {
+      await page.addInitScript(() => {
+        Object.defineProperty(navigator, 'share', {
+          configurable: true,
+          value: async () => {
+            await new Promise((resolve) => setTimeout(resolve, 300))
+          },
+        })
+      })
+
       await page.goto('/editor')
       await expect(page.locator('.toolbar-mobile')).toBeVisible()
       await expect(page.locator('.mobile-workspace-switcher')).toBeVisible()
@@ -41,7 +50,14 @@ for (const profile of smartphoneProfiles) {
       await page.getByRole('tab', { name: 'Code' }).click()
       await expect(page.locator('.editor-container')).toBeVisible()
       await expect(page.locator('.preview-container')).toHaveCount(0)
-      await expect(page.locator('.editor-monaco-host')).toContainText('graph TD')
+      await expect(page.locator('.editor-monaco-host .view-lines')).toContainText('graph TD')
+
+      const shareButton = page.locator('.toolbar-mobile-actions').getByRole('button', { name: 'Share' })
+      await shareButton.click()
+      await expect(shareButton).toBeDisabled()
+      await expect(shareButton).toHaveText('Creating link…')
+      await expect(shareButton).toBeEnabled()
+      await expect(shareButton).toHaveText('Share')
 
       await page.getByRole('tab', { name: 'Preview' }).click()
       await expect(page.locator('.preview-container')).toBeVisible({ timeout: 30_000 })

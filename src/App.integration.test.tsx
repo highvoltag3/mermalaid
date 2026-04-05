@@ -3,6 +3,7 @@ import { cleanup, render, screen, waitFor, within } from '@testing-library/react
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import App from './App'
+import * as privateUrlShare from './utils/privateUrlShare'
 
 vi.mock('@tauri-apps/api/core', () => ({
   isTauri: () => false,
@@ -21,6 +22,14 @@ vi.mock('./nativeAppMenu', () => ({
 vi.mock('./hooks/useUpdateCheck', () => ({
   useUpdateCheck: () => ({ update: null, dismiss: () => {} }),
 }))
+
+vi.mock('./utils/privateUrlShare', async () => {
+  const actual = await vi.importActual<typeof import('./utils/privateUrlShare')>('./utils/privateUrlShare')
+  return {
+    ...actual,
+    encodePrivateShareHash: vi.fn(actual.encodePrivateShareHash),
+  }
+})
 
 vi.mock('@monaco-editor/react', () => ({
   __esModule: true,
@@ -51,6 +60,7 @@ describe('App (web)', () => {
   beforeEach(() => {
     localStorage.clear()
     setViewportWidth(1280)
+    vi.restoreAllMocks()
   })
 
   afterEach(() => {
@@ -132,5 +142,38 @@ describe('App (web)', () => {
       expect(queries.getByRole('button', { name: 'SVG' })).toBeInTheDocument()
       expect(queries.getByLabelText('Theme')).toBeInTheDocument()
     })
+  })
+
+  it('shows the mobile Share button as busy while creating a private link', async () => {
+    setViewportWidth(412)
+    const user = userEvent.setup()
+
+    const encodePrivateShareHashMock = vi
+      .mocked(privateUrlShare.encodePrivateShareHash)
+      .mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            setTimeout(() => resolve('#v1.mock-link'), 50)
+          }),
+      )
+
+    render(
+      <MemoryRouter initialEntries={['/editor']}>
+        <App />
+      </MemoryRouter>,
+    )
+
+    const shareButton = await screen.findByRole('button', { name: 'Share' })
+    await user.click(shareButton)
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Creating link…' })).toBeDisabled()
+    })
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Share' })).not.toBeDisabled()
+    })
+
+    expect(encodePrivateShareHashMock).toHaveBeenCalled()
   })
 })

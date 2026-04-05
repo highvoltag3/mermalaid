@@ -694,7 +694,7 @@ ${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</di
             className="toolbar-btn toolbar-mobile-btn"
             title={PRIVATE_LINK_BUTTON_TITLE}
           >
-            Share
+            {isCopyingPrivateLink ? 'Creating link…' : 'Share'}
           </button>
           <button
             type="button"

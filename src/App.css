@@ -107,10 +107,7 @@
   }
 
   .app-content {
+    display: flex;
     min-height: 0;
-  }
-
-  .app-mobile .app-content {
-    display: block;
   }
 }
