@@ -336,7 +336,13 @@ export default function Editor({
               height="100%"
               defaultLanguage="mermaid"
               value={code}
-              onChange={(value) => setCode(value || '')}
+              onChange={(value) => {
+                // Monaco can report `undefined` during mount/layout churn; ignore that so
+                // switching into the mobile Code panel does not wipe the current diagram.
+                if (typeof value === 'string') {
+                  setCode(value)
+                }
+              }}
               onMount={handleEditorDidMount}
               theme={isAppThemeDark(mermaidTheme) ? 'vs-dark' : 'vs'}
               options={{

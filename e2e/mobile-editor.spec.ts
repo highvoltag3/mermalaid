@@ -41,10 +41,12 @@ for (const profile of smartphoneProfiles) {
       await page.getByRole('tab', { name: 'Code' }).click()
       await expect(page.locator('.editor-container')).toBeVisible()
       await expect(page.locator('.preview-container')).toHaveCount(0)
+      await expect(page.locator('.editor-monaco-host')).toContainText('graph TD')
 
       await page.getByRole('tab', { name: 'Preview' }).click()
       await expect(page.locator('.preview-container')).toBeVisible({ timeout: 30_000 })
 
+      await expect(page.locator('.toolbar-mobile-actions').getByRole('button', { name: 'Share' })).toBeVisible()
       await page.getByRole('button', { name: 'More' }).click()
       await expect(page.getByRole('dialog', { name: 'More actions' })).toBeVisible()
       await expect(page.getByRole('button', { name: 'Copy Code' })).toBeVisible()

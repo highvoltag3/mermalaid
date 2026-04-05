@@ -49,6 +49,7 @@ import {
 import './Toolbar.css'
 
 const PRIVATE_LINK_ENCODE_TIMEOUT_MS = 2500
+const PRIVATE_LINK_BUTTON_TITLE = 'Copy a private link (encrypted in the URL fragment only). The URL also appears in the address bar.'
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number, timeoutMessage: string): Promise<T> {
   return new Promise<T>((resolve, reject) => {
@@ -677,7 +678,22 @@ ${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</di
           <button type="button" onClick={handleSave} className="toolbar-btn toolbar-mobile-btn" title="Save diagram">
             Save
           </button>
-          <button type="button" onClick={() => void handleShare()} className="toolbar-btn toolbar-mobile-btn" title="Share diagram">
+          <button
+            type="button"
+            disabled={isCopyingPrivateLink}
+            aria-busy={isCopyingPrivateLink}
+            onClick={() => {
+              void handleCopyPrivateLink().catch((e) => {
+                console.error('[mermalaid] Copy private link: unexpected error', e)
+                showToast(
+                  e instanceof Error ? e.message : 'Could not create a private link. Please try again.',
+                  'error',
+                )
+              })
+            }}
+            className="toolbar-btn toolbar-mobile-btn"
+            title={PRIVATE_LINK_BUTTON_TITLE}
+          >
             Share
           </button>
           <button
@@ -728,17 +744,6 @@ ${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</di
                 </button>
                 <button type="button" onClick={() => { handleCopyCode(); setShowMobileActions(false) }} className="toolbar-btn">
                   Copy Code
-                </button>
-                <button
-                  type="button"
-                  disabled={isCopyingPrivateLink}
-                  aria-busy={isCopyingPrivateLink}
-                  onClick={() => {
-                    void handleCopyPrivateLink().finally(() => setShowMobileActions(false))
-                  }}
-                  className="toolbar-btn"
-                >
-                  {isCopyingPrivateLink ? 'Creating link…' : 'Private Link'}
                 </button>
                 {error && (
                   <button
@@ -877,9 +882,9 @@ ${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</di
                 })
               }}
               className="toolbar-btn"
-              title="Copy a private link (encrypted in the URL fragment only). The URL also appears in the address bar."
+              title={PRIVATE_LINK_BUTTON_TITLE}
             >
-              {isCopyingPrivateLink ? 'Creating link…' : 'Copy private link'}
+              {isCopyingPrivateLink ? 'Creating link…' : 'Share'}
             </button>
             {error && (
               <button

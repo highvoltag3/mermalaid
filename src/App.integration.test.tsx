@@ -24,8 +24,8 @@ vi.mock('./hooks/useUpdateCheck', () => ({
 
 vi.mock('@monaco-editor/react', () => ({
   __esModule: true,
-  default: function MonacoEditorMock() {
-    return <div data-testid="monaco-editor-mock" />
+  default: function MonacoEditorMock({ value }: { value?: string }) {
+    return <div data-testid="monaco-editor-mock">{value}</div>
   },
   loader: {
     init: async () => ({
@@ -104,6 +104,7 @@ describe('App (web)', () => {
     await waitFor(() => {
       expect(container.querySelector('.editor-container')).toBeTruthy()
       expect(container.querySelector('.preview-container')).toBeFalsy()
+      expect(queries.getByTestId('monaco-editor-mock')).toHaveTextContent('graph TD')
     })
   })
 
@@ -120,6 +121,7 @@ describe('App (web)', () => {
 
     await waitFor(() => {
       expect(queries.getByRole('button', { name: 'More' })).toBeInTheDocument()
+      expect(queries.getByRole('button', { name: 'Share' })).toBeInTheDocument()
     })
 
     await user.click(queries.getByRole('button', { name: 'More' }))
