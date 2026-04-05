@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { useState, useEffect, useRef, useLayoutEffect } from 'react'
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { invoke, isTauri } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
 import { ThemeProvider } from './contexts/ThemeContext'
@@ -7,6 +7,7 @@ import { ToastProvider } from './contexts/ToastContext'
 import { useTheme } from './hooks/useTheme'
 import { useUpdateCheck } from './hooks/useUpdateCheck'
 import { useMountEffect } from './hooks/useMountEffect'
+import { useToast } from './hooks/useToast'
 import Editor from './components/Editor'
 import Preview from './components/Preview'
 import Toolbar, { type ToolbarRef } from './components/Toolbar'
@@ -14,6 +15,12 @@ import LandingPage from './components/LandingPage'
 import UpdateAvailableBanner from './components/UpdateAvailableBanner'
 import type { LatestReleaseInfo } from './utils/githubRelease'
 import { isDiagramImportFileName } from './utils/diagramImportFiles'
+import {
+  clearUrlFragment,
+  decodePrivateShareHash,
+  getPrivateShareErrorMessage,
+  isPrivateShareHash,
+} from './utils/privateUrlShare'
 import { extractMermaidCode, extractAllMermaidBlocks } from './utils/mermaidCodeBlock'
 import { getAppThemeCssVars, isAppThemeDark } from './utils/mermaidThemes'
 import { initNativeAppMenu, setNativeMenuHandlerSource } from './nativeAppMenu'
@@ -24,8 +31,24 @@ interface ReleaseBannerRouteProps {
   onDismissPendingRelease: () => void
 }
 
+function PrivateShareHashRedirect() {
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  useLayoutEffect(() => {
+    if (location.pathname !== '/') return
+    const h = location.hash
+    if (!isPrivateShareHash(h)) return
+    navigate(`/editor${h}`, { replace: true })
+  }, [location.pathname, location.hash, navigate])
+
+  return null
+}
+
 function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRouteProps) {
   const { mermaidTheme } = useTheme()
+  const { showToast } = useToast()
+  const location = useLocation()
   const [code, setCode] = useState('graph TD\n    A[Start] --> B{Decision}\n    B -->|Yes| C[Action 1]\n    B -->|No| D[Action 2]\n    C --> E[End]\n    D --> E')
   const [error, setError] = useState<string | null>(null)
   const [isEditorCollapsed, setIsEditorCollapsed] = useState(false)
@@ -53,15 +76,63 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
     try { localStorage.setItem('mermalaid-has-used-editor', '1') } catch {}
   })
 
+  /** Draft only when the first paint is not a private share URL (share handling is hash-subscribed below). */
   useMountEffect(() => {
     if (isTauri()) return
+    if (isPrivateShareHash(window.location.hash)) return
     const saved = localStorage.getItem('mermalaid-draft')
     if (saved) setCode(saved)
   })
 
+  /** Web: react to private `#v1…` on load and when the hash changes while staying on /editor. */
+  useEffect(() => {
+    if (isTauri()) return
+    const hash = location.hash
+    if (!isPrivateShareHash(hash)) return
+
+    let cancelled = false
+    void (async () => {
+      try {
+        const state = await decodePrivateShareHash(hash)
+        if (cancelled) return
+        setCode(state.code)
+        documentPathRef.current = null
+        clearUrlFragment()
+        showToast('Opened diagram from private link')
+      } catch (e) {
+        if (cancelled) return
+        showToast(getPrivateShareErrorMessage(e), 'error')
+        clearUrlFragment()
+        const saved = localStorage.getItem('mermalaid-draft')
+        if (saved) setCode(saved)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [location.hash, showToast])
+
   /** Finder / Explorer / argv: open the requested file instead of restoring draft (issue #41). */
   useMountEffect(() => {
     if (!isTauri()) return
+
+    const tryConsumePrivateShareHash = async (): Promise<'loaded' | 'none' | 'invalid'> => {
+      const hash = window.location.hash
+      if (!isPrivateShareHash(hash)) return 'none'
+      try {
+        const state = await decodePrivateShareHash(hash)
+        setCode(state.code)
+        documentPathRef.current = null
+        clearUrlFragment()
+        showToast('Opened diagram from private link')
+        return 'loaded'
+      } catch (e) {
+        showToast(getPrivateShareErrorMessage(e), 'error')
+        clearUrlFragment()
+        return 'invalid'
+      }
+    }
 
     const openQueuedPaths = async () => {
       const paths = await invoke<string[]>('take_open_files')
@@ -73,6 +144,8 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
     }
 
     const restoreDraftIfNoOsFile = async () => {
+      const shareOutcome = await tryConsumePrivateShareHash()
+      if (shareOutcome === 'loaded') return
       const opened = await openQueuedPaths()
       if (opened) return
       const saved = localStorage.getItem('mermalaid-draft')
@@ -210,6 +283,7 @@ function App() {
   return (
     <ThemeProvider>
       <ToastProvider>
+        <PrivateShareHashRedirect />
         <Routes>
           <Route
             path="/"

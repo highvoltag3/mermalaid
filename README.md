@@ -59,6 +59,7 @@ Mermalaid provides professional-grade features typically found in paid Mermaid e
   - **PNG Export** - Raster images for documentation and web use
   - **ASCII Export** - Unicode box-drawing for terminals (flowcharts, state, sequence, class, ER diagrams)
 - **Copy to Clipboard** - Export code blocks ready for Markdown, GitHub, or documentation
+- **Private URL share** - **Copy private link** puts the diagram in `#v1.<payload>` only (fragment, not query). The payload is compressed, encrypted locally with AES-GCM (Web Crypto), then base64url-encoded. There is no upload and no server sees the ciphertext in HTTP requests (fragments are not sent). Anyone who has the full link can decrypt it; treat links like secrets.
 
 ### Mermaid Diagram Types Supported
 

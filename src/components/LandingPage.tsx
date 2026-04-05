@@ -112,6 +112,12 @@ const compactFeatures = [
     description: 'Saved to your browser \u2014 your data never leaves your device.',
   },
   {
+    icon: '#',
+    title: 'Private link sharing',
+    description:
+      'Copy private link to pack your diagram into #v1\u2026 in the address bar. Compressed and encrypted in the browser with Web Crypto; no upload. Fragments are not sent to servers like query strings.',
+  },
+  {
     icon: '\u2193',
     title: 'Drag & Drop Import',
     description: 'Drop .mmd, .txt, or .md files directly into the editor.',
@@ -154,6 +160,11 @@ const faqs = [
   {
     question: 'Can I export my diagrams?',
     answer: 'Yes. Export your diagrams as SVG (scalable vector graphics) for crisp rendering at any size, or PNG for raster images. You can also copy the raw Mermaid code to your clipboard with markdown formatting.',
+  },
+  {
+    question: 'What is Copy private link?',
+    answer:
+      'Copy private link builds a URL that carries your diagram in the hash (for example #v1.\u2026), not in query parameters. Your text is compressed and encrypted locally with AES-GCM (Web Crypto), then base64url-encoded. Nothing is uploaded: opening the link decrypts in the browser. Anyone with the full link can read the diagram, so treat it like a secret.',
   },
   {
     question: 'What is the visual editor?',
@@ -282,12 +293,14 @@ export default function LandingPage({
             </div>
             <p className="landing-hero-privacy-note">
               Your diagrams never leave your device. No tracking, no cloud, no analytics.
+              Need to send one? Use <strong>Copy private link</strong> in the editor: encrypted in the URL
+              fragment only, no backend.
             </p>
             <h1>The Free Mermaid Diagram Editor You&rsquo;ve Been Looking For</h1>
             <p className="landing-hero-sub">
               Create flowcharts, sequence diagrams, class diagrams, and more with the most powerful
-              free Mermaid editor online. Live preview, visual drag-and-drop editing, SVG &amp; PNG export
-              &mdash; all without creating an account.
+              free Mermaid editor online. Live preview, visual drag-and-drop editing, SVG &amp; PNG export,
+              and private URL sharing &mdash; all without creating an account.
             </p>
             <div className="landing-hero-actions">
               <Link to="/editor" className="landing-btn landing-btn-primary">
