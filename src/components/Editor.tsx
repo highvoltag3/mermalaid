@@ -87,6 +87,7 @@ interface EditorProps {
   setSelectedBlockIndex: (index: number) => void
   isCollapsed: boolean
   onToggleCollapsed: () => void
+  isMobile?: boolean
 }
 
 function CollapseEditorIcon() {
@@ -113,6 +114,7 @@ export default function Editor({
   code, setCode, error,
   mermaidBlocks, selectedBlockIndex, setSelectedBlockIndex,
   isCollapsed, onToggleCollapsed,
+  isMobile = false,
 }: EditorProps) {
   const { mermaidTheme } = useTheme()
   const debounceTimer = useRef<NodeJS.Timeout>()
@@ -309,20 +311,22 @@ export default function Editor({
   }, [mermaidBlocks, selectedBlockIndex, setSelectedBlockIndex, editorReady])
 
   return (
-    <div className={`editor-container ${isCollapsed ? 'collapsed' : ''}`}>
+    <div className={`editor-container ${isCollapsed ? 'collapsed' : ''} ${isMobile ? 'editor-container-mobile' : ''}`}>
       <div className="editor-header">
         {!isCollapsed && <span>Editor</span>}
         <div className="editor-header-controls">
           {!isCollapsed && error && <span className="error-indicator">⚠️ Syntax Error</span>}
-          <button
-            type="button"
-            className="editor-toggle-btn"
-            onClick={onToggleCollapsed}
-            title={isCollapsed ? 'Expand editor' : 'Collapse editor'}
-            aria-label={isCollapsed ? 'Expand editor panel' : 'Collapse editor panel'}
-          >
-            {isCollapsed ? <ExpandEditorIcon /> : <CollapseEditorIcon />}
-          </button>
+          {!isMobile && (
+            <button
+              type="button"
+              className="editor-toggle-btn"
+              onClick={onToggleCollapsed}
+              title={isCollapsed ? 'Expand editor' : 'Collapse editor'}
+              aria-label={isCollapsed ? 'Expand editor panel' : 'Collapse editor panel'}
+            >
+              {isCollapsed ? <ExpandEditorIcon /> : <CollapseEditorIcon />}
+            </button>
+          )}
         </div>
       </div>
       {!isCollapsed && (
@@ -332,16 +336,25 @@ export default function Editor({
               height="100%"
               defaultLanguage="mermaid"
               value={code}
-              onChange={(value) => setCode(value || '')}
+              onChange={(value) => {
+                // Monaco can report `undefined` during mount/layout churn; ignore that so
+                // switching into the mobile Code panel does not wipe the current diagram.
+                if (typeof value === 'string') {
+                  setCode(value)
+                }
+              }}
               onMount={handleEditorDidMount}
               theme={isAppThemeDark(mermaidTheme) ? 'vs-dark' : 'vs'}
               options={{
                 minimap: { enabled: false },
-                fontSize: 14,
+                fontSize: isMobile ? 16 : 14,
                 tabSize: 2,
                 wordWrap: 'on',
                 automaticLayout: true,
-                glyphMargin: mermaidBlocks.length > 1,
+                glyphMargin: !isMobile && mermaidBlocks.length > 1,
+                lineNumbers: isMobile ? 'off' : 'on',
+                folding: !isMobile,
+                scrollBeyondLastLine: false,
               }}
             />
           </div>

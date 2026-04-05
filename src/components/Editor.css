@@ -118,3 +118,27 @@
   margin-left: 4px;
   border-radius: 1px;
 }
+
+@media (max-width: 768px) {
+  .editor-container {
+    border-right: none;
+  }
+
+  .editor-container-mobile .editor-header {
+    padding: 0 14px;
+  }
+
+  .editor-container-mobile .editor-header-controls {
+    gap: 6px;
+  }
+
+  .editor-container-mobile .error-indicator {
+    font-size: 10px;
+  }
+
+  .editor-container-mobile .error-message {
+    padding: 10px 14px;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+}

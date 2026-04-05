@@ -26,6 +26,53 @@ import { getAppThemeCssVars, isAppThemeDark } from './utils/mermaidThemes'
 import { initNativeAppMenu, setNativeMenuHandlerSource } from './nativeAppMenu'
 import './App.css'
 
+const SMARTPHONE_BREAKPOINT_PX = 768
+
+type MobileWorkspacePanel = 'editor' | 'preview'
+
+function useIsSmartphoneLayout() {
+  const [isSmartphoneLayout, setIsSmartphoneLayout] = useState(
+    () => window.innerWidth <= SMARTPHONE_BREAKPOINT_PX,
+  )
+
+  useEffect(() => {
+    const updateLayout = () => setIsSmartphoneLayout(window.innerWidth <= SMARTPHONE_BREAKPOINT_PX)
+
+    updateLayout()
+    window.addEventListener('resize', updateLayout)
+    return () => window.removeEventListener('resize', updateLayout)
+  }, [])
+
+  return isSmartphoneLayout
+}
+
+function useIsKeyboardOpen(isSmartphoneLayout: boolean) {
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false)
+
+  useEffect(() => {
+    if (!isSmartphoneLayout) {
+      setIsKeyboardOpen(false)
+      return
+    }
+
+    const vv = window.visualViewport
+    if (!vv) return
+
+    const initialHeight = vv.height
+    const update = () => {
+      // Heuristic: a sizable reduction from the initial viewport height implies a soft keyboard.
+      const delta = initialHeight - vv.height
+      setIsKeyboardOpen(delta > 140)
+    }
+
+    update()
+    vv.addEventListener('resize', update)
+    return () => vv.removeEventListener('resize', update)
+  }, [isSmartphoneLayout])
+
+  return isKeyboardOpen
+}
+
 interface ReleaseBannerRouteProps {
   pendingRelease: LatestReleaseInfo | null
   onDismissPendingRelease: () => void
@@ -49,9 +96,12 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
   const { mermaidTheme } = useTheme()
   const { showToast } = useToast()
   const location = useLocation()
+  const isSmartphoneLayout = useIsSmartphoneLayout()
+  const isKeyboardOpen = useIsKeyboardOpen(isSmartphoneLayout)
   const [code, setCode] = useState('graph TD\n    A[Start] --> B{Decision}\n    B -->|Yes| C[Action 1]\n    B -->|No| D[Action 2]\n    C --> E[End]\n    D --> E')
   const [error, setError] = useState<string | null>(null)
   const [isEditorCollapsed, setIsEditorCollapsed] = useState(false)
+  const [mobileWorkspacePanel, setMobileWorkspacePanel] = useState<MobileWorkspacePanel>('preview')
   const [selectedBlockIndex, setSelectedBlockIndex] = useState(0)
   const documentPathRef = useRef<string | null>(null)
   const toolbarRef = useRef<ToolbarRef>(null)
@@ -224,9 +274,12 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
     e.preventDefault()
   }
 
+  const showEditorPanel = !isSmartphoneLayout || mobileWorkspacePanel === 'editor'
+  const showPreviewPanel = !isSmartphoneLayout || mobileWorkspacePanel === 'preview'
+
   return (
     <div
-      className={`app ${isAppThemeDark(mermaidTheme) ? 'app-theme-dark' : 'app-theme-light'}`}
+      className={`app ${isAppThemeDark(mermaidTheme) ? 'app-theme-dark' : 'app-theme-light'} ${isSmartphoneLayout ? 'app-mobile' : ''} ${isKeyboardOpen ? 'app-mobile-keyboard-open' : ''}`}
       style={getAppThemeCssVars(mermaidTheme) as React.CSSProperties}
       onDrop={handleDrop}
       onDragOver={handleDragOver}
@@ -246,28 +299,67 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
         activeCode={activeCode}
         mermaidBlocks={mermaidBlocks}
         documentPathRef={documentPathRef}
+        isMobile={isSmartphoneLayout}
       />
       <div className="app-content">
-        <Editor
-          code={code}
-          setCode={setCode}
-          error={error}
-          mermaidBlocks={mermaidBlocks}
-          selectedBlockIndex={selectedBlockIndex}
-          setSelectedBlockIndex={setSelectedBlockIndex}
-          isCollapsed={isEditorCollapsed}
-          onToggleCollapsed={() => setIsEditorCollapsed((collapsed) => !collapsed)}
-        />
-        <Preview
-          code={code}
-          setError={setError}
-          onCodeChange={setCode}
-          activeCode={activeCode}
-          mermaidBlocks={mermaidBlocks}
-          selectedBlockIndex={selectedBlockIndex}
-          setSelectedBlockIndex={setSelectedBlockIndex}
-        />
+        {showEditorPanel && (
+          <Editor
+            code={code}
+            setCode={setCode}
+            error={error}
+            mermaidBlocks={mermaidBlocks}
+            selectedBlockIndex={selectedBlockIndex}
+            setSelectedBlockIndex={setSelectedBlockIndex}
+            isCollapsed={isSmartphoneLayout ? false : isEditorCollapsed}
+            onToggleCollapsed={() => setIsEditorCollapsed((collapsed) => !collapsed)}
+            isMobile={isSmartphoneLayout}
+          />
+        )}
+        {showPreviewPanel && (
+          <Preview
+            code={code}
+            setError={setError}
+            onCodeChange={setCode}
+            activeCode={activeCode}
+            mermaidBlocks={mermaidBlocks}
+            selectedBlockIndex={selectedBlockIndex}
+            setSelectedBlockIndex={setSelectedBlockIndex}
+            isMobile={isSmartphoneLayout}
+          />
+        )}
       </div>
+      {isSmartphoneLayout && (
+        <div className="mobile-bottom-bar" role="navigation" aria-label="Mobile workspace">
+          <div className="mobile-bottom-bar-inner" role="tablist" aria-label="Mobile workspace tabs">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mobileWorkspacePanel === 'preview'}
+              className={`mobile-bottom-bar-btn ${mobileWorkspacePanel === 'preview' ? 'active' : ''}`}
+              onClick={() => setMobileWorkspacePanel('preview')}
+            >
+              Preview
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mobileWorkspacePanel === 'editor'}
+              className={`mobile-bottom-bar-btn ${mobileWorkspacePanel === 'editor' ? 'active' : ''}`}
+              onClick={() => setMobileWorkspacePanel('editor')}
+            >
+              Code
+            </button>
+            <button
+              type="button"
+              className="mobile-bottom-bar-btn mobile-bottom-bar-more-btn"
+              onClick={() => toolbarRef.current?.openMobileActions?.()}
+              aria-haspopup="dialog"
+            >
+              More
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

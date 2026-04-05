@@ -213,3 +213,62 @@
   white-space: nowrap;
 }
 
+@media (max-width: 768px) {
+  .preview-container-mobile .preview-header {
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 14px;
+    height: auto;
+    min-height: var(--panel-header-height, 48px);
+  }
+
+  .preview-container-mobile .preview-header > span {
+    margin-top: .5rem;
+  }
+
+  .preview-container-mobile .preview-header-controls {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  .preview-container-mobile .preview-content {
+    padding: 10px 12px 12px;
+  }
+
+  .preview-container-mobile .preview-zoom-toolbar {
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .preview-container-mobile .preview-zoom-btn {
+    min-width: 40px;
+    height: 36px;
+    padding: 0 10px;
+    font-size: 14px;
+    border-radius: 8px;
+  }
+
+  .preview-container-mobile .preview-zoom-btn-wide {
+    min-width: 64px;
+    font-size: 13px;
+  }
+
+  .preview-container-mobile .mode-toggle-btn,
+  .preview-container-mobile .block-selector-btn {
+    min-height: 32px;
+  }
+
+  .preview-container-mobile .block-selector {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .preview-container-mobile .block-selector-label {
+    font-size: 12px;
+  }
+
+  .preview-container-mobile .error-preview {
+    max-width: none;
+  }
+}

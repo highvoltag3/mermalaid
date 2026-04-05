@@ -170,11 +170,13 @@ interface PreviewProps {
   mermaidBlocks: MermaidBlock[]
   selectedBlockIndex: number
   setSelectedBlockIndex: (index: number | ((prev: number) => number)) => void
+  isMobile?: boolean
 }
 
 export default function Preview({
   code, setError, onCodeChange,
   activeCode, mermaidBlocks, selectedBlockIndex, setSelectedBlockIndex,
+  isMobile = false,
 }: PreviewProps) {
   const { mermaidTheme } = useTheme()
   const previewRef = useRef<HTMLDivElement>(null)
@@ -379,7 +381,7 @@ export default function Preview({
 
   if (isEditMode && canEdit && parsedDiagram) {
     return (
-      <div className="preview-container">
+      <div className={`preview-container ${isMobile ? 'preview-container-mobile' : ''}`}>
         <div className="preview-header">
           <span>Visual Editor</span>
           <div className="preview-header-controls">
@@ -402,7 +404,7 @@ export default function Preview({
   }
 
   return (
-    <div className="preview-container">
+    <div className={`preview-container ${isMobile ? 'preview-container-mobile' : ''}`}>
       <div className="preview-header">
         <span>Preview</span>
         <div className="preview-header-controls">
