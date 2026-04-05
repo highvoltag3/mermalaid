@@ -48,6 +48,7 @@ function PrivateShareHashRedirect() {
 function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRouteProps) {
   const { mermaidTheme } = useTheme()
   const { showToast } = useToast()
+  const location = useLocation()
   const [code, setCode] = useState('graph TD\n    A[Start] --> B{Decision}\n    B -->|Yes| C[Action 1]\n    B -->|No| D[Action 2]\n    C --> E[End]\n    D --> E')
   const [error, setError] = useState<string | null>(null)
   const [isEditorCollapsed, setIsEditorCollapsed] = useState(false)
@@ -75,28 +76,42 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
     try { localStorage.setItem('mermalaid-has-used-editor', '1') } catch {}
   })
 
+  /** Draft only when the first paint is not a private share URL (share handling is hash-subscribed below). */
   useMountEffect(() => {
     if (isTauri()) return
-    void (async () => {
-      const hash = window.location.hash
-      if (isPrivateShareHash(hash)) {
-        try {
-          const state = await decodePrivateShareHash(hash)
-          setCode(state.code)
-          documentPathRef.current = null
-          clearUrlFragment()
-          showToast('Opened diagram from private link')
-          return
-        } catch (e) {
-          showToast(getPrivateShareErrorMessage(e), 'error')
-          clearUrlFragment()
-          // Match Tauri: only skip draft on success ('loaded'); invalid hash still restores draft.
-        }
-      }
-      const saved = localStorage.getItem('mermalaid-draft')
-      if (saved) setCode(saved)
-    })()
+    if (isPrivateShareHash(window.location.hash)) return
+    const saved = localStorage.getItem('mermalaid-draft')
+    if (saved) setCode(saved)
   })
+
+  /** Web: react to private `#v1…` on load and when the hash changes while staying on /editor. */
+  useEffect(() => {
+    if (isTauri()) return
+    const hash = location.hash
+    if (!isPrivateShareHash(hash)) return
+
+    let cancelled = false
+    void (async () => {
+      try {
+        const state = await decodePrivateShareHash(hash)
+        if (cancelled) return
+        setCode(state.code)
+        documentPathRef.current = null
+        clearUrlFragment()
+        showToast('Opened diagram from private link')
+      } catch (e) {
+        if (cancelled) return
+        showToast(getPrivateShareErrorMessage(e), 'error')
+        clearUrlFragment()
+        const saved = localStorage.getItem('mermalaid-draft')
+        if (saved) setCode(saved)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [location.hash, showToast])
 
   /** Finder / Explorer / argv: open the requested file instead of restoring draft (issue #41). */
   useMountEffect(() => {
