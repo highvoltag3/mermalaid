@@ -1,7 +1,7 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 
 vi.mock('@tauri-apps/api/core', () => ({
@@ -53,6 +53,10 @@ describe('App (web)', () => {
     setViewportWidth(1280)
   })
 
+  afterEach(() => {
+    cleanup()
+  })
+
   it('renders landing with editor entry point on /', async () => {
     render(
       <MemoryRouter initialEntries={['/']}>
@@ -85,16 +89,17 @@ describe('App (web)', () => {
         <App />
       </MemoryRouter>,
     )
+    const queries = within(container)
 
     await waitFor(() => {
-      expect(screen.getByRole('tab', { name: 'Code' })).toBeInTheDocument()
-      expect(screen.getByRole('tab', { name: 'Preview' })).toBeInTheDocument()
+      expect(queries.getByRole('tab', { name: 'Code' })).toBeInTheDocument()
+      expect(queries.getByRole('tab', { name: 'Preview' })).toBeInTheDocument()
       expect(container.querySelector('.toolbar-mobile')).toBeTruthy()
       expect(container.querySelector('.preview-container')).toBeTruthy()
       expect(container.querySelector('.editor-container')).toBeFalsy()
     })
 
-    await user.click(screen.getByRole('tab', { name: 'Code' }))
+    await user.click(queries.getByRole('tab', { name: 'Code' }))
 
     await waitFor(() => {
       expect(container.querySelector('.editor-container')).toBeTruthy()
@@ -106,23 +111,24 @@ describe('App (web)', () => {
     setViewportWidth(412)
     const user = userEvent.setup()
 
-    render(
+    const { container } = render(
       <MemoryRouter initialEntries={['/editor']}>
         <App />
       </MemoryRouter>,
     )
+    const queries = within(container)
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'More' })).toBeInTheDocument()
+      expect(queries.getByRole('button', { name: 'More' })).toBeInTheDocument()
     })
 
-    await user.click(screen.getByRole('button', { name: 'More' }))
+    await user.click(queries.getByRole('button', { name: 'More' }))
 
     await waitFor(() => {
-      expect(screen.getByRole('dialog', { name: 'More actions' })).toBeInTheDocument()
-      expect(screen.getByRole('button', { name: 'Copy Code' })).toBeInTheDocument()
-      expect(screen.getByRole('button', { name: 'SVG' })).toBeInTheDocument()
-      expect(screen.getByLabelText('Theme')).toBeInTheDocument()
+      expect(queries.getByRole('dialog', { name: 'More actions' })).toBeInTheDocument()
+      expect(queries.getByRole('button', { name: 'Copy Code' })).toBeInTheDocument()
+      expect(queries.getByRole('button', { name: 'SVG' })).toBeInTheDocument()
+      expect(queries.getByLabelText('Theme')).toBeInTheDocument()
     })
   })
 })
