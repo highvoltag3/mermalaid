@@ -118,6 +118,8 @@ export default function Editor({
   const debounceTimer = useRef<NodeJS.Timeout>()
   const editorRef = useRef<any>(null)
   const decorationIdsRef = useRef<string[]>([])
+  /** Avoid scrolling on every keystroke: reveal block start only when selection or block list shape changes (issue #54). */
+  const lastBlockRevealRef = useRef<{ selectedBlockIndex: number; blockCount: number } | null>(null)
   const [editorReady, setEditorReady] = useState(false)
 
   const readClipboardText = (clipboardData: DataTransfer | null): string => {
@@ -143,7 +145,6 @@ export default function Editor({
     if (editorRef.current) {
       const currentValue = editorRef.current.getValue()
       if (currentValue !== code) {
-        console.log('Updating Monaco editor with new code')
         editorRef.current.setValue(code)
       }
     }
@@ -237,6 +238,7 @@ export default function Editor({
 
     if (mermaidBlocks.length <= 1) {
       decorationIdsRef.current = editor.deltaDecorations(decorationIdsRef.current, [])
+      lastBlockRevealRef.current = null
       return
     }
 
@@ -265,7 +267,17 @@ export default function Editor({
       },
     ])
 
-    editor.revealLineInCenterIfOutsideViewport(startPos.lineNumber)
+    const blockCount = mermaidBlocks.length
+    const prevReveal = lastBlockRevealRef.current
+    const shouldRevealBlockStart =
+      prevReveal === null ||
+      prevReveal.selectedBlockIndex !== selectedBlockIndex ||
+      prevReveal.blockCount !== blockCount
+
+    if (shouldRevealBlockStart) {
+      editor.revealLineInCenterIfOutsideViewport(startPos.lineNumber)
+      lastBlockRevealRef.current = { selectedBlockIndex, blockCount }
+    }
   }, [mermaidBlocks, selectedBlockIndex, code, editorReady])
 
   // Listen for cursor position changes to switch selected block
