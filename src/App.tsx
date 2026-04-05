@@ -86,11 +86,12 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
           documentPathRef.current = null
           clearUrlFragment()
           showToast('Opened diagram from private link')
+          return
         } catch (e) {
           showToast(getPrivateShareErrorMessage(e), 'error')
           clearUrlFragment()
+          // Match Tauri: only skip draft on success ('loaded'); invalid hash still restores draft.
         }
-        return
       }
       const saved = localStorage.getItem('mermalaid-draft')
       if (saved) setCode(saved)

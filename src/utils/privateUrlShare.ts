@@ -13,6 +13,10 @@ const INNER_JSON_VERSION = 1
 const PACKET_KEY_LEN = 32
 const GCM_IV_LENGTH = 12
 const FLAG_COMPRESSED = 0x01
+const STREAM_OPERATION_TIMEOUT_MS = 1500
+const CRYPTO_OPERATION_TIMEOUT_MS = 2500
+let compressionStreamBroken = false
+let compressionFallbackNotified = false
 
 export type ShareableEditorState = {
   code: string
@@ -28,6 +32,23 @@ export class PrivateShareError extends Error {
     this.name = 'PrivateShareError'
     this.kind = kind
   }
+}
+
+/** Web Crypto subtle exists only in secure contexts (HTTPS, localhost, 127.0.0.1 — not http://192.168…). */
+function throwIfWebCryptoUnavailableForPrivateShare(): void {
+  if (crypto?.subtle) return
+
+  if (typeof window !== 'undefined' && window.isSecureContext === false) {
+    throw new PrivateShareError(
+      'unsupported',
+      'Private links need a secure page. Browsers disable Web Crypto on plain HTTP for LAN IPs (http://192.168…). Use http://localhost:5173 on this machine, serve HTTPS (e.g. vite --host with TLS), or use your HTTPS deployment.',
+    )
+  }
+
+  throw new PrivateShareError(
+    'unsupported',
+    'Web Crypto is not available here, so private links cannot be created or opened. Try another browser or update.',
+  )
 }
 
 function bytesToBase64Url(bytes: Uint8Array): string {
@@ -51,18 +72,49 @@ function base64UrlToBytes(s: string): Uint8Array {
   return out
 }
 
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, timeoutError: Error): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timeoutId = setTimeout(() => reject(timeoutError), timeoutMs)
+    promise.then(
+      (value) => {
+        clearTimeout(timeoutId)
+        resolve(value)
+      },
+      (err) => {
+        clearTimeout(timeoutId)
+        reject(err)
+      },
+    )
+  })
+}
+
 async function compressIfSupported(data: Uint8Array): Promise<{ bytes: Uint8Array; compressed: boolean }> {
-  if (typeof CompressionStream === 'undefined') {
+  if (compressionStreamBroken || typeof CompressionStream === 'undefined') {
     return { bytes: data, compressed: false }
   }
-  const stream = new CompressionStream('deflate-raw')
-  const writer = stream.writable.getWriter()
-  await writer.write(data as BufferSource)
-  await writer.close()
-  const buf = await new Response(stream.readable).arrayBuffer()
-  const out = new Uint8Array(buf)
-  if (out.length < data.length) {
-    return { bytes: out, compressed: true }
+  try {
+    const out = await withTimeout(
+      (async () => {
+        const stream = new CompressionStream('deflate-raw')
+        const writer = stream.writable.getWriter()
+        await writer.write(data as BufferSource)
+        await writer.close()
+        const buf = await new Response(stream.readable).arrayBuffer()
+        return new Uint8Array(buf)
+      })(),
+      STREAM_OPERATION_TIMEOUT_MS,
+      new Error('Compression stream timed out'),
+    )
+    if (out.length < data.length) {
+      return { bytes: out, compressed: true }
+    }
+  } catch (err) {
+    compressionStreamBroken = true
+    if (import.meta.env.DEV && !compressionFallbackNotified) {
+      compressionFallbackNotified = true
+      // Compression is optional; keep this as a one-time debug note to avoid console noise.
+      console.debug('[mermalaid] Compression unavailable; private links will use uncompressed payload.')
+    }
   }
   return { bytes: data, compressed: false }
 }
@@ -72,12 +124,22 @@ async function decompressIfNeeded(data: Uint8Array, compressed: boolean): Promis
   if (typeof DecompressionStream === 'undefined') {
     throw new PrivateShareError('unsupported', 'This link uses compression that your browser cannot decode.')
   }
-  const stream = new DecompressionStream('deflate-raw')
-  const writer = stream.writable.getWriter()
-  await writer.write(data as BufferSource)
-  await writer.close()
-  const buf = await new Response(stream.readable).arrayBuffer()
-  return new Uint8Array(buf)
+  try {
+    return await withTimeout(
+      (async () => {
+        const stream = new DecompressionStream('deflate-raw')
+        const writer = stream.writable.getWriter()
+        await writer.write(data as BufferSource)
+        await writer.close()
+        const buf = await new Response(stream.readable).arrayBuffer()
+        return new Uint8Array(buf)
+      })(),
+      STREAM_OPERATION_TIMEOUT_MS,
+      new Error('Decompression stream timed out'),
+    )
+  } catch {
+    throw new PrivateShareError('invalid', 'This share link is damaged and could not be opened.')
+  }
 }
 
 function getRandomBytes(length: number): Uint8Array {
@@ -116,9 +178,7 @@ function parseInnerJson(bytes: Uint8Array): ShareableEditorState {
  * Builds `#v1.<base64url(packet)>` for the current origin/path; caller should set `location` appropriately.
  */
 export async function encodePrivateShareHash(state: ShareableEditorState): Promise<string> {
-  if (!crypto?.subtle) {
-    throw new PrivateShareError('unsupported', 'Your browser does not support private links.')
-  }
+  throwIfWebCryptoUnavailableForPrivateShare()
 
   const json = JSON.stringify({ v: INNER_JSON_VERSION, code: state.code })
   const plain = new TextEncoder().encode(json)
@@ -126,16 +186,40 @@ export async function encodePrivateShareHash(state: ShareableEditorState): Promi
 
   const key = getRandomBytes(PACKET_KEY_LEN)
   const iv = getRandomBytes(GCM_IV_LENGTH)
-  const cryptoKey = await crypto.subtle.importKey('raw', key as BufferSource, 'AES-GCM', false, ['encrypt'])
+  let cryptoKey: CryptoKey
+  try {
+    cryptoKey = await withTimeout(
+      crypto.subtle.importKey('raw', key as BufferSource, 'AES-GCM', false, ['encrypt']),
+      CRYPTO_OPERATION_TIMEOUT_MS,
+      new Error('Web Crypto importKey timed out'),
+    )
+  } catch {
+    throw new PrivateShareError(
+      'unsupported',
+      'Could not create a private link because Web Crypto timed out. Refresh the page and try again.',
+    )
+  }
 
   const flags = compressed ? FLAG_COMPRESSED : 0
-  const ciphertext = new Uint8Array(
-    await crypto.subtle.encrypt(
-      { name: 'AES-GCM', iv: iv as BufferSource },
-      cryptoKey,
-      body as BufferSource,
-    ),
-  )
+  let ciphertext: Uint8Array
+  try {
+    ciphertext = new Uint8Array(
+      await withTimeout(
+        crypto.subtle.encrypt(
+          { name: 'AES-GCM', iv: iv as BufferSource },
+          cryptoKey,
+          body as BufferSource,
+        ),
+        CRYPTO_OPERATION_TIMEOUT_MS,
+        new Error('Web Crypto encrypt timed out'),
+      ),
+    )
+  } catch {
+    throw new PrivateShareError(
+      'unsupported',
+      'Could not create a private link because encryption timed out. Refresh the page and try again.',
+    )
+  }
 
   const packet = new Uint8Array(1 + PACKET_KEY_LEN + GCM_IV_LENGTH + ciphertext.length)
   packet[0] = flags
@@ -148,9 +232,7 @@ export async function encodePrivateShareHash(state: ShareableEditorState): Promi
 }
 
 export async function decodePrivateShareHash(hash: string): Promise<ShareableEditorState> {
-  if (!crypto?.subtle) {
-    throw new PrivateShareError('unsupported', 'Your browser does not support private links.')
-  }
+  throwIfWebCryptoUnavailableForPrivateShare()
 
   const raw = hash.startsWith('#') ? hash.slice(1) : hash
   if (!raw.startsWith(PRIVATE_SHARE_PAYLOAD_PREFIX)) {
@@ -179,15 +261,28 @@ export async function decodePrivateShareHash(hash: string): Promise<ShareableEdi
   const iv = packet.subarray(1 + PACKET_KEY_LEN, 1 + PACKET_KEY_LEN + GCM_IV_LENGTH)
   const ciphertext = packet.subarray(1 + PACKET_KEY_LEN + GCM_IV_LENGTH)
 
-  const cryptoKey = await crypto.subtle.importKey('raw', key as BufferSource, 'AES-GCM', false, ['decrypt'])
+  let cryptoKey: CryptoKey
+  try {
+    cryptoKey = await withTimeout(
+      crypto.subtle.importKey('raw', key as BufferSource, 'AES-GCM', false, ['decrypt']),
+      CRYPTO_OPERATION_TIMEOUT_MS,
+      new Error('Web Crypto importKey timed out'),
+    )
+  } catch {
+    throw new PrivateShareError('invalid', 'This share link could not be opened because key setup timed out.')
+  }
 
   let plain: Uint8Array
   try {
     plain = new Uint8Array(
-      await crypto.subtle.decrypt(
-        { name: 'AES-GCM', iv: iv as BufferSource },
-        cryptoKey,
-        ciphertext as BufferSource,
+      await withTimeout(
+        crypto.subtle.decrypt(
+          { name: 'AES-GCM', iv: iv as BufferSource },
+          cryptoKey,
+          ciphertext as BufferSource,
+        ),
+        CRYPTO_OPERATION_TIMEOUT_MS,
+        new Error('Web Crypto decrypt timed out'),
       ),
     )
   } catch {
@@ -222,6 +317,15 @@ export function clearUrlFragment(): void {
   const url = new URL(window.location.href)
   url.hash = ''
   history.replaceState(null, '', `${url.pathname}${url.search}`)
+}
+
+/**
+ * Puts the full share URL in the address bar without reloading. Use when the system clipboard
+ * is blocked so the user can ⌘L / Ctrl+L then ⌘C / Ctrl+C.
+ */
+export function applyPrivateShareFullUrlToHistory(fullUrl: string): void {
+  const u = new URL(fullUrl)
+  history.replaceState(null, '', `${u.pathname}${u.search}${u.hash}`)
 }
 
 export function assertPrivateShareUrlFits(fullUrl: string): void {

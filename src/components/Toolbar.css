@@ -46,6 +46,16 @@
   border-color: var(--app-accent);
 }
 
+.toolbar-btn:not(.ai-fix-btn):disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.toolbar-btn:not(.ai-fix-btn):disabled:hover {
+  background-color: var(--app-bg);
+  border-color: var(--app-border);
+}
+
 .toolbar-select {
   padding: 6px 12px 6px 12px;
   border: 1px solid var(--app-border);

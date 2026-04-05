@@ -1,9 +1,13 @@
+import basicSsl from '@vitejs/plugin-basic-ssl'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
+/** Set `DEV_HTTPS=1` (see `npm run dev:https`) for HTTPS so LAN URLs are a secure context (Web Crypto / private links). */
+const useDevHttps = process.env.DEV_HTTPS === '1'
+
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), ...(useDevHttps ? [basicSsl()] : [])],
   base: '/', // Use absolute path for Appwrite Sites deployment
   server: {
     port: parseInt(process.env.PORT || '5173'),

@@ -36,7 +36,9 @@ import {
 import Settings from './Settings'
 import { rebuildNativeAppMenu } from '../nativeAppMenu'
 import { addRecentFile, recentFileLabel, removeRecentFile } from '../utils/recentFiles'
+import { copyPlainTextWhenReady, formatClipboardFailureMessage } from '../utils/copyToClipboard'
 import {
+  applyPrivateShareFullUrlToHistory,
   assertPrivateShareUrlFits,
   buildPrivateShareUrl,
   encodePrivateShareHash,
@@ -44,6 +46,24 @@ import {
   PrivateShareError,
 } from '../utils/privateUrlShare'
 import './Toolbar.css'
+
+const PRIVATE_LINK_ENCODE_TIMEOUT_MS = 2500
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, timeoutMessage: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timeoutId = setTimeout(() => reject(new Error(timeoutMessage)), timeoutMs)
+    promise.then(
+      (value) => {
+        clearTimeout(timeoutId)
+        resolve(value)
+      },
+      (err) => {
+        clearTimeout(timeoutId)
+        reject(err)
+      },
+    )
+  })
+}
 
 const OPEN_FILTERS = [
   { name: 'Mermaid / Text', extensions: ['mmd', 'txt', 'md', 'markdown'] as string[] },
@@ -105,7 +125,17 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [showSettings, setShowSettings] = useState(false)
   const [isFixing, setIsFixing] = useState(false)
+  const [isCopyingPrivateLink, setIsCopyingPrivateLink] = useState(false)
   const hasMultipleBlocks = mermaidBlocks.length > 1
+
+  const openBrowserFilePicker = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click()
+      return
+    }
+    console.error('File input ref is not available')
+    showToast('Unable to open file dialog. Please try again.', 'error')
+  }
 
   const handleNew = () => {
     if (confirm('Create a new diagram? Unsaved changes will be lost.')) {
@@ -127,17 +157,14 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
         await openPath(path)
       } catch (err) {
         console.error('Open dialog error:', err)
-        showToast('Failed to open file.', 'error')
+        // Some desktop/web hybrid contexts can report Tauri=true but fail to open native dialog.
+        // Fall back to browser picker so Open always does something useful.
+        openBrowserFilePicker()
       }
       return
     }
     try {
-      if (fileInputRef.current) {
-        fileInputRef.current.click()
-      } else {
-        console.error('File input ref is not available')
-        showToast('Unable to open file dialog. Please try again.', 'error')
-      }
+      openBrowserFilePicker()
     } catch (err) {
       console.error('Error opening file dialog:', err)
       showToast('Failed to open file dialog. Please ensure your browser supports file selection.', 'error')
@@ -439,22 +466,51 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
   }
 
   const handleCopyPrivateLink = async () => {
-    if (!code.trim()) {
-      showToast('Nothing to share yet.', 'error')
-      return
-    }
+    if (isCopyingPrivateLink) return
+    setIsCopyingPrivateLink(true)
     try {
-      const hash = await encodePrivateShareHash({ code })
-      const fullUrl = buildPrivateShareUrl(hash)
-      assertPrivateShareUrlFits(fullUrl)
-      await navigator.clipboard.writeText(fullUrl)
-      showToast('Private link copied. The diagram is in the URL fragment only; it is not sent to servers.')
-    } catch (err) {
-      if (err instanceof PrivateShareError && err.kind === 'oversized') {
-        showToast(err.message, 'error')
+      if (!code.trim()) {
+        showToast('Nothing to share yet.', 'error')
         return
       }
-      showToast(getPrivateShareErrorMessage(err), 'error')
+
+      const hash = await withTimeout(
+        encodePrivateShareHash({ code }),
+        PRIVATE_LINK_ENCODE_TIMEOUT_MS,
+        'Creating the private link took too long. Please refresh and try again.',
+      )
+      const fullUrl = buildPrivateShareUrl(hash)
+      assertPrivateShareUrlFits(fullUrl)
+
+      // Always show the link in the address bar (intuitive fallback; replaceState does not fire hashchange).
+      applyPrivateShareFullUrlToHistory(fullUrl)
+
+      let clipboardOk = false
+      try {
+        await copyPlainTextWhenReady(() => Promise.resolve(fullUrl))
+        clipboardOk = true
+      } catch {
+        clipboardOk = false
+      }
+
+      if (clipboardOk) {
+        showToast(
+          'Private link copied to clipboard. The same URL (with #v1…) is in the address bar if you need it again.',
+        )
+      } else {
+        showToast(
+          'Private link is in the address bar. Press ⌘L or Ctrl+L to focus it, then ⌘C or Ctrl+C to copy (clipboard API was blocked).',
+        )
+      }
+    } catch (err) {
+      if (err instanceof PrivateShareError) {
+        showToast(getPrivateShareErrorMessage(err), 'error')
+        return
+      }
+      console.error('[mermalaid] Copy private link failed', err)
+      showToast(formatClipboardFailureMessage(err), 'error')
+    } finally {
+      setIsCopyingPrivateLink(false)
     }
   }
 
@@ -584,10 +640,10 @@ ${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</di
     <>
       <div className="toolbar">
         <div className="toolbar-section">
-          <button onClick={handleNew} className="toolbar-btn" title="New (⌘N)">
+          <button type="button" onClick={handleNew} className="toolbar-btn" title="New (⌘N)">
             New
           </button>
-          <button onClick={handleOpen} className="toolbar-btn" title="Open (⌘O)">
+          <button type="button" onClick={handleOpen} className="toolbar-btn" title="Open (⌘O)">
             Open
           </button>
           <input
@@ -597,7 +653,7 @@ ${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</di
             onChange={handleFileChange}
             style={{ display: 'none' }}
           />
-          <button onClick={handleSave} className="toolbar-btn" title="Save (⌘S)">
+          <button type="button" onClick={handleSave} className="toolbar-btn" title="Save (⌘S)">
             Save
           </button>
         </div>
@@ -621,11 +677,22 @@ ${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</di
             Copy Code
           </button>
           <button
-            onClick={() => void handleCopyPrivateLink()}
+            type="button"
+            disabled={isCopyingPrivateLink}
+            aria-busy={isCopyingPrivateLink}
+            onClick={() => {
+              void handleCopyPrivateLink().catch((e) => {
+                console.error('[mermalaid] Copy private link: unexpected error', e)
+                showToast(
+                  e instanceof Error ? e.message : 'Could not create a private link. Please try again.',
+                  'error',
+                )
+              })
+            }}
             className="toolbar-btn"
-            title="Copy a private link (encrypted in the URL fragment only)"
+            title="Copy a private link (encrypted in the URL fragment only). The URL also appears in the address bar."
           >
-            Copy private link
+            {isCopyingPrivateLink ? 'Creating link…' : 'Copy private link'}
           </button>
           {error && (
             <button
