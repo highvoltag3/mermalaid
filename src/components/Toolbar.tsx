@@ -49,6 +49,7 @@ import {
 import './Toolbar.css'
 
 const PRIVATE_LINK_ENCODE_TIMEOUT_MS = 2500
+const PRIVATE_LINK_BUSY_MIN_MS = 300
 const PRIVATE_LINK_BUTTON_TITLE = 'Copy a private link (encrypted in the URL fragment only). The URL also appears in the address bar.'
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number, timeoutMessage: string): Promise<T> {
@@ -64,6 +65,12 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number, timeoutMessage: 
         reject(err)
       },
     )
+  })
+}
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms)
   })
 }
 
@@ -492,6 +499,7 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
   const handleCopyPrivateLink = async () => {
     if (isCopyingPrivateLink) return
     setIsCopyingPrivateLink(true)
+    const startedAt = Date.now()
     try {
       if (!code.trim()) {
         showToast('Nothing to share yet.', 'error')
@@ -534,6 +542,10 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
       console.error('[mermalaid] Copy private link failed', err)
       showToast(formatClipboardFailureMessage(err), 'error')
     } finally {
+      const elapsed = Date.now() - startedAt
+      if (elapsed < PRIVATE_LINK_BUSY_MIN_MS) {
+        await wait(PRIVATE_LINK_BUSY_MIN_MS - elapsed)
+      }
       setIsCopyingPrivateLink(false)
     }
   }

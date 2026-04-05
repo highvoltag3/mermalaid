@@ -54,10 +54,8 @@ for (const profile of smartphoneProfiles) {
 
       const shareButton = page.locator('.toolbar-mobile-actions').getByRole('button', { name: 'Share' })
       await shareButton.click()
-      await expect(shareButton).toBeDisabled()
-      await expect(shareButton).toHaveText('Creating link…')
-      await expect(shareButton).toBeEnabled()
-      await expect(shareButton).toHaveText('Share')
+      await expect(page.locator('.toolbar-mobile-actions').getByRole('button', { name: 'Creating link…' })).toBeDisabled()
+      await expect(page.locator('.toolbar-mobile-actions').getByRole('button', { name: 'Share' })).toBeEnabled()
 
       await page.getByRole('tab', { name: 'Preview' }).click()
       await expect(page.locator('.preview-container')).toBeVisible({ timeout: 30_000 })
