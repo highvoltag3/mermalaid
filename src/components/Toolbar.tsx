@@ -689,8 +689,8 @@ ${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</di
             <img
               className="toolbar-mobile-logo"
               src="/apple-touch-icon.png"
-              width={28}
-              height={28}
+              width={56}
+              height={56}
               alt="Mermalaid"
               loading="eager"
               decoding="async"

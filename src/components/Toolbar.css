@@ -127,6 +127,7 @@
   }
 
   .toolbar-mobile-brand {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -134,10 +135,12 @@
   }
 
   .toolbar-mobile-logo {
-    width: 28px;
-    height: 28px;
+    position: absolute;
+    left: 0;
+    top: -.7rem;
+    width: 56px;
+    height: 56px;
     border-radius: 8px;
-    flex: 0 0 auto;
   }
 
   .toolbar-mobile-title-stack {
@@ -145,6 +148,7 @@
   }
 
   .toolbar-mobile-title {
+    margin-left: 60px;
     font-size: 16px;
     font-weight: 700;
     color: var(--app-fg);
