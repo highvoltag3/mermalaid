@@ -222,6 +222,10 @@
     min-height: var(--panel-header-height, 48px);
   }
 
+  .preview-container-mobile .preview-header > span {
+    margin-top: .5rem;
+  }
+
   .preview-container-mobile .preview-header-controls {
     flex-wrap: wrap;
     justify-content: flex-end;
@@ -268,4 +272,3 @@
     max-width: none;
   }
 }
-
