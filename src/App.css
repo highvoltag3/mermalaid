@@ -113,8 +113,8 @@
 @media (max-width: 768px) {
   .app {
     width: 100%;
-    height: 100dvh;
-    min-height: 100dvh;
+    height: var(--vvh, 100dvh);
+    min-height: var(--vvh, 100dvh);
   }
 
   .app-content {
@@ -124,7 +124,7 @@
 
   /* When the keyboard is open, the visual viewport height shrinks — keep our layout stable. */
   .app-mobile {
-    height: 100dvh;
+    height: var(--vvh, 100dvh);
   }
 
   /* Avoid covering the code editor when the soft keyboard is open. */
