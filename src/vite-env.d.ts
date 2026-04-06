@@ -16,6 +16,9 @@ interface ImportMetaEnv {
 
   // Feature Flags
   readonly VITE_ENABLE_AI_FIXER?: string
+
+  /** Public web origin for private share links in the desktop app (default: mermalaid.com). */
+  readonly VITE_PUBLIC_SHARE_BASE_URL?: string
 }
 
 interface ImportMeta {
