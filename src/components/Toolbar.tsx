@@ -48,7 +48,8 @@ import {
 } from '../utils/privateUrlShare'
 import './Toolbar.css'
 
-const PRIVATE_LINK_ENCODE_TIMEOUT_MS = 2500
+/** Must cover compress (up to ~1.5s wall) + importKey + encrypt (each up to 2.5s) on slow devices. */
+const PRIVATE_LINK_ENCODE_TIMEOUT_MS = 10_000
 const PRIVATE_LINK_BUSY_MIN_MS = 300
 const PRIVATE_LINK_BUTTON_TITLE = 'Copy a private link (encrypted in the URL fragment only). The URL also appears in the address bar.'
 

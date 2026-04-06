@@ -118,23 +118,29 @@ async function compressPayload(data: Uint8Array): Promise<{ bytes: Uint8Array; k
     return best
   }
 
-  const tryFormat = async (format: 'deflate-raw' | 'gzip', kind: CompressionKind) => {
+  const tryOne = async (format: 'deflate-raw' | 'gzip', kind: CompressionKind) => {
     try {
       const out = await withTimeout(
         compressWithFormat(data, format),
         STREAM_OPERATION_TIMEOUT_MS,
         new Error('Compression stream timed out'),
       )
-      if (out.length < best.bytes.length) {
-        best = { bytes: out, kind }
-      }
+      return { ok: true as const, bytes: out, kind }
     } catch {
-      /* try next format */
+      return { ok: false as const }
     }
   }
 
-  await tryFormat('deflate-raw', COMPRESSION_DEFLATE_RAW)
-  await tryFormat('gzip', COMPRESSION_GZIP)
+  const [deflateTry, gzipTry] = await Promise.all([
+    tryOne('deflate-raw', COMPRESSION_DEFLATE_RAW),
+    tryOne('gzip', COMPRESSION_GZIP),
+  ])
+
+  for (const r of [deflateTry, gzipTry]) {
+    if (r.ok && r.bytes.length < best.bytes.length) {
+      best = { bytes: r.bytes, kind: r.kind }
+    }
+  }
 
   return best
 }
