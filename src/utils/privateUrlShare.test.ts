@@ -105,6 +105,17 @@ describe('privateUrlShare', () => {
     }
   })
 
+  it('assertPrivateShareUrlFits at browser max length uses browser message, not chat-app message', () => {
+    const atBrowserMax = 'x'.repeat(PRIVATE_SHARE_BROWSER_MAX_URL_LENGTH)
+    expect(() => assertPrivateShareUrlFits(atBrowserMax)).toThrow(PrivateShareError)
+    try {
+      assertPrivateShareUrlFits(atBrowserMax)
+    } catch (e) {
+      expect(getPrivateShareErrorMessage(e)).toMatch(/browser/i)
+      expect(getPrivateShareErrorMessage(e)).not.toMatch(/Slack|chat apps/i)
+    }
+  })
+
   it('applyPrivateShareFullUrlToHistory updates path and hash', () => {
     const prev = `${window.location.pathname}${window.location.search}${window.location.hash}`
     try {

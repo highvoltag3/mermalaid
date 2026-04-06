@@ -358,13 +358,14 @@ export function applyPrivateShareFullUrlToHistory(fullUrl: string): void {
 }
 
 export function assertPrivateShareUrlFits(fullUrl: string): void {
-  if (fullUrl.length > PRIVATE_SHARE_BROWSER_MAX_URL_LENGTH) {
-    throw new PrivateShareError(
-      'oversized',
-      'This diagram is too large to share as a link for this browser. Try shortening the code, splitting it into smaller diagrams, or exporting as SVG. You can also select specific blocks to share.',
-    )
-  }
+  // Messaging limit first; nested browser check uses >= so the browser message wins at the 28k boundary.
   if (fullUrl.length > PRIVATE_SHARE_MESSAGING_SAFE_MAX_URL_LENGTH) {
+    if (fullUrl.length >= PRIVATE_SHARE_BROWSER_MAX_URL_LENGTH) {
+      throw new PrivateShareError(
+        'oversized',
+        'This diagram is too large to share as a link for this browser. Try shortening the code, splitting it into smaller diagrams, or exporting as SVG. You can also select specific blocks to share.',
+      )
+    }
     throw new PrivateShareError(
       'oversized',
       'This link is too long for common chat apps (including Slack), which usually reject URLs above about 4,000 characters. Try shortening the diagram, export as SVG or PNG, or use Copy Code to paste the Mermaid source into chat instead of a link.',
