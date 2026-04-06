@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import UpdateAvailableBanner from './UpdateAvailableBanner'
 import type { LatestReleaseInfo } from '../utils/githubRelease'
@@ -20,7 +20,7 @@ function ThemeSwitcher({ theme, setTheme }: { theme: Theme; setTheme: (t: Theme)
       className="landing-theme-switcher"
       role="radiogroup"
       aria-label="Theme"
-      style={{ '--ts-index': activeIndex } as React.CSSProperties}
+      style={{ '--ts-index': activeIndex } as CSSProperties}
     >
       <div className="landing-theme-indicator" />
       <button
@@ -72,115 +72,211 @@ function ThemeSwitcher({ theme, setTheme }: { theme: Theme; setTheme: (t: Theme)
   )
 }
 
-const heroFeatures = [
+const GITHUB_URL = 'https://github.com/highvoltag3/mermalaid'
+const MAC_DOWNLOAD_URL = 'https://github.com/highvoltag3/mermalaid/releases/latest'
+
+const heroHighlights = [
+  'Live preview while you type',
+  'Offline Mermaid editor for macOS',
+  'SVG and PNG export',
+  'Fast editing with Monaco and visual flowchart tools',
+]
+
+const trustSignals = [
+  { label: 'Free Mermaid editor', value: 'No sign-up' },
+  { label: 'Open source', value: '11 GitHub stars' },
+  { label: 'Built for Mac', value: 'Native Tauri app' },
+  { label: 'Local-first', value: 'Browser storage and offline Mac workflows' },
+]
+
+const previewCards = [
+  {
+    badge: 'Mermaid editor online',
+    title: 'Open the browser editor for quick edits, links, and zero setup.',
+    description:
+      'Use the full-featured online editor when you want to sketch fast, share a private link, or jump into Mermaid without installing anything.',
+    image: '/editor-hero-demo.svg',
+    alt: 'Browser-based Mermalaid Mermaid editor with code on the left and rendered diagram preview on the right',
+    ctaLabel: 'Try Online',
+    ctaHref: '/editor',
+    isInternal: true,
+  },
+  {
+    badge: 'Mermaid editor for Mac',
+    title: 'Install the native macOS app for local and offline diagram work.',
+    description:
+      'Use the Mac app when Mermaid is part of your daily workflow and you want the same editor available offline with a desktop feel.',
+    image: '/visual-editor-demo.svg',
+    alt: 'Native Mac-focused Mermalaid preview showing a Mermaid flowchart in the visual editor',
+    ctaLabel: 'Download for Mac',
+    ctaHref: MAC_DOWNLOAD_URL,
+    isInternal: false,
+  },
+]
+
+const benefitCards = [
+  {
+    eyebrow: 'Clear choice',
+    title: 'One product, two workflows',
+    description:
+      'Mermalaid is both a Mermaid editor online and a native Mac app, so users do not have to choose between convenience and local workflows.',
+  },
+  {
+    eyebrow: 'Credible tooling',
+    title: 'Built for technical work',
+    description:
+      'Engineers, technical writers, and architects get code-first editing, live preview, visual flowchart editing, and export in one place.',
+  },
+  {
+    eyebrow: 'Practical privacy',
+    title: 'Local-first by default',
+    description:
+      'The web editor stores work in your browser, and the Mac app supports offline Mermaid editing for private or low-connectivity environments.',
+  },
+]
+
+const modeCards = [
+  {
+    title: 'Use the online editor when you want speed',
+    description:
+      'The browser version is the fastest way to start diagramming. It is ideal for quick edits, reviewing Mermaid snippets, and sharing a link without asking anyone to install software.',
+    bullets: ['No install required', 'Fast access from any modern browser', 'Useful for quick edits, previews, and sharing'],
+    ctaLabel: 'Try Online',
+    ctaHref: '/editor',
+    isInternal: true,
+  },
+  {
+    title: 'Use the native Mac app when you want local power',
+    description:
+      'The macOS app fits heavier Mermaid usage: offline editing, local-only workflows, and a dedicated desktop tool for engineers who work in diagrams every day.',
+    bullets: ['Works as an offline Mermaid editor on macOS', 'Good fit for local files and regular usage', 'Same core editing workflow without browser lock-in'],
+    ctaLabel: 'Download for Mac',
+    ctaHref: MAC_DOWNLOAD_URL,
+    isInternal: false,
+  },
+]
+
+const featureCards = [
   {
     icon: '</>',
-    title: 'Monaco Code Editor',
-    description: 'The same editor that powers VS Code. Full syntax highlighting, autocomplete, and error detection for Mermaid syntax.',
+    title: 'Code editor built for Mermaid',
+    description: 'Write Mermaid in Monaco with syntax highlighting and a fast editing surface.',
   },
   {
-    icon: '\u25B6',
-    title: 'Live Preview',
-    description: 'See your diagrams render in real-time as you type. Instant feedback with debounced updates for a smooth experience.',
+    icon: 'LIVE',
+    title: 'Live preview',
+    description: 'See diagrams update as you type so you can iterate without context switching.',
   },
   {
-    icon: '\u25C7',
-    title: 'Visual Drag & Drop Editor',
-    description: 'Edit flowcharts visually. Drag nodes, draw connections, and double-click to edit labels \u2014 all synced back to code.',
+    icon: 'FLOW',
+    title: 'Visual flowchart editing',
+    description: 'Edit flowcharts visually and keep the Mermaid source in sync with your diagram.',
   },
   {
-    icon: '\u2197',
-    title: 'Export SVG & PNG',
-    description: 'Export your diagrams as crisp SVG vectors or high-resolution PNG images. Perfect for documentation and presentations.',
+    icon: 'SAVE',
+    title: 'Export and import',
+    description: 'Export SVG or PNG, copy Mermaid code, and drag in existing files to continue working.',
+  },
+  {
+    icon: 'TYPES',
+    title: 'Supports the Mermaid formats teams actually use',
+    description: 'Flowcharts, sequence diagrams, class diagrams, ER diagrams, state diagrams, mindmaps, Gantt, and more.',
+  },
+  {
+    icon: 'LOCAL',
+    title: 'Local-first sharing and storage',
+    description: 'Keep work in the browser locally, or use private-link sharing when you need to send a diagram quickly.',
   },
 ]
 
-const compactFeatures = [
+const comparisonPoints = [
   {
-    icon: '\u25D0',
-    title: 'Dark & Light Themes',
-    description: 'Multiple themes including default, dark, forest, and neutral.',
-  },
-  {
-    icon: '\u2726',
-    title: 'AI Error Fixer',
-    description: 'AI analyzes syntax errors and suggests fixes preserving your intent.',
-  },
-  {
-    icon: '\u21BB',
-    title: 'Auto-Save & Local Storage',
-    description: 'Saved to your browser \u2014 your data never leaves your device.',
-  },
-  {
-    icon: '#',
-    title: 'Private link sharing',
+    title: 'Not limited to browser-only Mermaid editors',
     description:
-      'Copy private link to pack your diagram into #v1\u2026 in the address bar. Compressed and encrypted in the browser with Web Crypto; no upload. Fragments are not sent to servers like query strings.',
+      'Many Mermaid tools are fine for quick browser work, but stop there. Mermalaid covers quick online edits and native Mac workflows in one tool.',
   },
   {
-    icon: '\u2193',
-    title: 'Drag & Drop Import',
-    description: 'Drop .mmd, .txt, or .md files directly into the editor.',
+    title: 'Not limited to local-only desktop tools',
+    description:
+      'Some desktop apps work well locally but add friction when you just want to open a Mermaid editor online and start typing. Mermalaid gives you both options.',
+  },
+  {
+    title: 'A practical Mermaid Live Editor alternative',
+    description:
+      'If you are comparing Mermaid live editors, Mermalaid adds a cleaner path between quick browser use, offline Mac work, visual flowchart editing, and export.',
   },
 ]
 
-const diagramTypes = [
-  { name: 'Flowcharts', description: 'Decision trees, processes, and workflows', code: 'graph TD' },
-  { name: 'Sequence Diagrams', description: 'Interaction between systems and APIs', code: 'sequenceDiagram' },
-  { name: 'Class Diagrams', description: 'OOP structures and relationships', code: 'classDiagram' },
-  { name: 'State Diagrams', description: 'State machines and transitions', code: 'stateDiagram-v2' },
-  { name: 'ER Diagrams', description: 'Database schemas and relations', code: 'erDiagram' },
-  { name: 'Gantt Charts', description: 'Project timelines and scheduling', code: 'gantt' },
-  { name: 'Pie Charts', description: 'Data distribution visualization', code: 'pie' },
-  { name: 'Git Graphs', description: 'Branch and merge visualization', code: 'gitGraph' },
-  { name: 'User Journeys', description: 'Customer experience mapping', code: 'journey' },
-  { name: 'Mindmaps', description: 'Brainstorming and idea organization', code: 'mindmap' },
+const comparisonRows = [
+  { label: 'Use in the browser', mermalaid: 'Yes', browserOnly: 'Yes', localOnly: 'No' },
+  { label: 'Use offline on Mac', mermalaid: 'Yes', browserOnly: 'Limited', localOnly: 'Yes' },
+  { label: 'Switch between quick edits and heavier local work', mermalaid: 'Yes', browserOnly: 'No', localOnly: 'Limited' },
+  { label: 'Open source and no sign-up for the web editor', mermalaid: 'Yes', browserOnly: 'Varies', localOnly: 'Varies' },
 ]
 
-const stats = [
-  { value: '0', label: 'sign-ups required', detail: 'Start creating instantly' },
-  { value: '100%', label: 'local & private', detail: 'Nothing leaves your device' },
-  { value: '10+', label: 'diagram types', detail: 'Every Mermaid type supported' },
-  { value: '\u221E', label: 'open source forever', detail: 'CC BY-NC-SA 4.0 license' },
+const useCases = [
+  {
+    title: 'Engineers',
+    description:
+      'Write docs-as-code, architecture diagrams, and sequence diagrams online for speed, then move to the Mac app when Mermaid becomes a daily local workflow.',
+  },
+  {
+    title: 'Technical writers',
+    description:
+      'Draft and refine diagrams in the browser during content work, then use the Mac app offline when preparing documentation on the go.',
+  },
+  {
+    title: 'System designers',
+    description:
+      'Model flows, services, and states with fast preview while keeping a local Mac editor ready for heavier iteration sessions.',
+  },
+  {
+    title: 'Teams collaborating on diagrams',
+    description:
+      'Use the online editor for quick reviews and link-based sharing, and the Mac app for focused local editing when diagrams need deeper refinement.',
+  },
 ]
 
 const faqs = [
   {
-    question: 'Is Mermalaid really free?',
-    answer: 'Yes, Mermalaid is 100% free with no hidden costs, no premium tiers, and no usage limits. Create unlimited Mermaid diagrams without ever paying a cent. The project is open source under the CC BY-NC-SA 4.0 license.',
-  },
-  {
-    question: 'Do I need to create an account to use Mermalaid?',
-    answer: 'No. Mermalaid requires zero sign-up. Just open the editor and start creating diagrams immediately. Your work is saved locally in your browser \u2014 no accounts, no cloud storage, no tracking.',
-  },
-  {
-    question: 'What types of Mermaid diagrams can I create?',
-    answer: 'Mermalaid supports all Mermaid.js diagram types including flowcharts, sequence diagrams, class diagrams, state diagrams, entity relationship diagrams, Gantt charts, pie charts, git graphs, user journeys, mindmaps, and more.',
-  },
-  {
-    question: 'Can I export my diagrams?',
-    answer: 'Yes. Export your diagrams as SVG (scalable vector graphics) for crisp rendering at any size, or PNG for raster images. You can also copy the raw Mermaid code to your clipboard with markdown formatting.',
-  },
-  {
-    question: 'What is Copy private link?',
+    question: 'What is Mermalaid?',
     answer:
-      'Copy private link builds a URL that carries your diagram in the hash (for example #v1.\u2026), not in query parameters. Your text is compressed and encrypted locally with AES-GCM (Web Crypto), then base64url-encoded. Nothing is uploaded: opening the link decrypts in the browser. Anyone with the full link can read the diagram, so treat it like a secret.',
+      'Mermalaid is a free Mermaid editor that works in two ways: as a Mermaid editor online in your browser and as a native macOS app for local and offline workflows.',
   },
   {
-    question: 'What is the visual editor?',
-    answer: 'The visual editor lets you edit flowcharts by dragging and dropping nodes, drawing connections between them, and double-clicking to edit labels. Changes are automatically synced back to the Mermaid code, giving you both visual and code-based editing.',
+    question: 'Is Mermalaid free?',
+    answer:
+      'Yes. Mermalaid is free to use with no sign-up required for the web editor. The project is open source under the CC BY-NC-SA 4.0 license.',
   },
   {
-    question: 'Is Mermalaid open source?',
-    answer: 'Yes. Mermalaid is fully open source and available on GitHub. You can inspect the code, contribute improvements, or fork the project for your own use.',
-  },
-  {
-    question: 'What is Mermaid.js?',
-    answer: 'Mermaid.js is a JavaScript library that lets you create diagrams and charts from text-based definitions, similar to Markdown. Instead of using a drag-and-drop tool, you write simple text that gets rendered into professional diagrams. Mermalaid provides the best free editor for writing and previewing Mermaid syntax.',
+    question: 'Can I use Mermalaid online?',
+    answer:
+      'Yes. The browser-based editor is a full-featured Mermaid editor online, so you can open it and start editing immediately without installing anything.',
   },
   {
     question: 'Does Mermalaid work offline?',
-    answer: 'Mermalaid is also available as a lightweight native macOS desktop app built with Tauri. The desktop version is under 10MB and works completely offline, while offering the exact same features as the web version.',
+    answer:
+      'Yes. Mermalaid is also available as a native Mac app, which makes it a practical offline Mermaid editor for local workflows and travel-friendly use.',
+  },
+  {
+    question: 'Is there a Mac app?',
+    answer:
+      'Yes. Mermalaid includes a native macOS app built with Tauri, giving Mac users a local Mermaid editor without being limited to the browser.',
+  },
+  {
+    question: 'Is Mermalaid a Mermaid Live Editor alternative?',
+    answer:
+      'Yes. If you are looking for a Mermaid Live Editor alternative, Mermalaid offers live preview in the browser plus a native Mac app for offline and local-first work.',
+  },
+  {
+    question: 'Can I export diagrams?',
+    answer:
+      'Yes. Mermalaid supports exporting diagrams as SVG and PNG, which makes it useful for documentation, architecture reviews, and technical presentations.',
+  },
+  {
+    question: 'Is Mermalaid open source?',
+    answer:
+      'Yes. The project is available on GitHub, so you can inspect the code, follow releases, contribute changes, and star the repository if it is useful.',
   },
 ]
 
@@ -243,7 +339,7 @@ export default function LandingPage({
     return () => observer.disconnect()
   }, [])
 
-  const stagger = (i: number): React.CSSProperties => ({
+  const stagger = (i: number): CSSProperties => ({
     transitionDelay: `${i * 60}ms`,
   })
 
@@ -261,18 +357,19 @@ export default function LandingPage({
       <nav className="landing-nav">
         <div className="landing-nav-inner">
           <a href="/" className="landing-logo">
-            <img src="/apple-touch-icon.png" alt="Mermalaid" className="landing-logo-img" width="120" height="120" />
+            <img src="/apple-touch-icon.png" alt="Mermalaid logo" className="landing-logo-img" width="120" height="120" />
             <span className="landing-logo-text">Mermalaid</span>
           </a>
           <div className="landing-nav-links">
+            <a href="#modes">Online vs Mac</a>
             <a href="#features">Features</a>
-            <a href="#diagrams">Diagrams</a>
+            <a href="#compare">Compare</a>
             <a href="#faq">FAQ</a>
-            <a href="https://github.com/highvoltag3/mermalaid" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer">GitHub</a>
           </div>
           <ThemeSwitcher theme={theme} setTheme={setTheme} />
           <Link to="/editor" className="landing-nav-cta">
-            Open Editor
+            Try Online
             <span className="landing-nav-cta-arrow">&rarr;</span>
           </Link>
         </div>
@@ -289,143 +386,223 @@ export default function LandingPage({
           <div className="landing-hero-text">
             <div className="landing-hero-badge">
               <span className="landing-hero-badge-dot" />
-              Open Source &middot; 100% Free &middot; No Sign-Up
+              Free Mermaid editor online + native Mac app
             </div>
-            <p className="landing-hero-privacy-note">
-              Your diagrams never leave your device. No tracking, no cloud, no analytics.
-              Need to send one? Use <strong>Copy private link</strong> in the editor: encrypted in the URL
-              fragment only, no backend.
-            </p>
-            <h1>The Free Mermaid Diagram Editor You&rsquo;ve Been Looking For</h1>
+            <h1>Free Mermaid Editor Online and for Mac</h1>
             <p className="landing-hero-sub">
-              Create flowcharts, sequence diagrams, class diagrams, and more with the most powerful
-              free Mermaid editor online. Live preview, visual drag-and-drop editing, SVG &amp; PNG export,
-              and private URL sharing &mdash; all without creating an account.
+              Mermalaid is a dual-mode Mermaid editor: use it in the browser for quick edits and sharing,
+              or install the native macOS app for local and offline workflows. It is fast, developer-friendly,
+              and built for people who write Mermaid often.
             </p>
             <div className="landing-hero-actions">
               <Link to="/editor" className="landing-btn landing-btn-primary">
-                Start Creating &mdash; It&rsquo;s Free
+                Try Online
               </Link>
-              <a href="https://github.com/highvoltag3/mermalaid" target="_blank" rel="noopener noreferrer" className="landing-btn landing-btn-ghost">
+              <a href={MAC_DOWNLOAD_URL} target="_blank" rel="noopener noreferrer" className="landing-btn landing-btn-secondary">
+                Download for Mac
+              </a>
+              <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer" className="landing-btn landing-btn-ghost">
                 View on GitHub
               </a>
             </div>
+            <ul className="landing-hero-highlights">
+              {heroHighlights.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+            <p className="landing-hero-privacy-note">
+              Local-first workflows, open source code, and private-link sharing when you need to send a diagram.
+            </p>
           </div>
           <div className="landing-hero-visual">
-            <div className="landing-editor-mockup">
-              <div className="landing-mockup-bar">
-                <div className="landing-mockup-dots">
-                  <span /><span /><span />
+            <div className="landing-dual-preview">
+              <div className="landing-editor-mockup">
+                <div className="landing-mockup-bar">
+                  <div className="landing-mockup-dots">
+                    <span /><span /><span />
+                  </div>
+                  <span className="landing-mockup-title">Browser editor</span>
                 </div>
-                <span className="landing-mockup-title">mermalaid</span>
+                <img
+                  src="/editor-hero-demo.svg"
+                  alt="Mermalaid online Mermaid editor with code editor and live preview"
+                  className="landing-mockup-screenshot"
+                />
               </div>
-              <img
-                src="/editor-hero-demo.svg"
-                alt="Mermalaid editor showing Mermaid code on the left and a rendered flowchart diagram on the right"
-                className="landing-mockup-screenshot"
-              />
+              <div className="landing-mini-card">
+                <span className="landing-mini-card-badge">Native Mac app</span>
+                <h2>Offline Mermaid editor for macOS</h2>
+                <p>Use the same Mermalaid workflow in a local desktop app when you are offline or diagramming heavily.</p>
+              </div>
             </div>
+          </div>
+        </div>
+        <div className="landing-container">
+          <div className="landing-trust-strip">
+            {trustSignals.map((item) => (
+              <div key={item.label} className="landing-trust-item">
+                <span className="landing-trust-label">{item.label}</span>
+                <span className="landing-trust-value">{item.value}</span>
+              </div>
+            ))}
           </div>
         </div>
       </header>
 
-      {/* Features */}
+      <section className="landing-section landing-preview fade-in-section">
+        <div className="landing-container">
+          <p className="landing-section-label">Product preview</p>
+          <h2>One Mermaid editor, two ways to work</h2>
+          <p className="landing-section-sub">
+            Mermalaid makes the online editor and Mac app feel like one product, so users can choose the right mode for the moment instead of switching tools.
+          </p>
+          <div className="landing-preview-grid">
+            {previewCards.map((card, i) => (
+              <article key={card.title} className="landing-preview-card" style={stagger(i)}>
+                <span className="landing-preview-badge">{card.badge}</span>
+                <h3>{card.title}</h3>
+                <p>{card.description}</p>
+                <div className="landing-preview-frame">
+                  <img src={card.image} alt={card.alt} className="landing-preview-image" />
+                </div>
+                {card.isInternal ? (
+                  <Link to={card.ctaHref} className="landing-btn landing-btn-primary">
+                    {card.ctaLabel}
+                  </Link>
+                ) : (
+                  <a href={card.ctaHref} target="_blank" rel="noopener noreferrer" className="landing-btn landing-btn-secondary">
+                    {card.ctaLabel}
+                  </a>
+                )}
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="landing-section landing-benefits fade-in-section">
+        <div className="landing-container">
+          <p className="landing-section-label">Key benefits</p>
+          <h2>Clearer positioning for people comparing Mermaid editors</h2>
+          <p className="landing-section-sub">
+            The landing page now leads with the real differentiator: Mermalaid is both a free Mermaid editor online and a native Mac tool for offline work.
+          </p>
+          <div className="landing-benefits-grid">
+            {benefitCards.map((card, i) => (
+              <article key={card.title} className="landing-benefit-card" style={stagger(i)}>
+                <span className="landing-card-eyebrow">{card.eyebrow}</span>
+                <h3>{card.title}</h3>
+                <p>{card.description}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="modes" className="landing-section landing-modes fade-in-section">
+        <div className="landing-container">
+          <p className="landing-section-label">Online vs Mac app</p>
+          <h2>Use it your way: online or native Mac app</h2>
+          <p className="landing-section-sub">
+            The web editor and the Mac app solve different moments in the same workflow. Use the browser when speed matters, and use the Mac app when local or offline work matters.
+          </p>
+          <div className="landing-modes-grid">
+            {modeCards.map((card, i) => (
+              <article key={card.title} className="landing-mode-card" style={stagger(i)}>
+                <h3>{card.title}</h3>
+                <p>{card.description}</p>
+                <ul className="landing-check-list">
+                  {card.bullets.map((bullet) => (
+                    <li key={bullet}>{bullet}</li>
+                  ))}
+                </ul>
+                {card.isInternal ? (
+                  <Link to={card.ctaHref} className="landing-btn landing-btn-primary">
+                    {card.ctaLabel}
+                  </Link>
+                ) : (
+                  <a href={card.ctaHref} target="_blank" rel="noopener noreferrer" className="landing-btn landing-btn-secondary">
+                    {card.ctaLabel}
+                  </a>
+                )}
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section id="features" className="landing-section landing-features fade-in-section">
         <div className="landing-container">
-          <p className="landing-section-label">Capabilities</p>
-          <h2>Everything You Need to Create Mermaid Diagrams</h2>
+          <p className="landing-section-label">Features</p>
+          <h2>Everything needed in a modern Mermaid editor</h2>
           <p className="landing-section-sub">
-            A professional-grade Mermaid editor with features that rival paid tools &mdash; completely free and open source.
+            Mermalaid is designed for developers and technical teams who want a fast free Mermaid editor without losing power as their workflow grows.
           </p>
-          <div className="landing-features-hero-grid">
-            {heroFeatures.map((f, i) => (
-              <article key={f.title} className="landing-feature-card landing-feature-card-hero" style={stagger(i)}>
-                <div className="landing-feature-icon" aria-hidden="true">{f.icon}</div>
-                <h3>{f.title}</h3>
-                <p>{f.description}</p>
-              </article>
-            ))}
-          </div>
-          <div className="landing-features-compact-strip">
-            {compactFeatures.map((f, i) => (
-              <article key={f.title} className="landing-feature-card landing-feature-card-compact" style={stagger(i + 4)}>
-                <div className="landing-feature-icon" aria-hidden="true">{f.icon}</div>
-                <div>
-                  <h3>{f.title}</h3>
-                  <p>{f.description}</p>
-                </div>
+          <div className="landing-features-grid">
+            {featureCards.map((card, i) => (
+              <article key={card.title} className="landing-feature-card" style={stagger(i)}>
+                <div className="landing-feature-icon" aria-hidden="true">{card.icon}</div>
+                <h3>{card.title}</h3>
+                <p>{card.description}</p>
               </article>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Visual Editor Showcase */}
-      <section className="landing-section landing-visual-editor fade-in-section">
-        <div className="landing-container">
-          <div className="landing-visual-editor-layout">
-            <div className="landing-visual-editor-text">
-              <p className="landing-section-label">Visual Mode</p>
-              <h2>Visual Drag &amp; Drop Flowchart Editor</h2>
-              <p>
-                Don&rsquo;t want to write code? Use the visual editor to build flowcharts by dragging
-                nodes, drawing connections, and editing labels with a double-click. Every change
-                syncs back to Mermaid code automatically.
-              </p>
-              <ul className="landing-check-list">
-                <li>Drag and reposition nodes freely</li>
-                <li>Draw connections between any nodes</li>
-                <li>Double-click to edit node and edge labels</li>
-                <li>Supports all Mermaid node shapes</li>
-                <li>Auto-syncs visual changes to code</li>
-              </ul>
-              <Link to="/editor" className="landing-btn landing-btn-primary">Try the Visual Editor</Link>
-            </div>
-            <div className="landing-visual-editor-demo">
-              <div className="landing-ve-canvas">
-                <img src="/visual-editor-demo.svg" alt="Mermaid flowchart rendered in Mermalaid visual editor showing Start, Decision, Action 1, Action 2, and End nodes with Yes/No branches" className="landing-ve-diagram" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Diagram Types */}
-      <section id="diagrams" className="landing-section landing-diagrams fade-in-section">
-        <div className="landing-container">
-          <p className="landing-section-label landing-section-label-light">Supported Types</p>
-          <h2>All Mermaid Diagram Types Supported</h2>
-          <p className="landing-section-sub">
-            From simple flowcharts to complex entity-relationship diagrams &mdash; create any diagram that Mermaid.js supports.
-          </p>
-          <div className="landing-diagrams-grid">
-            {diagramTypes.map((d, i) => (
-              <div key={d.name} className="landing-diagram-card" style={stagger(i)}>
-                <code className="landing-diagram-code">{d.code}</code>
-                <h3>{d.name}</h3>
-                <p>{d.description}</p>
-                <span className="landing-diagram-hint">Try it in the editor &rarr;</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Why Mermalaid — Stat Cards */}
-      <section className="landing-section landing-why fade-in-section">
+      <section id="compare" className="landing-section landing-compare fade-in-section">
         <div className="landing-container">
           <p className="landing-section-label">Comparison</p>
-          <h2>Why Developers Choose Mermalaid</h2>
+          <h2>Why Mermalaid vs other Mermaid editors</h2>
           <p className="landing-section-sub">
-            Most free Mermaid editors are either too basic or want you to sign up. Mermalaid gives you professional features with zero friction.
+            Mermalaid stands out because it supports both quick browser work and native Mac workflows, rather than forcing people into a single way of using Mermaid.
           </p>
-          <div className="landing-stats-grid">
-            {stats.map((s, i) => (
-              <div key={s.label} className="landing-stat-card" style={stagger(i)}>
-                <span className="landing-stat-value">{s.value}</span>
-                <span className="landing-stat-label">{s.label}</span>
-                <span className="landing-stat-detail">{s.detail}</span>
-              </div>
+          <div className="landing-compare-grid">
+            {comparisonPoints.map((point, i) => (
+              <article key={point.title} className="landing-compare-card" style={stagger(i)}>
+                <h3>{point.title}</h3>
+                <p>{point.description}</p>
+              </article>
+            ))}
+          </div>
+          <div className="landing-compare-table-wrap">
+            <table className="landing-compare-table">
+              <thead>
+                <tr>
+                  <th>What matters</th>
+                  <th>Mermalaid</th>
+                  <th>Browser-only editors</th>
+                  <th>Local-only tools</th>
+                </tr>
+              </thead>
+              <tbody>
+                {comparisonRows.map((row) => (
+                  <tr key={row.label}>
+                    <th>{row.label}</th>
+                    <td>{row.mermalaid}</td>
+                    <td>{row.browserOnly}</td>
+                    <td>{row.localOnly}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section className="landing-section landing-use-cases fade-in-section">
+        <div className="landing-container">
+          <p className="landing-section-label">Use cases</p>
+          <h2>Made for the people who work in Mermaid often</h2>
+          <p className="landing-section-sub">
+            Each audience can start online, move local when needed, and keep the same editor model the whole time.
+          </p>
+          <div className="landing-use-cases-grid">
+            {useCases.map((card, i) => (
+              <article key={card.title} className="landing-use-case-card" style={stagger(i)}>
+                <h3>{card.title}</h3>
+                <p>{card.description}</p>
+              </article>
             ))}
           </div>
         </div>
@@ -435,7 +612,7 @@ export default function LandingPage({
       <section id="faq" className="landing-section landing-faq fade-in-section">
         <div className="landing-container">
           <p className="landing-section-label">Support</p>
-          <h2>Frequently Asked Questions</h2>
+          <h2>Frequently asked questions</h2>
           <div className="landing-faq-list">
             {faqs.map((faq, i) => (
               <details key={faq.question} className="landing-faq-item" style={stagger(i)}>
@@ -454,11 +631,19 @@ export default function LandingPage({
       <section className="landing-section landing-final-cta fade-in-section">
         <div className="landing-container">
           <img src="/apple-touch-icon.png" alt="" className="landing-cta-icon" width="80" height="80" aria-hidden="true" />
-          <h2>Start Creating Mermaid Diagrams Now</h2>
-          <p>No sign-up. No payment. No limits. Just open the editor and start diagramming.</p>
-          <Link to="/editor" className="landing-btn landing-btn-primary landing-btn-lg">
-            Open the Free Editor
-          </Link>
+          <h2>Choose the Mermaid workflow that fits the moment</h2>
+          <p>Open the free Mermaid editor online, download the native Mac app, or inspect the project on GitHub.</p>
+          <div className="landing-final-actions">
+            <Link to="/editor" className="landing-btn landing-btn-primary landing-btn-lg">
+              Try Online
+            </Link>
+            <a href={MAC_DOWNLOAD_URL} target="_blank" rel="noopener noreferrer" className="landing-btn landing-btn-secondary landing-btn-lg">
+              Download for Mac
+            </a>
+            <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer" className="landing-btn landing-btn-ghost landing-btn-lg">
+              View on GitHub
+            </a>
+          </div>
         </div>
       </section>
 
@@ -471,10 +656,11 @@ export default function LandingPage({
           </div>
           <nav className="landing-footer-nav">
             <Link to="/editor">Editor</Link>
+            <a href="#modes">Online vs Mac</a>
             <a href="#features">Features</a>
-            <a href="#diagrams">Diagrams</a>
+            <a href="#compare">Compare</a>
             <a href="#faq">FAQ</a>
-            <a href="https://github.com/highvoltag3/mermalaid" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer">GitHub</a>
             <a href="https://mermaid.js.org/intro/" target="_blank" rel="noopener noreferrer">Docs</a>
           </nav>
           <p className="landing-footer-copy">&copy; {new Date().getFullYear()} Mermalaid. Open source under CC BY-NC-SA 4.0.</p>
