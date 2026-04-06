@@ -3,6 +3,11 @@
  * Payload is base64url(key || iv || AES-GCM(ciphertext)); ciphertext covers optional compressed JSON.
  */
 
+import { isTauri } from '@tauri-apps/api/core'
+
+/** Web origin used in shared URLs when running in Tauri (`tauri://` is not openable in browsers). */
+const DESKTOP_DEFAULT_SHARE_ORIGIN = 'https://mermalaid.com'
+
 export const PRIVATE_SHARE_URL_PREFIX = '#v1.'
 export const PRIVATE_SHARE_PAYLOAD_PREFIX = 'v1.'
 
@@ -339,10 +344,30 @@ export function getPrivateShareErrorMessage(err: unknown): string {
 }
 
 /**
- * Full URL with hash for clipboard (uses current window location path).
+ * Origin for links copied/shared: web uses the current site; Tauri uses the public web app (not `tauri://`).
+ * Override with `VITE_PUBLIC_SHARE_BASE_URL` (https origin, optional path) for forks or staging.
+ */
+function getShareLinkOrigin(): string {
+  const configured = import.meta.env.VITE_PUBLIC_SHARE_BASE_URL?.trim()
+  if (configured) {
+    try {
+      return new URL(configured).origin
+    } catch {
+      /* ignore invalid env */
+    }
+  }
+  if (isTauri()) {
+    return DESKTOP_DEFAULT_SHARE_ORIGIN
+  }
+  return window.location.origin
+}
+
+/**
+ * Full URL with hash for clipboard (same pathname/query as the editor; HTTPS origin in Tauri).
  */
 export function buildPrivateShareUrl(fullHash: string): string {
-  const url = new URL(window.location.href)
+  const pathAndQuery = `${window.location.pathname}${window.location.search}` || '/editor'
+  const url = new URL(pathAndQuery, getShareLinkOrigin())
   url.hash = fullHash.startsWith('#') ? fullHash.slice(1) : fullHash
   return url.toString()
 }
