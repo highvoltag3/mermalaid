@@ -535,11 +535,15 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
 
       if (clipboardOk) {
         showToast(
-          'Private link copied to clipboard. The same URL (with #v1…) is in the address bar if you need it again.',
+          isTauri()
+            ? 'Private link copied to clipboard.'
+            : 'Private link copied to clipboard. The same URL (with #v1…) is in the address bar if you need it again.',
         )
       } else {
         showToast(
-          'Private link is in the address bar. Press ⌘L or Ctrl+L to focus it, then ⌘C or Ctrl+C to copy (clipboard API was blocked).',
+          isTauri()
+            ? 'Could not copy the link to the clipboard. Try again, or restart the app if this keeps happening.'
+            : 'Private link is in the address bar. Press ⌘L or Ctrl+L to focus it, then ⌘C or Ctrl+C to copy (clipboard API was blocked).',
         )
       }
     } catch (err) {
