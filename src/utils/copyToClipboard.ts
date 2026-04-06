@@ -1,8 +1,12 @@
 /**
- * Copy text after async generation. Resolves the string once, then tries `writeText` and
- * `execCommand('copy')`. We intentionally avoid `clipboard.write(ClipboardItem)` with a deferred
- * Blob: several Chromium builds never complete that path (hang until timeout).
+ * Copy text after async generation. Resolves the string once, then tries Tauri native clipboard
+ * (desktop), `navigator.clipboard.writeText`, and `execCommand('copy')`. We intentionally avoid
+ * `clipboard.write(ClipboardItem)` with a deferred Blob: several Chromium builds never complete
+ * that path (hang until timeout).
  */
+
+import { isTauri } from '@tauri-apps/api/core'
+import { writeText as writeClipboardTauri } from '@tauri-apps/plugin-clipboard-manager'
 
 /** `isSecureContext` can be missing in some hosts; localhost still gets the Async Clipboard API. */
 function isClipboardApiContext(): boolean {
@@ -99,6 +103,17 @@ export async function copyPlainTextWhenReady(produceText: () => Promise<string>)
       window.focus()
     } catch {
       /* jsdom and some embedded hosts do not implement focus() */
+    }
+  }
+
+  if (isTauri()) {
+    try {
+      await writeClipboardTauri(text)
+      return
+    } catch (err) {
+      if (import.meta.env.DEV) {
+        console.warn('[mermalaid] Tauri clipboard write failed; falling back to web clipboard APIs', err)
+      }
     }
   }
 

@@ -8,7 +8,8 @@ import {
   getPrivateShareErrorMessage,
   isPrivateShareHash,
   PrivateShareError,
-  PRIVATE_SHARE_MAX_URL_LENGTH,
+  PRIVATE_SHARE_BROWSER_MAX_URL_LENGTH,
+  PRIVATE_SHARE_MESSAGING_SAFE_MAX_URL_LENGTH,
   PRIVATE_SHARE_URL_PREFIX,
 } from './privateUrlShare'
 
@@ -80,15 +81,38 @@ describe('privateUrlShare', () => {
     await expect(decodePrivateShareHash(broken)).rejects.toBeInstanceOf(PrivateShareError)
   })
 
-  it('assertPrivateShareUrlFits throws oversized with friendly message', () => {
-    const long = 'x'.repeat(PRIVATE_SHARE_MAX_URL_LENGTH + 1)
+  it('assertPrivateShareUrlFits rejects URLs too long for Slack-style chat limits', () => {
+    const long = 'x'.repeat(PRIVATE_SHARE_MESSAGING_SAFE_MAX_URL_LENGTH + 1)
     expect(() => assertPrivateShareUrlFits(long)).toThrow(PrivateShareError)
     try {
       assertPrivateShareUrlFits(long)
     } catch (e) {
       expect(e).toBeInstanceOf(PrivateShareError)
       expect((e as PrivateShareError).kind).toBe('oversized')
-      expect(getPrivateShareErrorMessage(e)).toMatch(/too large/i)
+      expect(getPrivateShareErrorMessage(e)).toMatch(/Slack|chat apps/i)
+    }
+  })
+
+  it('assertPrivateShareUrlFits rejects extremely long URLs for browser safety', () => {
+    const long = 'x'.repeat(PRIVATE_SHARE_BROWSER_MAX_URL_LENGTH + 1)
+    expect(() => assertPrivateShareUrlFits(long)).toThrow(PrivateShareError)
+    try {
+      assertPrivateShareUrlFits(long)
+    } catch (e) {
+      expect(e).toBeInstanceOf(PrivateShareError)
+      expect((e as PrivateShareError).kind).toBe('oversized')
+      expect(getPrivateShareErrorMessage(e)).toMatch(/browser/i)
+    }
+  })
+
+  it('assertPrivateShareUrlFits at browser max length uses browser message, not chat-app message', () => {
+    const atBrowserMax = 'x'.repeat(PRIVATE_SHARE_BROWSER_MAX_URL_LENGTH)
+    expect(() => assertPrivateShareUrlFits(atBrowserMax)).toThrow(PrivateShareError)
+    try {
+      assertPrivateShareUrlFits(atBrowserMax)
+    } catch (e) {
+      expect(getPrivateShareErrorMessage(e)).toMatch(/browser/i)
+      expect(getPrivateShareErrorMessage(e)).not.toMatch(/Slack|chat apps/i)
     }
   })
 

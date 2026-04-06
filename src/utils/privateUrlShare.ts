@@ -1,22 +1,36 @@
 /**
  * Client-only private links: `#v1.<payload>` (fragment only — not sent to servers with navigations).
- * Payload is base64url(key || iv || AES-GCM(ciphertext)); ciphertext covers optional deflate + JSON.
+ * Payload is base64url(key || iv || AES-GCM(ciphertext)); ciphertext covers optional compressed JSON.
  */
 
 export const PRIVATE_SHARE_URL_PREFIX = '#v1.'
 export const PRIVATE_SHARE_PAYLOAD_PREFIX = 'v1.'
 
-/** Conservative cap so shared URLs stay under typical browser limits. */
-export const PRIVATE_SHARE_MAX_URL_LENGTH = 28_000
+/**
+ * Chat apps (notably Slack) effectively reject or break URLs much longer than ~4KB.
+ * @see https://github.com/elastic/kibana/issues/158262
+ */
+export const PRIVATE_SHARE_MESSAGING_SAFE_MAX_URL_LENGTH = 3990
+
+/** Hard ceiling so shared URLs stay under typical browser/document limits. */
+export const PRIVATE_SHARE_BROWSER_MAX_URL_LENGTH = 28_000
+
+/** @deprecated Use {@link PRIVATE_SHARE_MESSAGING_SAFE_MAX_URL_LENGTH} (same value). */
+export const PRIVATE_SHARE_MAX_URL_LENGTH = PRIVATE_SHARE_MESSAGING_SAFE_MAX_URL_LENGTH
 
 const INNER_JSON_VERSION = 1
 const PACKET_KEY_LEN = 32
 const GCM_IV_LENGTH = 12
-const FLAG_COMPRESSED = 0x01
+/** Lower two bits of the flags byte: 0 = none, 1 = deflate-raw (legacy), 2 = gzip. */
+const COMPRESSION_KIND_MASK = 0x03
+const COMPRESSION_NONE = 0
+const COMPRESSION_DEFLATE_RAW = 1
+const COMPRESSION_GZIP = 2
+
+type CompressionKind = typeof COMPRESSION_NONE | typeof COMPRESSION_DEFLATE_RAW | typeof COMPRESSION_GZIP
+
 const STREAM_OPERATION_TIMEOUT_MS = 1500
 const CRYPTO_OPERATION_TIMEOUT_MS = 2500
-let compressionStreamBroken = false
-let compressionFallbackNotified = false
 
 export type ShareableEditorState = {
   code: string
@@ -88,46 +102,56 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number, timeoutError: Er
   })
 }
 
-async function compressIfSupported(data: Uint8Array): Promise<{ bytes: Uint8Array; compressed: boolean }> {
-  if (compressionStreamBroken || typeof CompressionStream === 'undefined') {
-    return { bytes: data, compressed: false }
-  }
-  try {
-    const out = await withTimeout(
-      (async () => {
-        const stream = new CompressionStream('deflate-raw')
-        const writer = stream.writable.getWriter()
-        await writer.write(data as BufferSource)
-        await writer.close()
-        const buf = await new Response(stream.readable).arrayBuffer()
-        return new Uint8Array(buf)
-      })(),
-      STREAM_OPERATION_TIMEOUT_MS,
-      new Error('Compression stream timed out'),
-    )
-    if (out.length < data.length) {
-      return { bytes: out, compressed: true }
-    }
-  } catch (err) {
-    compressionStreamBroken = true
-    if (import.meta.env.DEV && !compressionFallbackNotified) {
-      compressionFallbackNotified = true
-      // Compression is optional; keep this as a one-time debug note to avoid console noise.
-      console.debug('[mermalaid] Compression unavailable; private links will use uncompressed payload.')
-    }
-  }
-  return { bytes: data, compressed: false }
+async function compressWithFormat(data: Uint8Array, format: 'deflate-raw' | 'gzip'): Promise<Uint8Array> {
+  const stream = new CompressionStream(format)
+  const writer = stream.writable.getWriter()
+  await writer.write(data as BufferSource)
+  await writer.close()
+  const buf = await new Response(stream.readable).arrayBuffer()
+  return new Uint8Array(buf)
 }
 
-async function decompressIfNeeded(data: Uint8Array, compressed: boolean): Promise<Uint8Array> {
-  if (!compressed) return data
+async function compressPayload(data: Uint8Array): Promise<{ bytes: Uint8Array; kind: CompressionKind }> {
+  let best: { bytes: Uint8Array; kind: CompressionKind } = { bytes: data, kind: COMPRESSION_NONE }
+
+  if (typeof CompressionStream === 'undefined') {
+    return best
+  }
+
+  const tryFormat = async (format: 'deflate-raw' | 'gzip', kind: CompressionKind) => {
+    try {
+      const out = await withTimeout(
+        compressWithFormat(data, format),
+        STREAM_OPERATION_TIMEOUT_MS,
+        new Error('Compression stream timed out'),
+      )
+      if (out.length < best.bytes.length) {
+        best = { bytes: out, kind }
+      }
+    } catch {
+      /* try next format */
+    }
+  }
+
+  await tryFormat('deflate-raw', COMPRESSION_DEFLATE_RAW)
+  await tryFormat('gzip', COMPRESSION_GZIP)
+
+  return best
+}
+
+async function decompressPayload(data: Uint8Array, kind: CompressionKind): Promise<Uint8Array> {
+  if (kind === COMPRESSION_NONE) return data
+  if (kind !== COMPRESSION_DEFLATE_RAW && kind !== COMPRESSION_GZIP) {
+    throw new PrivateShareError('invalid', 'This share link is damaged and could not be opened.')
+  }
   if (typeof DecompressionStream === 'undefined') {
     throw new PrivateShareError('unsupported', 'This link uses compression that your browser cannot decode.')
   }
+  const format: 'deflate-raw' | 'gzip' = kind === COMPRESSION_DEFLATE_RAW ? 'deflate-raw' : 'gzip'
   try {
     return await withTimeout(
       (async () => {
-        const stream = new DecompressionStream('deflate-raw')
+        const stream = new DecompressionStream(format)
         const writer = stream.writable.getWriter()
         await writer.write(data as BufferSource)
         await writer.close()
@@ -168,10 +192,11 @@ function parseInnerJson(bytes: Uint8Array): ShareableEditorState {
     throw new PrivateShareError('invalid', 'This share link could not be read.')
   }
   const rec = parsed as Record<string, unknown>
-  if (rec.v !== INNER_JSON_VERSION || typeof rec.code !== 'string') {
+  const code = typeof rec.code === 'string' ? rec.code : typeof rec.c === 'string' ? rec.c : undefined
+  if (rec.v !== INNER_JSON_VERSION || code === undefined) {
     throw new PrivateShareError('invalid', 'This share link is not compatible with this version of Mermalaid.')
   }
-  return { code: rec.code }
+  return { code }
 }
 
 /**
@@ -180,9 +205,9 @@ function parseInnerJson(bytes: Uint8Array): ShareableEditorState {
 export async function encodePrivateShareHash(state: ShareableEditorState): Promise<string> {
   throwIfWebCryptoUnavailableForPrivateShare()
 
-  const json = JSON.stringify({ v: INNER_JSON_VERSION, code: state.code })
+  const json = JSON.stringify({ v: INNER_JSON_VERSION, c: state.code })
   const plain = new TextEncoder().encode(json)
-  const { bytes: body, compressed } = await compressIfSupported(plain)
+  const { bytes: body, kind: compressionKind } = await compressPayload(plain)
 
   const key = getRandomBytes(PACKET_KEY_LEN)
   const iv = getRandomBytes(GCM_IV_LENGTH)
@@ -200,7 +225,7 @@ export async function encodePrivateShareHash(state: ShareableEditorState): Promi
     )
   }
 
-  const flags = compressed ? FLAG_COMPRESSED : 0
+  const flags = compressionKind
   let ciphertext: Uint8Array
   try {
     ciphertext = new Uint8Array(
@@ -256,7 +281,11 @@ export async function decodePrivateShareHash(hash: string): Promise<ShareableEdi
   }
 
   const flags = packet[0]!
-  const compressed = (flags & FLAG_COMPRESSED) !== 0
+  const compressionKindRaw = flags & COMPRESSION_KIND_MASK
+  if (compressionKindRaw > COMPRESSION_GZIP) {
+    throw new PrivateShareError('invalid', 'This share link is not compatible with this version of Mermalaid.')
+  }
+  const compressionKind = compressionKindRaw as CompressionKind
   const key = packet.subarray(1, 1 + PACKET_KEY_LEN)
   const iv = packet.subarray(1 + PACKET_KEY_LEN, 1 + PACKET_KEY_LEN + GCM_IV_LENGTH)
   const ciphertext = packet.subarray(1 + PACKET_KEY_LEN + GCM_IV_LENGTH)
@@ -289,7 +318,7 @@ export async function decodePrivateShareHash(hash: string): Promise<ShareableEdi
     throw new PrivateShareError('invalid', 'This share link is damaged or was changed and could not be opened.')
   }
 
-  const jsonBytes = await decompressIfNeeded(plain, compressed)
+  const jsonBytes = await decompressPayload(plain, compressionKind)
   return parseInnerJson(jsonBytes)
 }
 
@@ -329,10 +358,17 @@ export function applyPrivateShareFullUrlToHistory(fullUrl: string): void {
 }
 
 export function assertPrivateShareUrlFits(fullUrl: string): void {
-  if (fullUrl.length > PRIVATE_SHARE_MAX_URL_LENGTH) {
+  // Messaging limit first; nested browser check uses >= so the browser message wins at the 28k boundary.
+  if (fullUrl.length > PRIVATE_SHARE_MESSAGING_SAFE_MAX_URL_LENGTH) {
+    if (fullUrl.length >= PRIVATE_SHARE_BROWSER_MAX_URL_LENGTH) {
+      throw new PrivateShareError(
+        'oversized',
+        'This diagram is too large to share as a link for this browser. Try shortening the code, splitting it into smaller diagrams, or exporting as SVG. You can also select specific blocks to share.',
+      )
+    }
     throw new PrivateShareError(
       'oversized',
-      'This diagram is too large to share as a link. Try shortening the code or splitting it into smaller diagrams.',
+      'This link is too long for common chat apps (including Slack), which usually reject URLs above about 4,000 characters. Try shortening the diagram, export as SVG or PNG, or use Copy Code to paste the Mermaid source into chat instead of a link.',
     )
   }
 }

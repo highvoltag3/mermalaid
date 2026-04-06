@@ -9,6 +9,7 @@
     "core:default",
     "dialog:default",
     "opener:default",
+    "clipboard-manager:default",
     "core:window:allow-maximize",
     "core:window:allow-unminimize",
     "core:window:allow-show",
