@@ -302,7 +302,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
   gap: 56px;
-  align-items: center;
+  align-items: start;
 }
 
 .landing-hero-text {

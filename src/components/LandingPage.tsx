@@ -90,9 +90,9 @@ const MAC_DOWNLOAD_URL = 'https://github.com/highvoltag3/mermalaid/releases/late
 const heroHighlights = [
   'Live preview while you type',
   'Offline Mermaid editor for macOS',
-  'SVG, PNG and ASCII export',
+  'Completely local Encrypted Share Links',
   'Fast editing with Monaco and visual flowchart tools',
-  'Completely local Encrypted Share Links'
+  'SVG, PNG and ASCII export'
 ]
 
 const trustSignals = [
