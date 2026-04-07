@@ -9,6 +9,18 @@ interface LandingPageProps {
   onDismissPendingRelease: () => void
 }
 
+interface PreviewCard {
+  badge: string
+  title: string
+  description: string
+  image: string
+  alt: string
+  ctaLabel: string
+  ctaHref: string
+  isInternal: boolean
+  note?: string
+}
+
 /* ─── Theme Switcher ─── */
 const THEMES = ['system', 'light', 'dark'] as const
 type Theme = (typeof THEMES)[number]
@@ -78,18 +90,19 @@ const MAC_DOWNLOAD_URL = 'https://github.com/highvoltag3/mermalaid/releases/late
 const heroHighlights = [
   'Live preview while you type',
   'Offline Mermaid editor for macOS',
-  'SVG and PNG export',
+  'SVG, PNG and ASCII export',
   'Fast editing with Monaco and visual flowchart tools',
+  'Completely local Encrypted Share Links'
 ]
 
 const trustSignals = [
-  { label: 'Free Mermaid editor', value: 'No sign-up' },
-  { label: 'Open source', value: '11 GitHub stars' },
-  { label: 'Built for Mac', value: 'Native Tauri app' },
+  { label: 'Free Mermaid editor', value: 'No sign-up, subuscriptions or lifetime licenses ' },
+  { label: 'Open source', value: 'Source available on GitHub' },
+  { label: 'Built for Mac', value: 'Universal MacOS app; Intel and Apple Silicon' },
   { label: 'Local-first', value: 'Browser storage and offline Mac workflows' },
 ]
 
-const previewCards = [
+const previewCards: PreviewCard[] = [
   {
     badge: 'Mermaid editor online',
     title: 'Open the browser editor for quick edits, links, and zero setup.',
@@ -106,11 +119,12 @@ const previewCards = [
     title: 'Install the native macOS app for local and offline diagram work.',
     description:
       'Use the Mac app when Mermaid is part of your daily workflow and you want the same editor available offline with a desktop feel.',
-    image: '/visual-editor-demo.svg',
-    alt: 'Native Mac-focused Mermalaid preview showing a Mermaid flowchart in the visual editor',
-    ctaLabel: 'Download for Mac',
+    image: '/mermalaid-editor-real-screenshot.png',
+    alt: 'Mermalaid editor running on macOS with Mermaid code on the left and live diagram preview on the right',
+    ctaLabel: 'Download for ',
     ctaHref: MAC_DOWNLOAD_URL,
     isInternal: false,
+    note: 'Shown with the real Mermalaid UI on macOS so the local workflow feels concrete.',
   },
 ]
 
@@ -131,7 +145,13 @@ const benefitCards = [
     eyebrow: 'Practical privacy',
     title: 'Local-first by default',
     description:
-      'The web editor stores work in your browser, and the Mac app supports offline Mermaid editing for private or low-connectivity environments.',
+      'The web editor stores work in your browser, and the Mac app supports offline Mermaid editing for private or low-connectivity environments. No server or cloud needed.',
+  },
+  {
+    eyebrow: 'Private sharing',
+    title: 'Share diagrams without sending them to a server',
+    description:
+      'Mermalaid can generate shareable links that keep privacy front and center: the diagram data is encrypted end-to-end in the browser, works without server involvement, and fits teams that want fast sharing without giving up local control.',
   },
 ]
 
@@ -149,8 +169,8 @@ const modeCards = [
     title: 'Use the native Mac app when you want local power',
     description:
       'The macOS app fits heavier Mermaid usage: offline editing, local-only workflows, and a dedicated desktop tool for engineers who work in diagrams every day.',
-    bullets: ['Works as an offline Mermaid editor on macOS', 'Good fit for local files and regular usage', 'Same core editing workflow without browser lock-in'],
-    ctaLabel: 'Download for Mac',
+    bullets: ['Works as an offline Mermaid editor on macOS', 'Good fit for local files and regular usage', 'Same core editing workflow without the need of yet another browser tab'],
+    ctaLabel: 'Download for ',
     ctaHref: MAC_DOWNLOAD_URL,
     isInternal: false,
   },
@@ -175,7 +195,7 @@ const featureCards = [
   {
     icon: 'SAVE',
     title: 'Export and import',
-    description: 'Export SVG or PNG, copy Mermaid code, and drag in existing files to continue working.',
+    description: 'Export SVG, PNG or ASCII, copy Mermaid code, and drag in existing files to continue working.',
   },
   {
     icon: 'TYPES',
@@ -185,7 +205,7 @@ const featureCards = [
   {
     icon: 'LOCAL',
     title: 'Local-first sharing and storage',
-    description: 'Keep work in the browser locally, or use private-link sharing when you need to send a diagram quickly.',
+    description: 'Keep work in the browser locally, or use private-link sharing when you need to send a diagram quickly (no server needed).',
   },
 ]
 
@@ -203,13 +223,18 @@ const comparisonPoints = [
   {
     title: 'A practical Mermaid Live Editor alternative',
     description:
-      'If you are comparing Mermaid live editors, Mermalaid adds a cleaner path between quick browser use, offline Mac work, visual flowchart editing, and export.',
+      'If you are comparing Mermaid live editors, Mermalaid adds a cleaner path between quick browser use, offline Mac work, visual flowchart editing, privacy with zero server involvement and export.',
+  },
+  {
+    title: 'Open source, adaptable, and built with the community',
+    description:
+      'Because Mermalaid is open source, anyone can inspect the code, adapt it to their own workflow, and contribute improvements that benefit the broader Mermaid community.',
   },
 ]
 
 const comparisonRows = [
   { label: 'Use in the browser', mermalaid: 'Yes', browserOnly: 'Yes', localOnly: 'No' },
-  { label: 'Use offline on Mac', mermalaid: 'Yes', browserOnly: 'Limited', localOnly: 'Yes' },
+  { label: 'Use offline on ', mermalaid: 'Yes', browserOnly: 'Limited', localOnly: 'Yes' },
   { label: 'Switch between quick edits and heavier local work', mermalaid: 'Yes', browserOnly: 'No', localOnly: 'Limited' },
   { label: 'Open source and no sign-up for the web editor', mermalaid: 'Yes', browserOnly: 'Varies', localOnly: 'Varies' },
 ]
@@ -256,12 +281,12 @@ const faqs = [
   {
     question: 'Does Mermalaid work offline?',
     answer:
-      'Yes. Mermalaid is also available as a native Mac app, which makes it a practical offline Mermaid editor for local workflows and travel-friendly use.',
+      'Yes. Mermalaid is also available as a native Universal Mac app, which makes it a practical offline Mermaid editor for local workflows and travel-friendly use.',
   },
   {
     question: 'Is there a Mac app?',
     answer:
-      'Yes. Mermalaid includes a native macOS app built with Tauri, giving Mac users a local Mermaid editor without being limited to the browser.',
+      'Yes. Mermalaid includes a native macOS app, giving Mac users a local Mermaid editor without being limited to the browser.',
   },
   {
     question: 'Is Mermalaid a Mermaid Live Editor alternative?',
@@ -271,7 +296,7 @@ const faqs = [
   {
     question: 'Can I export diagrams?',
     answer:
-      'Yes. Mermalaid supports exporting diagrams as SVG and PNG, which makes it useful for documentation, architecture reviews, and technical presentations.',
+      'Yes. Mermalaid supports exporting diagrams as SVG, PNG, ASCII, which makes it useful for documentation, architecture reviews, and technical presentations. You can also save your files in Markdown .MD or .MMD format.',
   },
   {
     question: 'Is Mermalaid open source?',
@@ -399,7 +424,7 @@ export default function LandingPage({
                 Try Online
               </Link>
               <a href={MAC_DOWNLOAD_URL} target="_blank" rel="noopener noreferrer" className="landing-btn landing-btn-secondary">
-                Download for Mac
+                Download for 
               </a>
               <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer" className="landing-btn landing-btn-ghost">
                 View on GitHub
@@ -430,9 +455,24 @@ export default function LandingPage({
                 />
               </div>
               <div className="landing-mini-card">
-                <span className="landing-mini-card-badge">Native Mac app</span>
-                <h2>Offline Mermaid editor for macOS</h2>
-                <p>Use the same Mermalaid workflow in a local desktop app when you are offline or diagramming heavily.</p>
+                <div className="landing-mini-card-copy">
+                  <span className="landing-mini-card-badge">Native Mac app</span>
+                  <h2>Offline Mermaid editor for macOS</h2>
+                  <p>Use the same Mermalaid workflow in a local desktop app when you are offline or diagramming heavily.</p>
+                </div>
+                <div className="landing-native-mockup">
+                  <div className="landing-mockup-bar">
+                    <div className="landing-mockup-dots">
+                      <span /><span /><span />
+                    </div>
+                    <span className="landing-mockup-title">Mermalaid.app</span>
+                  </div>
+                  <img
+                    src="/mermalaid-editor-real-screenshot.png"
+                    alt="Mermalaid editor on macOS showing the actual code and preview workspace"
+                    className="landing-mockup-screenshot"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -459,21 +499,24 @@ export default function LandingPage({
           <div className="landing-preview-grid">
             {previewCards.map((card, i) => (
               <article key={card.title} className="landing-preview-card" style={stagger(i)}>
-                <span className="landing-preview-badge">{card.badge}</span>
+                <div className="landing-preview-card-head">
+                  <span className="landing-preview-badge">{card.badge}</span>
+                  {card.isInternal ? (
+                    <Link to={card.ctaHref} className="landing-btn landing-btn-primary">
+                      {card.ctaLabel}
+                    </Link>
+                  ) : (
+                    <a href={card.ctaHref} target="_blank" rel="noopener noreferrer" className="landing-btn landing-btn-secondary">
+                      {card.ctaLabel}
+                    </a>
+                  )}
+                </div>
                 <h3>{card.title}</h3>
                 <p>{card.description}</p>
                 <div className="landing-preview-frame">
                   <img src={card.image} alt={card.alt} className="landing-preview-image" />
                 </div>
-                {card.isInternal ? (
-                  <Link to={card.ctaHref} className="landing-btn landing-btn-primary">
-                    {card.ctaLabel}
-                  </Link>
-                ) : (
-                  <a href={card.ctaHref} target="_blank" rel="noopener noreferrer" className="landing-btn landing-btn-secondary">
-                    {card.ctaLabel}
-                  </a>
-                )}
+                {card.note && <p className="landing-preview-note">{card.note}</p>}
               </article>
             ))}
           </div>
@@ -661,7 +704,6 @@ export default function LandingPage({
             <a href="#compare">Compare</a>
             <a href="#faq">FAQ</a>
             <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer">GitHub</a>
-            <a href="https://mermaid.js.org/intro/" target="_blank" rel="noopener noreferrer">Docs</a>
           </nav>
           <p className="landing-footer-copy">&copy; {new Date().getFullYear()} Mermalaid. Open source under CC BY-NC-SA 4.0.</p>
         </div>
