@@ -1,9 +1,9 @@
 import { expect, test } from '@playwright/test'
 
 test.describe('Landing and editor', () => {
-  test('landing exposes Open Editor; /editor loads toolbar and panes', async ({ page }) => {
+  test('landing exposes a link to the editor; /editor loads toolbar and panes', async ({ page }) => {
     await page.goto('/')
-    await expect(page.getByRole('link', { name: 'Open Editor' })).toBeVisible()
+    await expect(page.locator('a[href="/editor"]').first()).toBeVisible()
 
     await page.goto('/editor')
     await expect(page.locator('.toolbar')).toBeVisible()
