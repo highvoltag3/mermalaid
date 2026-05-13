@@ -1,4 +1,4 @@
-name: keep-appwrite-active
+name: deploy-appwrite-site
 
 on:
   schedule:
@@ -6,13 +6,36 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: none
+  contents: read
+
+concurrency:
+  group: appwrite-site-deploy
+  cancel-in-progress: false
 
 jobs:
-  ping:
+  deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Appwrite health
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Build static site
+        run: |
+          npm ci
+          npm run build
+
+      - name: Install Appwrite CLI
+        run: |
+          npm install -g appwrite-cli@latest
+          appwrite -v
+
+      - name: Configure Appwrite CLI
         env:
           APPWRITE_ENDPOINT: ${{ secrets.APPWRITE_ENDPOINT }}
           APPWRITE_PROJECT_ID: ${{ secrets.APPWRITE_PROJECT_ID }}
@@ -25,14 +48,69 @@ jobs:
           BASE="${APPWRITE_ENDPOINT}"
           BASE="${BASE%/}"
           if [ -z "${APPWRITE_PROJECT_ID}" ] || [ -z "${APPWRITE_API_KEY}" ]; then
-            echo "::error::Set APPWRITE_PROJECT_ID and APPWRITE_API_KEY repository secrets. Appwrite Cloud /v1/health requires them."
+            echo "::error::Set APPWRITE_PROJECT_ID and APPWRITE_API_KEY repository secrets."
             exit 1
           fi
           if [ "${BASE}" = "https://cloud.appwrite.io/v1" ] || [ "${BASE}" = "https://cloud.appwrite.io" ]; then
             echo "::error::APPWRITE_ENDPOINT must include your region host, e.g. https://<REGION>.cloud.appwrite.io/v1"
             exit 1
           fi
-          curl -sf \
-            -H "X-Appwrite-Project: ${APPWRITE_PROJECT_ID}" \
-            -H "X-Appwrite-Key: ${APPWRITE_API_KEY}" \
-            "${BASE}/health"
+          appwrite client \
+            --endpoint "${BASE}" \
+            --project-id "${APPWRITE_PROJECT_ID}" \
+            --key "${APPWRITE_API_KEY}"
+
+      - name: Deploy to Appwrite Sites
+        env:
+          APPWRITE_SITE_ID: ${{ secrets.APPWRITE_SITE_ID }}
+        run: |
+          if [ -z "${APPWRITE_SITE_ID}" ]; then
+            echo "::error::Set APPWRITE_SITE_ID to the Appwrite Site ID that serves this app."
+            exit 1
+          fi
+
+          DEPLOYMENT_JSON="$(appwrite sites create-deployment \
+            --site-id "${APPWRITE_SITE_ID}" \
+            --code dist \
+            --install-command "" \
+            --build-command "" \
+            --output-directory "." \
+            --activate true \
+            --json)"
+
+          echo "${DEPLOYMENT_JSON}"
+          DEPLOYMENT_ID="$(printf '%s' "${DEPLOYMENT_JSON}" | jq -r '.$id // empty')"
+          if [ -z "${DEPLOYMENT_ID}" ]; then
+            echo "::error::Appwrite did not return a deployment ID."
+            exit 1
+          fi
+          echo "DEPLOYMENT_ID=${DEPLOYMENT_ID}" >> "${GITHUB_ENV}"
+
+      - name: Wait for Appwrite deployment
+        env:
+          APPWRITE_SITE_ID: ${{ secrets.APPWRITE_SITE_ID }}
+        run: |
+          for attempt in $(seq 1 60); do
+            STATUS_JSON="$(appwrite sites get-deployment \
+              --site-id "${APPWRITE_SITE_ID}" \
+              --deployment-id "${DEPLOYMENT_ID}" \
+              --json)"
+            STATUS="$(printf '%s' "${STATUS_JSON}" | jq -r '.status // empty')"
+            echo "Attempt ${attempt}: deployment ${DEPLOYMENT_ID} status is ${STATUS:-unknown}"
+
+            case "${STATUS}" in
+              ready)
+                exit 0
+                ;;
+              failed|canceled)
+                echo "${STATUS_JSON}"
+                echo "::error::Appwrite deployment ${DEPLOYMENT_ID} finished with status ${STATUS}."
+                exit 1
+                ;;
+            esac
+
+            sleep 10
+          done
+
+          echo "::error::Timed out waiting for Appwrite deployment ${DEPLOYMENT_ID} to become ready."
+          exit 1
