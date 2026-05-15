@@ -4,9 +4,13 @@ This guide explains how to deploy Mermalaid to Appwrite Sites.
 
 ## Prerequisites
 
-- An Appwrite account and project
-- Git repository connected to Appwrite (recommended — this is how deploys run)
+- An Appwrite account, project, and Site
 - Node.js 18+ (for local testing)
+- GitHub repository secrets for scheduled deploys:
+  - `APPWRITE_ENDPOINT` — regional endpoint such as `https://<REGION>.cloud.appwrite.io/v1`
+  - `APPWRITE_PROJECT_ID`
+  - `APPWRITE_API_KEY` — API key with permission to create and read site deployments
+  - `APPWRITE_SITE_ID`
 
 ## Build Configuration
 
@@ -85,14 +89,22 @@ VITE_ENABLE_AI_FIXER=true
 - For security, never commit `.env` files with actual API keys
 - Use `env.example` as a template (without sensitive data)
 
-### GitHub (recommended)
+### GitHub Actions scheduled deploy
 
-Deploys are expected to run **inside Appwrite** after you connect the repo — not via GitHub Actions in this repository.
+`.github/workflows/keep-appwrite-active.yml` deploys the app to Appwrite Sites every 5 days:
 
-1. **Repository provider**: Connect GitHub (or GitLab, etc.)
-2. **Repository**: Select this project’s repository
-3. **Production branch**: `main` (or your default branch)
-4. **Auto deploy**: Enable so pushes to that branch start a build on Appwrite’s builders (`npm install` → `npm run build` → serve `dist`)
+1. Checks out the repo
+2. Runs `npm ci`
+3. Runs `npm run build`
+4. Installs and configures the Appwrite CLI
+5. Uploads `dist` as a site deployment with `--activate true`
+6. Polls Appwrite until the deployment reports `ready`
+
+You can also run the workflow manually from the GitHub Actions tab.
+
+### GitHub / VCS integration (optional)
+
+You can still connect the repository in Appwrite Console and enable Appwrite's own auto deploy for pushes to `main`, but the scheduled GitHub Actions workflow is the recurring deployment used to keep the site active.
 
 ### Custom Domain (Optional)
 
@@ -114,11 +126,11 @@ The preview server will serve the built files from the `dist` directory, allowin
 
 ## How deployment runs
 
-1. **Git integration (default path)** — Connect GitHub under your site in the Appwrite Console (see **GitHub** above). Pushes to the production branch trigger builds on Appwrite. Check the site’s **Deployments** tab in Appwrite.
+1. **Scheduled GitHub Actions workflow** — Every 5 days, GitHub Actions builds `dist`, uploads it with `appwrite sites create-deployment`, activates the deployment, and waits for Appwrite to report `ready`.
 
-2. **Console-only** — You can also deploy from the console (branch picker or manual `.tar.gz` upload), using the same build settings as above.
+2. **Git integration** — If configured in Appwrite Console, pushes to the production branch can also start Appwrite-hosted builds.
 
-This repo does **not** use GitHub Actions for Appwrite deploys. See [.github/workflows/README.md](../.github/workflows/README.md) for workflows that *do* run on GitHub (e.g. Tauri release).
+3. **Console-only** — You can also deploy from the console (branch picker or manual `.tar.gz` upload), using the same build settings as above.
 
 ## Troubleshooting
 
