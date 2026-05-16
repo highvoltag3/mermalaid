@@ -79,7 +79,7 @@ jobs:
             --json)"
 
           echo "${DEPLOYMENT_JSON}"
-          DEPLOYMENT_ID="$(printf '%s' "${DEPLOYMENT_JSON}" | jq -r '.$id // empty')"
+          DEPLOYMENT_ID="$(printf '%s' "${DEPLOYMENT_JSON}" | jq -r '.["$id"] // empty')"
           if [ -z "${DEPLOYMENT_ID}" ]; then
             echo "::error::Appwrite did not return a deployment ID."
             exit 1
