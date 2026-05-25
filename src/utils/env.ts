@@ -39,20 +39,6 @@ export function isAIFixerEnabled(): boolean {
 }
 
 /**
- * Check if analytics is enabled
- */
-export function isAnalyticsEnabled(): boolean {
-  return import.meta.env.VITE_ENABLE_ANALYTICS === 'true'
-}
-
-/**
- * Get analytics ID if enabled
- */
-export function getAnalyticsId(): string | undefined {
-  return import.meta.env.VITE_ANALYTICS_ID
-}
-
-/**
  * Check if running in production
  */
 export function isProduction(): boolean {
