@@ -6,11 +6,14 @@ import { isTauri } from '@tauri-apps/api/core'
 import App from './App'
 import './index.css'
 
+// Desktop app sessions should never report web analytics.
+const shouldEnableWebAnalytics = !isTauri()
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
       <App />
     </BrowserRouter>
-    {!isTauri() && <Analytics />}
+    {shouldEnableWebAnalytics ? <Analytics /> : null}
   </React.StrictMode>,
 )
