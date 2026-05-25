@@ -1,135 +1,50 @@
-# Deployment Guide for Vercel
+# Deployment (Vercel)
 
-This guide explains how to deploy Mermalaid to Vercel as a static Vite app.
+Internal. Static Vite app — [`vercel.json`](../vercel.json) owns install/build/output and SPA rewrites.
 
-## Prerequisites
+## Setup
 
-- A Vercel account on the Hobby/free plan or a team plan
-- Access to the GitHub repository
-- Node.js 20.19+ for local build testing
+1. Import repo in Vercel (framework **Vite**, production branch **`main`**).
+2. Confirm: install `npm ci`, build `npm run build`, output `dist`.
+3. Set Production env vars (below). Rebuild after any env change.
 
-## Build Configuration
+**Flow:** PRs → preview; `main` → production. macOS releases are separate ([`release.yml`](../.github/workflows/release.yml)).
 
-The repository includes [`vercel.json`](../vercel.json) with the settings Vercel needs:
+## Production env vars
 
-- **Framework Preset**: `Vite`
-- **Install Command**: `npm ci`
-- **Build Command**: `npm run build`
-- **Output Directory**: `dist`
-- **Root Directory**: `.`
+`VITE_*` is baked into the client bundle — not for secrets you need to hide.
 
-`vercel.json` also rewrites all paths to `index.html` so React Router routes work on refresh and direct visits.
+| Variable | Value |
+|----------|--------|
+| `VITE_APP_NAME` | `Mermalaid` |
+| `VITE_GITHUB_REPO` | `highvoltag3/mermalaid` |
+| `VITE_PUBLIC_SHARE_BASE_URL` | `https://mermalaid.com` |
+| `VITE_ENABLE_AI_FIXER` | `true` |
+| `VITE_ENABLE_ANALYTICS` | `false` |
+| `VITE_OPENAI_API_KEY` | Your OpenAI key — only if AI fixer is on |
 
-## Vercel Project Setup
+Do **not** set `VITE_APP_VERSION` — version comes from `package.json` at build time.
 
-1. In Vercel, choose **Add New... > Project**.
-2. Import the GitHub repository.
-3. Keep the detected framework as **Vite**.
-4. Confirm the project uses:
-   - Install Command: `npm ci`
-   - Build Command: `npm run build`
-   - Output Directory: `dist`
-5. Set the production branch to `main`.
-6. Deploy.
+Preview: omit `VITE_PUBLIC_SHARE_BASE_URL`; set `VITE_ENABLE_AI_FIXER` to `false` if you want.
 
-Vercel creates preview deployments for pull requests and branch pushes. Pushes to `main` create production deployments.
+Local template: [.env.example](../.env.example).
 
-## Environment Variables
-
-Environment variables are optional for basic functionality. Add any client-side variables in Vercel project settings with the `VITE_` prefix:
-
-- `VITE_OPENAI_API_KEY` (optional) - OpenAI API key for the AI error fixing feature
-- `VITE_APP_NAME` (optional) - Custom application name; defaults to `Mermalaid`
-- `VITE_APP_VERSION` (optional) - Application version; defaults to `package.json`
-- `VITE_GITHUB_REPO` (optional) - GitHub repository shown in release links
-- `VITE_PUBLIC_SHARE_BASE_URL` (optional) - Public share origin override
-- `VITE_ANALYTICS_ID` (optional) - Analytics tracking ID
-- `VITE_ENABLE_AI_FIXER` (optional) - Enable or disable AI fixer; defaults to `true`
-- `VITE_ENABLE_ANALYTICS` (optional) - Enable analytics; defaults to `false`
-
-Important:
-
-- Vite embeds `VITE_` variables at build time.
-- `VITE_` variables are visible in the browser bundle.
-- Never commit `.env` files with real credentials.
-- Use [.env.example](../.env.example) as the local template.
-
-## Local Build Testing
-
-Before deploying, test the build locally:
+## Verify before merge
 
 ```bash
 npm ci
 npm run build
 npm run preview
-```
-
-The preview server serves the built files from `dist`.
-
-Run production smoke tests against the built bundle:
-
-```bash
 npm run test:e2e:preview
 ```
 
-This builds `dist`, serves it with `vite preview`, and runs Playwright (including static asset checks for `og-image.png`).
+## OG / Twitter images
 
-## Social preview images
-
-Open Graph and Twitter cards use `public/og-image.png` and `public/twitter-image.png` (1200×630). They are generated from `src-tauri/icons/icon_512x512@2x.png` on a brand-colored canvas:
+After changing the app icon:
 
 ```bash
 pip3 install pillow
 python3 scripts/generate-og-image.py
 ```
 
-Commit the updated PNGs after regenerating.
-
-## How Deployment Runs
-
-1. **Vercel Git integration** - Vercel builds and deploys the app when GitHub sends branch, pull request, and `main` updates.
-2. **Preview deployments** - Pull requests and feature branches get preview URLs automatically.
-3. **Production deployments** - Pushes to `main` deploy to production.
-4. **Manual deployments** - Maintainers can still use the Vercel CLI if needed.
-
-### Desktop releases are separate from the web app
-
-`npm run release` / `npm run release:patch` etc. bump the version, push `main`, and push a `v*` tag. That triggers [.github/workflows/release.yml](../.github/workflows/release.yml) for the Tauri macOS build and GitHub Release draft. Web deployment is handled separately by Vercel.
-
-## Troubleshooting
-
-### Build fails
-
-- Check that dependencies are listed in `package.json`.
-- Verify Node.js is 20.19+.
-- Review the Vercel deployment build logs.
-
-### Site is not loading
-
-- Verify the output directory is `dist`.
-- Check that `dist/index.html` exists after `npm run build`.
-- Confirm `vercel.json` is present in the repository root.
-
-### 404 errors on routes
-
-- Confirm `vercel.json` contains the SPA rewrite from `/(.*)` to `/index.html`.
-- Redeploy after changing routing configuration.
-
-### Social preview image missing or wrong
-
-- Confirm `public/og-image.png` exists and is copied into `dist` after `npm run build`.
-- Regenerate with `python3 scripts/generate-og-image.py` if the app icon changes.
-
-## Build Optimization
-
-The current build configuration includes:
-
-- Minification via esbuild
-- No source maps to reduce bundle size
-- Empty output directory on each build
-
-For further optimization, consider:
-
-- Code splitting for large chunks
-- Dynamic imports for Monaco Editor
-- Lazy loading for Mermaid diagram types
+Commit `public/og-image.png` and `public/twitter-image.png`.
