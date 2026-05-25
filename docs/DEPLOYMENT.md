@@ -12,7 +12,7 @@ Internal. Static Vite app — [`vercel.json`](../vercel.json) owns install/build
 
 ## Production env vars
 
-`VITE_*` is baked into the client bundle — not for secrets you need to hide.
+`VITE_*` is baked into the client bundle — not for secrets that need to be hidden.
 
 | Variable | Value |
 |----------|--------|
