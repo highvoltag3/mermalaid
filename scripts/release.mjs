@@ -241,9 +241,7 @@ function release(bump) {
   console.log("\nRelease push completed.");
   console.log("GitHub Actions should now trigger:");
   console.log("- Release (tag push: v*)");
-  console.log(
-    "- Appwrite Sites: only if the site is linked to this repo with auto deploy on main",
-  );
+  console.log("- Vercel: production deploy if the project is linked to this repo on main");
 }
 
 function main() {

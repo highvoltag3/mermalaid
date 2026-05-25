@@ -1,183 +1,112 @@
-# Deployment Guide for Appwrite Sites
+# Deployment Guide for Vercel
 
-This guide explains how to deploy Mermalaid to Appwrite Sites.
+This guide explains how to deploy Mermalaid to Vercel as a static Vite app.
 
 ## Prerequisites
 
-- An Appwrite account, project, and Site
-- Node.js 18+ (for local testing)
-- GitHub repository secrets for scheduled deploys:
-  - `APPWRITE_ENDPOINT` — regional endpoint such as `https://<REGION>.cloud.appwrite.io/v1`
-  - `APPWRITE_PROJECT_ID`
-  - `APPWRITE_API_KEY` — API key with permission to create and read site deployments
-  - `APPWRITE_SITE_ID`
+- A Vercel account on the Hobby/free plan or a team plan
+- Access to the GitHub repository
+- Node.js 20.19+ for local build testing
+
+No Appwrite project, Appwrite API key, or scheduled keep-alive deployment is required.
 
 ## Build Configuration
 
-The project is configured for static site deployment with the following settings:
+The repository includes `vercel.json` with the settings Vercel needs:
 
+- **Framework Preset**: `Vite`
+- **Install Command**: `npm ci`
 - **Build Command**: `npm run build`
-- **Install Command**: `npm install`
 - **Output Directory**: `dist`
-- **Framework Adapter**: `static` (static site)
+- **Root Directory**: `.`
 
-## Appwrite Console Configuration
+`vercel.json` also rewrites all paths to `index.html` so React Router routes work on refresh and direct visits.
 
-When setting up your site in the Appwrite Console, use these settings:
+## Vercel Project Setup
 
-### Site Settings
+1. In Vercel, choose **Add New... > Project**.
+2. Import the GitHub repository.
+3. Keep the detected framework as **Vite**.
+4. Confirm the project uses:
+   - Install Command: `npm ci`
+   - Build Command: `npm run build`
+   - Output Directory: `dist`
+5. Set the production branch to `main`.
+6. Deploy.
 
-1. **Site Name**: `Mermalaid` (or your preferred name)
-2. **Framework**: `React` or `Static Site`
-3. **Runtime**: `Node.js 18` or `Node.js 20`
+Vercel creates preview deployments for pull requests and branch pushes. Pushes to `main` create production deployments.
 
-### Build Settings
+## Environment Variables
 
-Configure the following in the Appwrite Console:
+Environment variables are optional for basic functionality. Add any client-side variables in Vercel project settings with the `VITE_` prefix:
 
-- **Install Command**: 
-  ```
-  npm install
-  ```
-
-- **Build Command**: 
-  ```
-  npm run build
-  ```
-
-- **Output Directory**: 
-  ```
-  dist
-  ```
-
-- **Framework Adapter**: 
-  ```
-  static
-  ```
-
-### Environment Variables
-
-Environment variables are optional for basic functionality but can be configured for enhanced features:
-
-**Available Environment Variables:**
-
-- `VITE_OPENAI_API_KEY` (optional) - OpenAI API key for AI error fixing feature
-- `VITE_APP_NAME` (optional) - Custom application name (defaults to "Mermalaid")
-- `VITE_APP_VERSION` (optional) - Application version
+- `VITE_OPENAI_API_KEY` (optional) - OpenAI API key for the AI error fixing feature
+- `VITE_APP_NAME` (optional) - Custom application name; defaults to `Mermalaid`
+- `VITE_APP_VERSION` (optional) - Application version; defaults to `package.json`
+- `VITE_GITHUB_REPO` (optional) - GitHub repository shown in release links
+- `VITE_PUBLIC_SHARE_BASE_URL` (optional) - Public share origin override
 - `VITE_ANALYTICS_ID` (optional) - Analytics tracking ID
-- `VITE_ENABLE_AI_FIXER` (optional) - Enable/disable AI fixer feature (default: true)
-- `VITE_ENABLE_ANALYTICS` (optional) - Enable/disable analytics (default: false)
+- `VITE_ENABLE_AI_FIXER` (optional) - Enable or disable AI fixer; defaults to `true`
+- `VITE_ENABLE_ANALYTICS` (optional) - Enable analytics; defaults to `false`
 
-**Configuring Environment Variables:**
+Important:
 
-1. In Appwrite Console, navigate to your site settings
-2. Go to the "Environment Variables" section
-3. Add each variable with the `VITE_` prefix (required by Vite)
-4. Variables are available in code via `import.meta.env.VITE_*`
-5. Use the helper functions from `src/utils/env.ts` for type-safe access
-
-**Example:**
-```
-VITE_OPENAI_API_KEY=sk-...
-VITE_APP_NAME=Mermalaid
-VITE_ENABLE_AI_FIXER=true
-```
-
-**Important:** 
-- All client-side environment variables must be prefixed with `VITE_`
-- Environment variables are embedded at build time, not runtime
-- For security, never commit `.env` files with actual API keys
-- Use `env.example` as a template (without sensitive data)
-
-### GitHub Actions scheduled deploy
-
-`.github/workflows/keep-appwrite-active.yml` deploys the app to Appwrite Sites every 5 days:
-
-1. Checks out the repo
-2. Runs `npm ci`
-3. Runs `npm run build`
-4. Installs and configures the Appwrite CLI
-5. Uploads `dist` as a site deployment with `--activate true`
-6. Polls Appwrite until the deployment reports `ready`
-
-You can also run the workflow manually from the GitHub Actions tab.
-
-### GitHub / VCS integration (optional)
-
-You can still connect the repository in Appwrite Console and enable Appwrite's own auto deploy for pushes to `main`, but the scheduled GitHub Actions workflow is the recurring deployment used to keep the site active.
-
-### Custom Domain (Optional)
-
-1. Add your custom domain in the Appwrite Console
-2. Configure DNS records as instructed by Appwrite
-3. SSL certificates are automatically provisioned
+- Vite embeds `VITE_` variables at build time.
+- `VITE_` variables are visible in the browser bundle.
+- Never commit `.env` files with real credentials.
+- Use `.env.example` as the local template.
 
 ## Local Build Testing
 
 Before deploying, test the build locally:
 
 ```bash
-npm install
+npm ci
 npm run build
 npm run preview
 ```
 
-The preview server will serve the built files from the `dist` directory, allowing you to verify everything works correctly.
+The preview server serves the built files from `dist`.
 
-## How deployment runs
+## How Deployment Runs
 
-1. **Scheduled GitHub Actions workflow** — Every 5 days, GitHub Actions builds `dist`, uploads it with `appwrite sites create-deployment`, activates the deployment, and waits for Appwrite to report `ready`.
+1. **Vercel Git integration** - Vercel builds and deploys the app when GitHub sends branch, pull request, and `main` updates.
+2. **Preview deployments** - Pull requests and feature branches get preview URLs automatically.
+3. **Production deployments** - Pushes to `main` deploy to production.
+4. **Manual deployments** - Maintainers can still use the Vercel CLI if needed.
 
-2. **Git integration** — If configured in Appwrite Console, pushes to the production branch can also start Appwrite-hosted builds.
+The previous Appwrite keep-alive workflow has been removed because Vercel does not require scheduled redeploys to keep a static app active.
 
-3. **Console-only** — You can also start a deployment from the Appwrite Console (e.g. choose a branch, or upload a `.tar.gz` of your build output). Use the same install/build/output settings as in **Build Settings**.
+### Desktop releases are separate from the web app
 
-### Desktop releases (separate from the web app)
-
-`npm run release` / `npm run release:patch` etc. bump the version, push `main`, and push a `v*` tag. That triggers [.github/workflows/release.yml](.github/workflows/release.yml) for the Tauri macOS build + GitHub Release draft. Appwrite deployment is handled separately by the scheduled workflow unless you also enable Appwrite's Git integration.
+`npm run release` / `npm run release:patch` etc. bump the version, push `main`, and push a `v*` tag. That triggers [.github/workflows/release.yml](.github/workflows/release.yml) for the Tauri macOS build and GitHub Release draft. Web deployment is handled separately by Vercel.
 
 ## Troubleshooting
 
-### Git deployments show Ready but are not live until you activate
+### Build fails
 
-Appwrite Sites often creates a deployment in **Ready** first; **Active** is what visitors get. Activate the deployment in the Appwrite Console if your workflow requires it, or enable auto-activation / “activate after build” in the site’s deployment options if Appwrite offers it for Git builds.
+- Check that dependencies are listed in `package.json`.
+- Verify Node.js is 20.19+.
+- Review the Vercel deployment build logs.
 
-### Build Fails
+### Site is not loading
 
-- Check that all dependencies are listed in `package.json`
-- Verify Node.js version compatibility (18+)
-- Review build logs in Appwrite Console
+- Verify the output directory is `dist`.
+- Check that `dist/index.html` exists after `npm run build`.
+- Confirm `vercel.json` is present in the repository root.
 
-### Site Not Loading
+### 404 errors on routes
 
-- Verify the output directory is set to `dist`
-- Check that `index.html` exists in the `dist` directory
-- Ensure routing is configured correctly (all routes should serve `index.html` for SPA routing)
-
-### 404 Errors on Routes
-
-- Ensure Appwrite Sites routing is configured to serve `index.html` for all routes (see `.appwrite.json`)
-
-### Release Command Fails Pre-checks
-
-- **Not on `main`**: switch branches with `git checkout main`
-- **Working tree not clean**: commit or stash changes, then re-run
-- **Behind remote**: run `git pull --ff-only origin main`
-- **Ahead of remote**: run `git push origin main`, then re-run release
-
-### Rollback Guidance
-
-- If release was already pushed, create a follow-up patch release instead of rewriting git history
-- If you must remove an accidental local tag before push, delete it locally with `git tag -d vX.Y.Z`
-- Avoid force-pushing release history on `main`
+- Confirm `vercel.json` contains the SPA rewrite from `/(.*)` to `/index.html`.
+- Redeploy after changing routing configuration.
 
 ## Build Optimization
 
 The current build configuration includes:
 
 - Minification via esbuild
-- No source maps (reduces bundle size)
-- Empty output directory on each build (ensures clean builds)
+- No source maps to reduce bundle size
+- Empty output directory on each build
 
 For further optimization, consider:
 

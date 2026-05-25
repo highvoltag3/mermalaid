@@ -80,7 +80,7 @@ Create unlimited diagrams of all types:
 
 - **Web Application** - Works in any modern browser
 - **Native macOS App** - Lightweight desktop application
-- **Static Hosting** - Deploy anywhere (Vercel, Netlify, Appwrite Sites, etc.)
+- **Vercel Hosting** - Static Vite deployment with preview and production URLs
 
 ## 💻 Technical Excellence
 
@@ -234,9 +234,7 @@ Areas where contributions are especially welcome:
 
 - [Contributing Guide](CONTRIBUTING.md) - How to contribute to Mermalaid
 - [Project Structure](PROJECT_STRUCTURE.md) - Codebase organization and file structure
-- [Deployment Guide](DEPLOYMENT.md) - Deploy Mermalaid web version
-- [Appwrite Setup](APPWRITE_SETUP.md) - Step-by-step Appwrite Sites setup
-- [Static Hosting](STATIC_HOSTING.md) - Hosting configuration details
+- [Deployment Guide](DEPLOYMENT.md) - Deploy the Mermalaid web version on Vercel
 
 ## 🐛 Troubleshooting
 
