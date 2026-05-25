@@ -2,7 +2,7 @@
 
 This directory contains GitHub Actions workflows for automating tasks in this repository.
 
-**Web app hosting:** Vercel Git integration builds and deploys the generated `dist` directory. See [DEPLOYMENT.md](../../DEPLOYMENT.md).
+**Web app hosting:** Vercel Git integration builds and deploys the generated `dist` directory. See [docs/DEPLOYMENT.md](../../docs/DEPLOYMENT.md).
 
 ## Workflows
 

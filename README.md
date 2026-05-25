@@ -234,7 +234,7 @@ Areas where contributions are especially welcome:
 
 - [Contributing Guide](CONTRIBUTING.md) - How to contribute to Mermalaid
 - [Project Structure](PROJECT_STRUCTURE.md) - Codebase organization and file structure
-- [Deployment Guide](DEPLOYMENT.md) - Deploy the Mermalaid web version on Vercel
+- [Deployment Guide](docs/DEPLOYMENT.md) - Deploy the Mermalaid web version on Vercel
 
 ## 🐛 Troubleshooting
 
