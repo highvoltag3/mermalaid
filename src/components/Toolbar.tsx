@@ -46,6 +46,7 @@ import {
   getPrivateShareErrorMessage,
   PrivateShareError,
 } from '../utils/privateUrlShare'
+import { publicAssetPath } from '../utils/publicPath'
 import './Toolbar.css'
 
 /** Must cover compress (up to ~1.5s wall) + importKey + encrypt (each up to 2.5s) on slow devices. */
@@ -693,7 +694,7 @@ ${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</di
           <div className="toolbar-mobile-brand">
             <img
               className="toolbar-mobile-logo"
-              src="/apple-touch-icon.png"
+              src={publicAssetPath('apple-touch-icon.png')}
               width={56}
               height={56}
               alt="Mermalaid"

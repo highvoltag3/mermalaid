@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import UpdateAvailableBanner from './UpdateAvailableBanner'
 import type { LatestReleaseInfo } from '../utils/githubRelease'
+import { publicAssetPath } from '../utils/publicPath'
 import './LandingPage.css'
 
 interface LandingPageProps {
@@ -108,7 +109,7 @@ const previewCards: PreviewCard[] = [
     title: 'Open the browser editor for quick edits, links, and zero setup.',
     description:
       'Use the full-featured online editor when you want to sketch fast, share a private link, or jump into Mermaid without installing anything.',
-    image: '/editor-hero-demo.svg',
+    image: 'editor-hero-demo.svg',
     alt: 'Browser-based Mermalaid Mermaid editor with code on the left and rendered diagram preview on the right',
     ctaLabel: 'Try Online',
     ctaHref: '/editor',
@@ -119,7 +120,7 @@ const previewCards: PreviewCard[] = [
     title: 'Install the native macOS app for local and offline diagram work.',
     description:
       'Use the Mac app when Mermaid is part of your daily workflow and you want the same editor available offline with a desktop feel.',
-    image: '/mermalaid-editor-real-screenshot.png',
+    image: 'mermalaid-editor-real-screenshot.png',
     alt: 'Mermalaid editor running on macOS with Mermaid code on the left and live diagram preview on the right',
     ctaLabel: 'Download for ',
     ctaHref: MAC_DOWNLOAD_URL,
@@ -381,10 +382,10 @@ export default function LandingPage({
       {/* Navigation */}
       <nav className="landing-nav">
         <div className="landing-nav-inner">
-          <a href="/" className="landing-logo">
-            <img src="/apple-touch-icon.png" alt="Mermalaid logo" className="landing-logo-img" width="120" height="120" />
+          <Link to="/" className="landing-logo">
+            <img src={publicAssetPath('apple-touch-icon.png')} alt="Mermalaid logo" className="landing-logo-img" width="120" height="120" />
             <span className="landing-logo-text">Mermalaid</span>
-          </a>
+          </Link>
           <div className="landing-nav-links">
             <a href="#modes">Online vs Mac</a>
             <a href="#features">Features</a>
@@ -449,7 +450,7 @@ export default function LandingPage({
                   <span className="landing-mockup-title">Browser editor</span>
                 </div>
                 <img
-                  src="/editor-hero-demo.svg"
+                  src={publicAssetPath('editor-hero-demo.svg')}
                   alt="Mermalaid online Mermaid editor with code editor and live preview"
                   className="landing-mockup-screenshot"
                 />
@@ -468,7 +469,7 @@ export default function LandingPage({
                     <span className="landing-mockup-title">Mermalaid.app</span>
                   </div>
                   <img
-                    src="/mermalaid-editor-real-screenshot.png"
+                    src={publicAssetPath('mermalaid-editor-real-screenshot.png')}
                     alt="Mermalaid editor on macOS showing the actual code and preview workspace"
                     className="landing-mockup-screenshot"
                   />
@@ -514,7 +515,7 @@ export default function LandingPage({
                 <h3>{card.title}</h3>
                 <p>{card.description}</p>
                 <div className="landing-preview-frame">
-                  <img src={card.image} alt={card.alt} className="landing-preview-image" />
+                  <img src={publicAssetPath(card.image)} alt={card.alt} className="landing-preview-image" />
                 </div>
                 {card.note && <p className="landing-preview-note">{card.note}</p>}
               </article>
@@ -673,7 +674,7 @@ export default function LandingPage({
       {/* Final CTA */}
       <section className="landing-section landing-final-cta fade-in-section">
         <div className="landing-container">
-          <img src="/apple-touch-icon.png" alt="" className="landing-cta-icon" width="80" height="80" aria-hidden="true" />
+          <img src={publicAssetPath('apple-touch-icon.png')} alt="" className="landing-cta-icon" width="80" height="80" aria-hidden="true" />
           <h2>Choose the Mermaid workflow that fits the moment</h2>
           <p>Open the free Mermaid editor online, download the native Mac app, or inspect the project on GitHub.</p>
           <div className="landing-final-actions">
@@ -694,7 +695,7 @@ export default function LandingPage({
       <footer className="landing-footer">
         <div className="landing-container landing-footer-row">
           <div className="landing-footer-logo-row">
-            <img src="/apple-touch-icon.png" alt="Mermalaid" width="24" height="24" className="landing-logo-img" />
+            <img src={publicAssetPath('apple-touch-icon.png')} alt="Mermalaid" width="24" height="24" className="landing-logo-img" />
             <span className="landing-logo-text">Mermalaid</span>
           </div>
           <nav className="landing-footer-nav">

@@ -5,10 +5,18 @@ import react from '@vitejs/plugin-react'
 /** Set `DEV_HTTPS=1` (see `npm run dev:https`) for HTTPS so LAN URLs are a secure context (Web Crypto / private links). */
 const useDevHttps = process.env.DEV_HTTPS === '1'
 
+function normalizeBasePath(basePath: string | undefined): string {
+  if (!basePath) return '/'
+  if (basePath === './') return './'
+
+  const withLeadingSlash = basePath.startsWith('/') ? basePath : `/${basePath}`
+  return withLeadingSlash.endsWith('/') ? withLeadingSlash : `${withLeadingSlash}/`
+}
+
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react(), ...(useDevHttps ? [basicSsl()] : [])],
-  base: '/', // Use absolute path for Appwrite Sites deployment
+  base: normalizeBasePath(process.env.VITE_BASE_PATH),
   server: {
     port: parseInt(process.env.PORT || '5173'),
     host: true,

@@ -2,7 +2,7 @@
 
 This directory contains GitHub Actions workflows for automating tasks in this repository.
 
-**Appwrite Sites:** `keep-appwrite-active.yml` builds the web app and deploys the generated `dist` directory to Appwrite Sites every 5 days. See [DEPLOYMENT.md](../../DEPLOYMENT.md).
+**GitHub Pages:** `deploy-github-pages.yml` builds the web app and deploys the generated `dist` directory to GitHub Pages. See [DEPLOYMENT.md](../../DEPLOYMENT.md).
 
 ## Workflows
 
@@ -19,15 +19,12 @@ Automatically creates GitHub releases and builds Tauri macOS applications when v
 
 **Secrets:** Uses the default `GITHUB_TOKEN` only (no extra repository secrets required for this workflow).
 
-### `keep-appwrite-active.yml`
+### `deploy-github-pages.yml`
 
-Builds and deploys the static web app to Appwrite Sites so the project receives a real deployment on a recurring schedule.
+Builds and deploys the static web app to GitHub Pages using the official Pages artifact and deploy actions.
 
-**Trigger:** Every 5 days and manual dispatch.
+**Trigger:** Pushes to `main` and manual dispatch.
 
-**Secrets:**
+**Repository variables:**
 
-- `APPWRITE_ENDPOINT`
-- `APPWRITE_PROJECT_ID`
-- `APPWRITE_API_KEY`
-- `APPWRITE_SITE_ID`
+- `GH_PAGES_BASE_PATH` (optional) — set to `/<repo>/` only when deploying without the custom domain.
