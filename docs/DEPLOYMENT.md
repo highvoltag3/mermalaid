@@ -34,6 +34,10 @@ The repository includes [`vercel.json`](../vercel.json) with the settings Vercel
 
 Vercel creates preview deployments for pull requests and branch pushes. Pushes to `main` create production deployments.
 
+## Web Analytics
+
+The web app includes `@vercel/analytics` via the `<Analytics />` component in `src/main.tsx` (Vite uses `@vercel/analytics/react`, not the Next.js entry). Enable **Web Analytics** in the Vercel project dashboard for production and preview deployments. The Tauri desktop build omits analytics.
+
 ## Environment Variables
 
 Environment variables are optional for basic functionality. Add any client-side variables in Vercel project settings with the `VITE_` prefix:
@@ -43,9 +47,7 @@ Environment variables are optional for basic functionality. Add any client-side 
 - `VITE_APP_VERSION` (optional) - Application version; defaults to `package.json`
 - `VITE_GITHUB_REPO` (optional) - GitHub repository shown in release links
 - `VITE_PUBLIC_SHARE_BASE_URL` (optional) - Public share origin override
-- `VITE_ANALYTICS_ID` (optional) - Analytics tracking ID
 - `VITE_ENABLE_AI_FIXER` (optional) - Enable or disable AI fixer; defaults to `true`
-- `VITE_ENABLE_ANALYTICS` (optional) - Enable analytics; defaults to `false`
 
 Important:
 
