@@ -1,8 +1,8 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Mermalaid",
-  "version": "1.4.2",
-  "identifier": "com.mermalaid.app",
+  "version": "1.6.2",
+  "identifier": "com.mermalaid.desktop",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:5173",
@@ -28,7 +28,33 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["app", "dmg"],
+    "category": "DeveloperTool",
+    "fileAssociations": [
+      {
+        "ext": [
+          "mmd"
+        ],
+        "name": "Mermaid diagram",
+        "description": "Mermaid diagram source",
+        "role": "Editor",
+        "mimeType": "text/plain"
+      },
+      {
+        "ext": [
+          "md",
+          "markdown",
+          "txt"
+        ],
+        "name": "Text document",
+        "description": "Markdown or text document",
+        "role": "Editor",
+        "mimeType": "text/plain"
+      }
+    ],
+    "targets": [
+      "app",
+      "dmg"
+    ],
     "icon": [
       "icons/icon_16x16.png",
       "icons/icon_16x16@2x.png",

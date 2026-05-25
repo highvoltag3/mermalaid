@@ -1,15 +1,29 @@
 {
   "name": "mermalaid",
-  "version": "1.4.2",
+  "version": "1.6.2",
   "type": "module",
   "license": "CC-BY-NC-SA-4.0",
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "overrides": {
-    "dompurify": "^3.2.4"
+    "dompurify": "^3.2.4",
+    "lodash-es": "^4.18.0"
   },
   "scripts": {
     "dev": "vite",
+    "dev:https": "DEV_HTTPS=1 vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:preview": "E2E_PREVIEW=1 playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "release": "node scripts/release.mjs",
+    "release:patch": "node scripts/release.mjs patch",
+    "release:minor": "node scripts/release.mjs minor",
+    "release:major": "node scripts/release.mjs major",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build"
@@ -18,21 +32,41 @@
     "@dagrejs/dagre": "^2.0.4",
     "@monaco-editor/react": "^4.6.0",
     "@tauri-apps/api": "^2.9.0",
+    "@tauri-apps/plugin-clipboard-manager": "^2.3.2",
+    "@tauri-apps/plugin-dialog": "^2.6.0",
+    "@tauri-apps/plugin-fs": "^2.4.5",
+    "@tauri-apps/plugin-opener": "^2.5.3",
     "@xyflow/react": "^12.9.2",
-    "html2canvas": "^1.4.1",
     "beautiful-mermaid": "^0.1.3",
+    "html2canvas": "^1.4.1",
+    "mermaid": "^11.15.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^7.13.1"
+    "react-router-dom": "^7.13.1",
+    "react-zoom-pan-pinch": "^3.7.0",
+    "yaml": "^2.8.3"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.4",
+    "@playwright/test": "^1.56.1",
     "@tauri-apps/cli": "^2.9.2",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/html2canvas": "^0.5.35",
     "@types/node": "^24.9.2",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
+    "@vitejs/plugin-basic-ssl": "^2.3.0",
     "@vitejs/plugin-react": "^5.1.0",
+    "eslint": "^9.39.4",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.4.0",
+    "jsdom": "^27.2.0",
     "typescript": "^5.2.2",
-    "vite": "^7.2.1"
+    "vite": "^7.3.2",
+    "vitest": "^4.0.18"
   }
 }

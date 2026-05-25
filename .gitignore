@@ -2,6 +2,12 @@
 logs
 *.log
 .env
+
+# Playwright
+/playwright-report/
+/test-results/
+/blob-report/
+/playwright/.cache/
 .env.local
 .env.*.local
 *.app
@@ -10,11 +16,8 @@ logs
 
 # Environment files (keep example files)
 !.env.example
-!env.example
 
 # Documentation files to keep local only
-APPWRITE_SETUP.md
-APPWRITE_TROUBLESHOOTING.md
 github_dario_novoa_io.pub
 PROJECT_STRUCTURE.md
 SEO_IMPLEMENTATION_SUMMARY.md
@@ -32,6 +35,9 @@ node_modules
 dist
 dist-ssr
 *.local
+
+# Cursor: agent skills are personal (~/.cursor/skills/), not per-repo
+.cursor/skills/
 
 # Editor directories and files
 .vscode/*

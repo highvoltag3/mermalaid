@@ -60,7 +60,8 @@
   bottom: 1.5rem;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 9999;
+  /* Above Monaco, React Flow, and preview overlays */
+  z-index: 2147483000;
   pointer-events: none;
 }
 

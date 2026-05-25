@@ -1,0 +1,132 @@
+.update-banner {
+  flex-shrink: 0;
+  z-index: 50;
+  border-bottom: 1px solid var(--update-banner-border, rgba(0, 0, 0, 0.12));
+  background: var(--update-banner-bg, #f0f7ff);
+  color: var(--update-banner-fg, #0c1929);
+}
+
+.update-banner--editor {
+  --update-banner-bg: color-mix(in oklab, var(--color-canvas-default, #f6f8fa) 88%, #0969da 12%);
+  --update-banner-border: color-mix(in oklab, var(--color-border-default, #d0d7de) 70%, #0969da 30%);
+  --update-banner-fg: var(--color-fg-default, #1f2328);
+  --update-banner-link: #0969da;
+  --update-banner-btn-bg: #0969da;
+  --update-banner-btn-fg: #fff;
+  --update-banner-btn-ghost-border: color-mix(in oklab, var(--color-border-default, #d0d7de) 80%, #0969da 20%);
+}
+
+.update-banner--editor.update-banner--dark,
+.app-theme-dark .update-banner--editor {
+  --update-banner-bg: color-mix(in oklab, var(--color-canvas-default, #0d1117) 85%, #388bfd 15%);
+  --update-banner-border: color-mix(in oklab, var(--color-border-default, #30363d) 65%, #388bfd 35%);
+  --update-banner-fg: var(--color-fg-default, #e6edf3);
+  --update-banner-link: #58a6ff;
+  --update-banner-btn-bg: #388bfd;
+  --update-banner-btn-fg: #fff;
+  --update-banner-btn-ghost-border: color-mix(in oklab, var(--color-border-default, #30363d) 75%, #388bfd 25%);
+}
+
+.update-banner--landing {
+  --update-banner-bg: color-mix(in oklab, #f8fafc 90%, #0ea5e9 10%);
+  --update-banner-border: rgba(14, 165, 233, 0.28);
+  --update-banner-fg: #0f172a;
+  --update-banner-link: #0369a1;
+  --update-banner-btn-bg: #0284c7;
+  --update-banner-btn-fg: #fff;
+  --update-banner-btn-ghost-border: rgba(14, 165, 233, 0.45);
+}
+
+.update-banner--landing.update-banner--dark {
+  --update-banner-bg: color-mix(in oklab, #0f172a 92%, #38bdf8 8%);
+  --update-banner-border: rgba(56, 189, 248, 0.3);
+  --update-banner-fg: #f1f5f9;
+  --update-banner-link: #7dd3fc;
+  --update-banner-btn-bg: #38bdf8;
+  --update-banner-btn-fg: #0f172a;
+  --update-banner-btn-ghost-border: rgba(56, 189, 248, 0.45);
+}
+
+.update-banner-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+  flex-wrap: wrap;
+  padding: 10px 16px;
+  max-width: 100%;
+}
+
+.update-banner-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  line-height: 1.35;
+  min-width: 0;
+}
+
+.update-banner-title {
+  font-weight: 650;
+}
+
+.update-banner-meta {
+  opacity: 0.92;
+}
+
+.update-banner-sep {
+  margin: 0 6px;
+  opacity: 0.55;
+}
+
+.update-banner-link {
+  color: var(--update-banner-link, #0969da);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.update-banner-link:hover {
+  text-decoration-thickness: 2px;
+}
+
+.update-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.update-banner-btn {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.update-banner-btn-primary {
+  background: var(--update-banner-btn-bg);
+  color: var(--update-banner-btn-fg);
+  border-color: transparent;
+}
+
+.update-banner-btn-primary:hover {
+  filter: brightness(1.05);
+}
+
+.update-banner-btn-ghost {
+  background: transparent;
+  color: var(--update-banner-fg);
+  border-color: var(--update-banner-btn-ghost-border);
+}
+
+.update-banner-btn-ghost:hover {
+  background: color-mix(in oklab, var(--update-banner-fg) 8%, transparent);
+}

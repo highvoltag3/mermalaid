@@ -1,11 +1,188 @@
-import { useEffect, useRef, useState } from 'react'
-import { renderMermaid } from 'beautiful-mermaid'
+import { useEffect, useMemo, useRef, useState, type RefObject } from 'react'
+import { renderMermaid as renderBeautifulMermaid } from 'beautiful-mermaid'
+import {
+  TransformComponent,
+  TransformWrapper,
+  getCenterPosition,
+  useControls,
+  type ReactZoomPanPinchContentRef,
+} from 'react-zoom-pan-pinch'
 import { useTheme } from '../hooks/useTheme'
 import { replaceMermaidBlock, type MermaidBlock } from '../utils/mermaidCodeBlock'
-import { getMermaidThemeOptions } from '../utils/mermaidThemes'
+import { getMermaidThemeOptions, isAppThemeDark } from '../utils/mermaidThemes'
 import { isEditableDiagram, parseMermaidFlowchart } from '../utils/mermaidParser'
+import { normalizeMermaidForBeautifulMermaid } from '../utils/normalizeMermaidForBeautifulMermaid'
+import {
+  mapMermaidConfigToThemeOptions,
+  parseMermaidWithConfig,
+  parseMermaidConfigForOfficialRenderer,
+  replaceDiagramInBlock,
+} from '../utils/mermaidYamlConfig'
+import {
+  buildMermalaidAboutPreviewHtml,
+  isMermaidAboutKeywordOnly,
+} from '../utils/mermalaidInfoText'
+import { renderOfficialMermaidPreview } from '../utils/officialMermaidPreview'
+import { MERMLAID_PREVIEW_DEBOUNCE_MS } from '../constants/mermalaidTiming'
 import VisualEditor from './VisualEditor'
 import './Preview.css'
+
+const MIN_PREVIEW_ZOOM = 0.2
+const MAX_PREVIEW_ZOOM = 4
+const FIT_PADDING = 0.92
+
+function useVisualViewportTick(isEnabled: boolean) {
+  const [tick, setTick] = useState(0)
+
+  useEffect(() => {
+    if (!isEnabled) return
+    const vv = window.visualViewport
+    if (!vv) return
+
+    const bump = () => setTick((t) => t + 1)
+    vv.addEventListener('resize', bump)
+    vv.addEventListener('scroll', bump)
+    window.addEventListener('orientationchange', bump)
+    return () => {
+      vv.removeEventListener('resize', bump)
+      vv.removeEventListener('scroll', bump)
+      window.removeEventListener('orientationchange', bump)
+    }
+  }, [isEnabled])
+
+  return tick
+}
+
+/**
+ * TransformComponent renders: viewport (wrapper) > transformed layer (content) > children.
+ * Measure those DOM nodes explicitly so fit math matches the visible viewport, not any outer stack.
+ */
+function getTransformViewportElements(svgHost: HTMLElement | null): {
+  wrapper: HTMLElement
+  content: HTMLElement
+} | null {
+  if (!svgHost) return null
+  const content = svgHost.parentElement
+  const wrapper = content?.parentElement ?? null
+  if (!content || !wrapper) return null
+  return { wrapper, content }
+}
+
+function fitPreviewToScreen(
+  api: ReactZoomPanPinchContentRef | null,
+  svgHost: HTMLElement | null,
+) {
+  if (!api) return
+  let attempts = 0
+  const run = () => {
+    attempts += 1
+    if (attempts > 32) return
+    const fromDom = getTransformViewportElements(svgHost)
+    const wrapper = fromDom?.wrapper ?? api.instance.wrapperComponent
+    const content = fromDom?.content ?? api.instance.contentComponent
+    if (!wrapper || !content) {
+      requestAnimationFrame(run)
+      return
+    }
+    const cw = content.offsetWidth
+    const ch = content.offsetHeight
+    if (cw < 2 || ch < 2) {
+      requestAnimationFrame(run)
+      return
+    }
+    const w = wrapper.offsetWidth
+    const h = wrapper.offsetHeight
+    if (w < 2 || h < 2) {
+      requestAnimationFrame(run)
+      return
+    }
+    const scale = Math.min(w / cw, h / ch) * FIT_PADDING
+    const clamped = Math.min(MAX_PREVIEW_ZOOM, Math.max(MIN_PREVIEW_ZOOM, scale))
+    const { positionX, positionY } = getCenterPosition(
+      clamped,
+      wrapper as HTMLDivElement,
+      content as HTMLDivElement,
+    )
+    api.setTransform(positionX, positionY, clamped, 200)
+  }
+  requestAnimationFrame(run)
+}
+
+function normalizePreviewSvgDimensions(svgMarkup: string): string {
+  const doc = new DOMParser().parseFromString(svgMarkup, 'image/svg+xml')
+  const svg = doc.documentElement
+  if (!svg || svg.nodeName.toLowerCase() !== 'svg') return svgMarkup
+
+  const viewBox = svg.getAttribute('viewBox')
+  if (!viewBox) return svgMarkup
+
+  const [, , width, height] = viewBox
+    .trim()
+    .split(/\s+/)
+    .map(Number)
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+    return svgMarkup
+  }
+
+  svg.setAttribute('width', String(width))
+  svg.setAttribute('height', String(height))
+  svg.style.maxWidth = 'none'
+  svg.style.width = `${width}px`
+  svg.style.height = `${height}px`
+  return svg.outerHTML
+}
+
+function PreviewZoomToolbar({
+  visible,
+  svgHostRef,
+}: {
+  visible: boolean
+  svgHostRef: RefObject<HTMLDivElement | null>
+}) {
+  const api = useControls()
+
+  if (!visible) return null
+  return (
+    <div className="preview-zoom-toolbar" role="toolbar" aria-label="Preview zoom">
+      <button
+        type="button"
+        className="preview-zoom-btn"
+        onClick={() => api.zoomOut(0.4, 200)}
+        title="Zoom out"
+        aria-label="Zoom out"
+      >
+        −
+      </button>
+      <button
+        type="button"
+        className="preview-zoom-btn preview-zoom-btn-wide"
+        onClick={() => fitPreviewToScreen(api, svgHostRef.current)}
+        title="Fit diagram to view (scroll or pinch to zoom, drag to pan)"
+        aria-label="Fit diagram to view"
+      >
+        Fit
+      </button>
+      <button
+        type="button"
+        className="preview-zoom-btn"
+        onClick={() => api.zoomIn(0.4, 200)}
+        title="Zoom in"
+        aria-label="Zoom in"
+      >
+        +
+      </button>
+      <button
+        type="button"
+        className="preview-zoom-btn"
+        onClick={() => api.resetTransform(200)}
+        title="Reset zoom and position to defaults"
+        aria-label="Reset zoom and position"
+      >
+        100%
+      </button>
+    </div>
+  )
+}
 
 interface PreviewProps {
   code: string
@@ -15,17 +192,23 @@ interface PreviewProps {
   mermaidBlocks: MermaidBlock[]
   selectedBlockIndex: number
   setSelectedBlockIndex: (index: number | ((prev: number) => number)) => void
+  isMobile?: boolean
 }
 
 export default function Preview({
   code, setError, onCodeChange,
   activeCode, mermaidBlocks, selectedBlockIndex, setSelectedBlockIndex,
+  isMobile = false,
 }: PreviewProps) {
   const { mermaidTheme } = useTheme()
   const previewRef = useRef<HTMLDivElement>(null)
+  const transformRef = useRef<ReactZoomPanPinchContentRef | null>(null)
   const renderIdRef = useRef(0)
   const [isEditMode, setIsEditMode] = useState(false)
+  const [diagramReady, setDiagramReady] = useState(false)
+  const [previewFitTick, setPreviewFitTick] = useState(0)
   const prevBlockIndex = useRef(selectedBlockIndex)
+  const vvTick = useVisualViewportTick(isMobile)
 
   // Reset edit mode when switching blocks
   useEffect(() => {
@@ -36,15 +219,36 @@ export default function Preview({
   }, [selectedBlockIndex])
 
   const hasMultipleBlocks = mermaidBlocks.length > 1
-  const trimmedCode = activeCode.trim()
-  const parsedDiagram = trimmedCode ? parseMermaidFlowchart(trimmedCode) : null
-  const canEdit = parsedDiagram !== null && isEditableDiagram(trimmedCode)
+  const parsed = useMemo(
+    () => parseMermaidWithConfig(activeCode.trim()),
+    [activeCode],
+  )
+  const { code: diagramCode, config: yamlConfig } = parsed
+  const officialYamlConfig = useMemo(
+    () => parseMermaidConfigForOfficialRenderer(activeCode.trim()),
+    [activeCode],
+  )
+  const previewThemeOptions = useMemo(
+    () => getMermaidThemeOptions(mermaidTheme),
+    [mermaidTheme],
+  )
+  const codeForBeautifulMermaid = useMemo(
+    () => (diagramCode ? normalizeMermaidForBeautifulMermaid(diagramCode) : ''),
+    [diagramCode],
+  )
+  const parsedDiagram = codeForBeautifulMermaid
+    ? parseMermaidFlowchart(codeForBeautifulMermaid)
+    : null
+  const canEdit =
+    parsedDiagram !== null && isEditableDiagram(codeForBeautifulMermaid)
 
   const handleCodeChange = (newCode: string) => {
     if (!onCodeChange) return
 
     if (mermaidBlocks.length > 0 && mermaidBlocks[selectedBlockIndex]) {
-      const updated = replaceMermaidBlock(code, mermaidBlocks[selectedBlockIndex], newCode)
+      const block = mermaidBlocks[selectedBlockIndex]
+      const newFullContent = replaceDiagramInBlock(block.code, newCode)
+      const updated = replaceMermaidBlock(code, block, newFullContent)
       onCodeChange(updated)
     } else {
       onCodeChange(newCode)
@@ -58,37 +262,134 @@ export default function Preview({
       const currentId = ++renderIdRef.current
       const container = previewRef.current
 
+      const applyMermalaidAboutPanel = async () => {
+        try {
+          const html = await buildMermalaidAboutPreviewHtml()
+          if (renderIdRef.current === currentId && container) {
+            container.innerHTML = html
+            setError(null)
+            setDiagramReady(true)
+            setPreviewFitTick((t) => t + 1)
+          }
+        } catch (err) {
+          const errorMsg =
+            err instanceof Error ? err.message : 'Could not load Mermalaid info'
+          setError(errorMsg)
+          if (renderIdRef.current === currentId && container) {
+            container.innerHTML = `<div class="error-preview">${errorMsg}</div>`
+            setDiagramReady(false)
+          }
+        }
+      }
+
       if (isEditMode && canEdit) {
         return
       }
 
-      if (!trimmedCode) {
+      if (!diagramCode) {
         if (renderIdRef.current === currentId) {
           container.innerHTML = '<div class="empty-preview">Start typing your Mermaid diagram...</div>'
           setError(null)
+          setDiagramReady(false)
         }
         return
       }
 
+      if (isMermaidAboutKeywordOnly(diagramCode)) {
+        await applyMermalaidAboutPanel()
+        return
+      }
+
       try {
-        const themeOptions = getMermaidThemeOptions(mermaidTheme)
-        const svg = await renderMermaid(trimmedCode, themeOptions)
+        let svg: string
+        const normalizedForCompat = normalizeMermaidForBeautifulMermaid(diagramCode)
+        try {
+          svg = await renderOfficialMermaidPreview(
+            diagramCode,
+            isAppThemeDark(mermaidTheme),
+            previewThemeOptions,
+            officialYamlConfig,
+          )
+        } catch (primaryErr) {
+          // Compatibility fallback: keep official Mermaid as the default path,
+          // but retry with legacy flowchart normalization to avoid regressions
+          // on diagrams that previously rendered in Mermalaid.
+          try {
+            if (normalizedForCompat !== diagramCode) {
+              svg = await renderOfficialMermaidPreview(
+                normalizedForCompat,
+                isAppThemeDark(mermaidTheme),
+                previewThemeOptions,
+                officialYamlConfig,
+              )
+            } else {
+              throw primaryErr
+            }
+          } catch {
+            // Last-resort legacy renderer fallback for pre-existing diagrams.
+            if (isMermaidAboutKeywordOnly(normalizedForCompat)) {
+              await applyMermalaidAboutPanel()
+              return
+            }
+            const themeOptions = yamlConfig
+              ? mapMermaidConfigToThemeOptions(yamlConfig)
+              : previewThemeOptions
+            svg = await renderBeautifulMermaid(normalizedForCompat, themeOptions)
+          }
+        }
+        const normalizedSvg = normalizePreviewSvgDimensions(svg)
 
         if (renderIdRef.current === currentId && container) {
-          container.innerHTML = svg
+          container.innerHTML = normalizedSvg
           setError(null)
+          setDiagramReady(true)
+          setPreviewFitTick((t) => t + 1)
         }
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : 'Invalid Mermaid syntax'
         setError(errorMsg)
         if (renderIdRef.current === currentId && container) {
           container.innerHTML = `<div class="error-preview">${errorMsg}<div class="error-recovery-hint">Try creating a new diagram (New button) or opening a valid .mmd file.</div></div>`
+          setDiagramReady(false)
         }
       }
-    }, 500)
+    }, MERMLAID_PREVIEW_DEBOUNCE_MS)
 
     return () => clearTimeout(timer)
-  }, [code, setError, mermaidTheme, isEditMode, canEdit, trimmedCode])
+  }, [
+    code,
+    setError,
+    isEditMode,
+    canEdit,
+    diagramCode,
+    codeForBeautifulMermaid,
+    yamlConfig,
+    mermaidTheme,
+    previewThemeOptions,
+    officialYamlConfig,
+  ])
+
+  // Run fit in useEffect (not useLayoutEffect): TransformWrapper applies `disabled` via instance.update
+  // in useEffect. Child effects run before parent effects, so this runs after `disabled` is false.
+  // `setTransform` no-ops while disabled. previewFitTick bumps on each successful SVG inject.
+  useEffect(() => {
+    if (!diagramReady) return
+    const id = requestAnimationFrame(() =>
+      fitPreviewToScreen(transformRef.current, previewRef.current),
+    )
+    return () => cancelAnimationFrame(id)
+  }, [diagramReady, previewFitTick])
+
+  // Mobile: re-fit on keyboard / URL bar viewport changes so the preview doesn't get stuck
+  // with stale wrapper/content sizes after the visual viewport shifts.
+  useEffect(() => {
+    if (!isMobile) return
+    if (!diagramReady) return
+    const id = requestAnimationFrame(() =>
+      fitPreviewToScreen(transformRef.current, previewRef.current),
+    )
+    return () => cancelAnimationFrame(id)
+  }, [isMobile, diagramReady, vvTick])
 
   const blockSelector = hasMultipleBlocks && (
     <div className="block-selector">
@@ -114,7 +415,7 @@ export default function Preview({
 
   if (isEditMode && canEdit && parsedDiagram) {
     return (
-      <div className="preview-container">
+      <div className={`preview-container ${isMobile ? 'preview-container-mobile' : ''}`}>
         <div className="preview-header">
           <span>Visual Editor</span>
           <div className="preview-header-controls">
@@ -137,7 +438,7 @@ export default function Preview({
   }
 
   return (
-    <div className="preview-container">
+    <div className={`preview-container ${isMobile ? 'preview-container-mobile' : ''}`}>
       <div className="preview-header">
         <span>Preview</span>
         <div className="preview-header-controls">
@@ -153,8 +454,30 @@ export default function Preview({
           )}
         </div>
       </div>
-      <div className="preview-content" ref={previewRef}>
-        <div className="empty-preview">Loading...</div>
+      <div className="preview-content">
+        <TransformWrapper
+          ref={transformRef}
+          disabled={!diagramReady}
+          minScale={MIN_PREVIEW_ZOOM}
+          maxScale={MAX_PREVIEW_ZOOM}
+          limitToBounds={false}
+          centerOnInit={false}
+          wheel={{ step: 0.12, smoothStep: 0.002 }}
+          panning={{ velocityDisabled: false, allowLeftClickPan: true }}
+          pinch={{ disabled: false }}
+          doubleClick={{ disabled: true }}
+        >
+          <div className="preview-zoom-stack">
+            <PreviewZoomToolbar visible={diagramReady} svgHostRef={previewRef} />
+            <TransformComponent
+              wrapperClass="preview-transform-viewport"
+              wrapperStyle={{ width: '100%', height: '100%' }}
+              contentClass="preview-transform-content"
+            >
+              <div ref={previewRef} className="preview-svg-host" />
+            </TransformComponent>
+          </div>
+        </TransformWrapper>
       </div>
     </div>
   )

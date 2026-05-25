@@ -21,12 +21,14 @@ export function getAppName(): string {
   return import.meta.env.VITE_APP_NAME || 'Mermalaid'
 }
 
+import { APP_VERSION } from '../version'
+
 /**
  * Get application version from environment variables
- * Falls back to package.json version
+ * Falls back to package.json version (see version.ts)
  */
 export function getAppVersion(): string {
-  return import.meta.env.VITE_APP_VERSION || '1.0.0'
+  return import.meta.env.VITE_APP_VERSION || APP_VERSION
 }
 
 /**

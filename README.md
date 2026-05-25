@@ -16,9 +16,9 @@ If you need a **free Mermaid editor** without limits, subscriptions, or account 
 - ✅ **Source-available Codebase** - Full source under CC BY-NC-SA 4.0 (non-commercial)
 - ✅ **No Sign-Up Required** - Open the editor and start diagramming instantly
 - ✅ **Unlimited Diagrams** - Create as many Mermaid charts as you need
-- ✅ **Professional Features** - Live preview, visual editor, syntax checks, and flexible export
+- ✅ **Professional Features** - Live preview, visual editor, syntax checks, flexible export, and private share links
+- ✅ **Privacy-First** - Your diagrams stay local; no cloud sync required
 - ✅ **Web & Desktop** - Use it in your browser or as a native macOS app
-- ✅ **Privacy-First** - Your diagrams stay local on your device
 
 ## 🚀 Quick Start - Create Your First Mermaid Diagram
 
@@ -31,6 +31,8 @@ Visit [Mermalaid](https://mermalaid.com) to start creating Mermaid diagrams inst
 1. Download the latest release from [GitHub Releases](https://github.com/highvoltag3/mermalaid/releases)
 2. Install the `.dmg` file
 3. Start creating unlimited free Mermaid diagrams
+4. 🏴‍☠️ IMPORTANT: Follow this step: [Installing the Desktop App](#installing-the-desktop-app).
+
 
 ## ✨ Features - Professional Editor, Zero Cost
 
@@ -55,8 +57,9 @@ Mermalaid includes the features teams usually pay for, while staying free to use
 - **Export Options**:
   - **SVG Export** - Vector graphics for presentations and documents
   - **PNG Export** - Raster images for documentation and web use
-  - **ASCII Export** - Unicode box-drawing for terminals (flowcharts, state, sequence, class, ER diagrams)
+- **ASCII Export** - Unicode box-drawing for terminals (flowcharts, state, sequence, class, ER diagrams)
 - **Copy to Clipboard** - Copy Markdown-ready Mermaid blocks for docs and GitHub
+- **Private URL Share** - **Copy private link** stores encrypted diagram data in the URL fragment only (no upload, no server-side storage)
 
 ### Mermaid Diagram Types Supported
 
@@ -77,7 +80,7 @@ Create diagrams across the full Mermaid ecosystem:
 
 - **Web Application** - Works in any modern browser
 - **Native macOS App** - Lightweight desktop application
-- **Static Hosting** - Deploy anywhere (Vercel, Netlify, Appwrite Sites, etc.)
+- **Vercel Hosting** - Static Vite deployment with preview and production URLs
 
 ## 💻 Technical Excellence
 
@@ -231,9 +234,7 @@ Areas where contributions are especially welcome:
 
 - [Contributing Guide](CONTRIBUTING.md) - How to contribute to Mermalaid
 - [Project Structure](PROJECT_STRUCTURE.md) - Codebase organization and file structure
-- [Deployment Guide](DEPLOYMENT.md) - Deploy Mermalaid web version
-- [Appwrite Setup](APPWRITE_SETUP.md) - Step-by-step Appwrite Sites setup
-- [Static Hosting](STATIC_HOSTING.md) - Hosting configuration details
+- [Deployment Guide](docs/DEPLOYMENT.md) - Deploy the Mermalaid web version on Vercel
 
 ## 🐛 Troubleshooting
 

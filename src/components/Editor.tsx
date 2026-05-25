@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import EditorComponent, { loader } from '@monaco-editor/react'
 import { useTheme } from '../hooks/useTheme'
 import { isAppThemeDark } from '../utils/mermaidThemes'
+import { MERMLAID_EDITOR_AUTOSAVE_DEBOUNCE_MS } from '../constants/mermalaidTiming'
 import type { MermaidBlock } from '../utils/mermaidCodeBlock'
 import './Editor.css'
 
@@ -84,24 +85,68 @@ interface EditorProps {
   mermaidBlocks: MermaidBlock[]
   selectedBlockIndex: number
   setSelectedBlockIndex: (index: number) => void
+  isCollapsed: boolean
+  onToggleCollapsed: () => void
+  isMobile?: boolean
+}
+
+function CollapseEditorIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M19 21L5 21C3.89543 21 3 20.1046 3 19L3 5C3 3.89543 3.89543 3 5 3L19 3C20.1046 3 21 3.89543 21 5L21 19C21 20.1046 20.1046 21 19 21Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M7.25 10L5.5 12L7.25 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M9.5 21V3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function ExpandEditorIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M19 21L5 21C3.89543 21 3 20.1046 3 19L3 5C3 3.89543 3.89543 3 5 3L19 3C20.1046 3 21 3.89543 21 5L21 19C21 20.1046 20.1046 21 19 21Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M9.5 21V3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M5.5 10L7.25 12L5.5 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
 }
 
 export default function Editor({
   code, setCode, error,
   mermaidBlocks, selectedBlockIndex, setSelectedBlockIndex,
+  isCollapsed, onToggleCollapsed,
+  isMobile = false,
 }: EditorProps) {
   const { mermaidTheme } = useTheme()
   const debounceTimer = useRef<NodeJS.Timeout>()
   const editorRef = useRef<any>(null)
   const decorationIdsRef = useRef<string[]>([])
+  /** Avoid scrolling on every keystroke: reveal block start only when selection or block list shape changes (issue #54). */
+  const lastBlockRevealRef = useRef<{ selectedBlockIndex: number; blockCount: number } | null>(null)
   const [editorReady, setEditorReady] = useState(false)
+
+  const readClipboardText = (clipboardData: DataTransfer | null): string => {
+    if (!clipboardData) return ''
+
+    const plainTextTypes = ['text/plain', 'text', 'Text']
+    for (const type of plainTextTypes) {
+      const value = clipboardData.getData(type)
+      if (value) return value
+    }
+
+    const html = clipboardData.getData('text/html')
+    if (!html) return ''
+
+    const doc = new DOMParser().parseFromString(html, 'text/html')
+    const preformatted = doc.querySelector('pre, code')?.textContent
+    const content = preformatted ?? doc.body?.textContent ?? ''
+    return content.replace(/\u00a0/g, ' ')
+  }
 
   // Update Monaco editor when code changes externally (e.g., from AI Fix)
   useEffect(() => {
     if (editorRef.current) {
       const currentValue = editorRef.current.getValue()
       if (currentValue !== code) {
-        console.log('Updating Monaco editor with new code')
         editorRef.current.setValue(code)
       }
     }
@@ -113,7 +158,7 @@ export default function Editor({
     }
     debounceTimer.current = setTimeout(() => {
       localStorage.setItem('mermalaid-draft', code)
-    }, 500)
+    }, MERMLAID_EDITOR_AUTOSAVE_DEBOUNCE_MS)
     return () => {
       if (debounceTimer.current) {
         clearTimeout(debounceTimer.current)
@@ -133,10 +178,14 @@ export default function Editor({
 
     const handlePaste = (e: ClipboardEvent) => {
       try {
-        const pastedText = e.clipboardData?.getData('text') || ''
+        const pastedText = readClipboardText(e.clipboardData ?? null)
+        if (!pastedText) return
+
+        const normalizedText = pastedText.replace(/\r\n/g, '\n')
+
         // Only unwrap if the entire pasted text is a single ```mermaid code block
         const singleBlockRegex = /^```mermaid\s*\n([\s\S]*?)\n```\s*$/i
-        const match = pastedText.trim().match(singleBlockRegex)
+        const match = normalizedText.trim().match(singleBlockRegex)
 
         if (match && match[1]) {
           e.preventDefault()
@@ -144,6 +193,28 @@ export default function Editor({
           const extracted = match[1].trim()
           editor.setValue(extracted)
           setCode(extracted)
+          return
+        }
+
+        const hasPlainText = ['text/plain', 'text', 'Text'].some(
+          (type) => Boolean(e.clipboardData?.getData(type)),
+        )
+
+        // Firefox + native WebView can expose only HTML clipboard payloads.
+        // In that case Monaco may not paste anything by default, so insert text manually.
+        if (!hasPlainText) {
+          e.preventDefault()
+          const selection = editor.getSelection()
+          if (selection) {
+            editor.executeEdits('clipboard-fallback', [
+              {
+                range: selection,
+                text: normalizedText,
+                forceMoveMarkers: true,
+              },
+            ])
+            setCode(editor.getValue())
+          }
         }
       } catch (err) {
         console.error('Error handling paste:', err)
@@ -169,6 +240,7 @@ export default function Editor({
 
     if (mermaidBlocks.length <= 1) {
       decorationIdsRef.current = editor.deltaDecorations(decorationIdsRef.current, [])
+      lastBlockRevealRef.current = null
       return
     }
 
@@ -197,7 +269,17 @@ export default function Editor({
       },
     ])
 
-    editor.revealLineInCenterIfOutsideViewport(startPos.lineNumber)
+    const blockCount = mermaidBlocks.length
+    const prevReveal = lastBlockRevealRef.current
+    const shouldRevealBlockStart =
+      prevReveal === null ||
+      prevReveal.selectedBlockIndex !== selectedBlockIndex ||
+      prevReveal.blockCount !== blockCount
+
+    if (shouldRevealBlockStart) {
+      editor.revealLineInCenterIfOutsideViewport(startPos.lineNumber)
+      lastBlockRevealRef.current = { selectedBlockIndex, blockCount }
+    }
   }, [mermaidBlocks, selectedBlockIndex, code, editorReady])
 
   // Listen for cursor position changes to switch selected block
@@ -229,31 +311,59 @@ export default function Editor({
   }, [mermaidBlocks, selectedBlockIndex, setSelectedBlockIndex, editorReady])
 
   return (
-    <div className="editor-container">
+    <div className={`editor-container ${isCollapsed ? 'collapsed' : ''} ${isMobile ? 'editor-container-mobile' : ''}`}>
       <div className="editor-header">
-        <span>Editor</span>
-        {error && <span className="error-indicator">⚠️ Syntax Error</span>}
-      </div>
-      <EditorComponent
-        height="100%"
-        defaultLanguage="mermaid"
-        value={code}
-        onChange={(value) => setCode(value || '')}
-        onMount={handleEditorDidMount}
-        theme={isAppThemeDark(mermaidTheme) ? 'vs-dark' : 'vs'}
-        options={{
-          minimap: { enabled: false },
-          fontSize: 14,
-          tabSize: 2,
-          wordWrap: 'on',
-          automaticLayout: true,
-          glyphMargin: mermaidBlocks.length > 1,
-        }}
-      />
-      {error && (
-        <div className="error-message">
-          {error}
+        {!isCollapsed && <span>Editor</span>}
+        <div className="editor-header-controls">
+          {!isCollapsed && error && <span className="error-indicator">⚠️ Syntax Error</span>}
+          {!isMobile && (
+            <button
+              type="button"
+              className="editor-toggle-btn"
+              onClick={onToggleCollapsed}
+              title={isCollapsed ? 'Expand editor' : 'Collapse editor'}
+              aria-label={isCollapsed ? 'Expand editor panel' : 'Collapse editor panel'}
+            >
+              {isCollapsed ? <ExpandEditorIcon /> : <CollapseEditorIcon />}
+            </button>
+          )}
         </div>
+      </div>
+      {!isCollapsed && (
+        <>
+          <div className="editor-monaco-host">
+            <EditorComponent
+              height="100%"
+              defaultLanguage="mermaid"
+              value={code}
+              onChange={(value) => {
+                // Monaco can report `undefined` during mount/layout churn; ignore that so
+                // switching into the mobile Code panel does not wipe the current diagram.
+                if (typeof value === 'string') {
+                  setCode(value)
+                }
+              }}
+              onMount={handleEditorDidMount}
+              theme={isAppThemeDark(mermaidTheme) ? 'vs-dark' : 'vs'}
+              options={{
+                minimap: { enabled: false },
+                fontSize: isMobile ? 16 : 14,
+                tabSize: 2,
+                wordWrap: 'on',
+                automaticLayout: true,
+                glyphMargin: !isMobile && mermaidBlocks.length > 1,
+                lineNumbers: isMobile ? 'off' : 'on',
+                folding: !isMobile,
+                scrollBeyondLastLine: false,
+              }}
+            />
+          </div>
+          {error && (
+            <div className="error-message">
+              {error}
+            </div>
+          )}
+        </>
       )}
     </div>
   )

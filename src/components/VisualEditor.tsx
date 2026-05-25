@@ -54,6 +54,7 @@ function VisualEditorInner({ parsedDiagram, onCodeChange }: VisualEditorProps) {
   const { pushState, undo, redo, canUndo, canRedo } = useUndoRedo()
 
   const isUpdatingFromCodeRef = useRef(false)
+  const preserveNodePositionsOnNextSyncRef = useRef(false)
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null)
   const [editingEdge, setEditingEdge] = useState<{ id: string; label: string } | null>(null)
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
@@ -159,11 +160,6 @@ function VisualEditorInner({ parsedDiagram, onCodeChange }: VisualEditorProps) {
       }
     })
 
-    // Apply dagre layout only if there are new nodes without positions
-    const hasNewNodes = parsedDiagram.nodes.some(
-      (n) => !nodes.find((existing) => existing.id === n.id)
-    )
-
     const newEdges = parsedDiagram.edges.map((edge) => ({
       id: `${edge.source}-${edge.target}`,
       source: edge.source,
@@ -179,11 +175,17 @@ function VisualEditorInner({ parsedDiagram, onCodeChange }: VisualEditorProps) {
       data: { type: edge.type },
     }))
 
-    if (hasNewNodes) {
-      setNodes(applyLayout(newNodes, newEdges))
-    } else {
-      setNodes(newNodes)
+    if (preserveNodePositionsOnNextSyncRef.current) {
+      preserveNodePositionsOnNextSyncRef.current = false
+      setEdges(newEdges)
+      setTimeout(() => {
+        isUpdatingFromCodeRef.current = false
+      }, 100)
+      return
     }
+
+    // Keep user-placed positions stable during code/edge sync.
+    setNodes(newNodes)
     setEdges(newEdges)
 
     setTimeout(() => {
@@ -208,6 +210,7 @@ function VisualEditorInner({ parsedDiagram, onCodeChange }: VisualEditorProps) {
   const onConnect = useCallback(
     (params: Connection) => {
       if (params.source && params.target) {
+        preserveNodePositionsOnNextSyncRef.current = true
         pushState({ nodes, edges })
         setEdges((eds) =>
           addEdge(
