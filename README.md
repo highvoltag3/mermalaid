@@ -1,24 +1,24 @@
-# Mermalaid - The #1 Free Mermaid Diagram Editor | 100% Open Source & Free
+# Mermalaid - Free Mermaid Diagram Editor | Source-available
 
-**Mermalaid** is the premier free, open-source Mermaid diagram editor and chart creator. Create unlimited Mermaid diagrams, flowcharts, sequence diagrams, and more—completely free, no restrictions, no sign-ups required. The best free alternative to paid Mermaid editors.
+**Mermalaid** helps you create Mermaid diagrams faster, without paywalls or sign-ups. Build flowcharts, sequence diagrams, class diagrams, and more with live preview and visual editing. The source code is available under CC BY-NC-SA 4.0 (non-commercial).
 
 [![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
-[![Open Source](https://img.shields.io/badge/Open%20Source-Free%20Beer-success)](LICENSE)
+[![Source-available](https://img.shields.io/badge/Source%20available-CC%20BY--NC--SA%204.0-success)](LICENSE)
 [![Free Forever](https://img.shields.io/badge/Free-Forever-green)]()
 
-## 🎯 Why Mermalaid? The Best Free Mermaid Editor
+## 🎯 Why Mermalaid
 
-Looking for a **free Mermaid editor**? Tired of **Mermaid diagram tools** with limits, subscriptions, or hidden costs? **Mermalaid is completely free and open source**—no document limits, no premium features, no credit cards required.
+If you need a **free Mermaid editor** without limits, subscriptions, or account walls, Mermalaid is built for you. It stays free and source-available, with no document caps and no premium lock-in.
 
 ### Key Differentiators
 
-- ✅ **100% Free** - No restrictions, no limits, free forever (free as in free beer 🍺)
-- ✅ **Completely Open Source** - Full source code available, modify as you need
-- ✅ **No Sign-Up Required** - Start creating Mermaid diagrams instantly
+- ✅ **100% Free** - No usage limits, no hidden fees, no premium upsell
+- ✅ **Source-available Codebase** - Full source under CC BY-NC-SA 4.0 (non-commercial)
+- ✅ **No Sign-Up Required** - Open the editor and start diagramming instantly
 - ✅ **Unlimited Diagrams** - Create as many Mermaid charts as you need
-- ✅ **Professional Features** - Live preview, visual editor, syntax highlighting, SVG/PNG/ASCII export, *Private Share Link*
-- ✅ **Privacy-First** - All data stays local, no cloud sync required
-- ✅ **Web & Desktop** - Use in browser or download native macOS app
+- ✅ **Professional Features** - Live preview, visual editor, syntax checks, flexible export, and private share links
+- ✅ **Privacy-First** - Your diagrams stay local; no cloud sync required
+- ✅ **Web & Desktop** - Use it in your browser or as a native macOS app
 
 ## 🚀 Quick Start - Create Your First Mermaid Diagram
 
@@ -34,36 +34,36 @@ Visit [Mermalaid](https://mermalaid.com) to start creating Mermaid diagrams inst
 4. 🏴‍☠️ IMPORTANT: Follow this step: [Installing the Desktop App](#installing-the-desktop-app).
 
 
-## ✨ Features - Professional Mermaid Editor, Zero Cost
+## ✨ Features - Professional Editor, Zero Cost
 
-Mermalaid provides professional-grade features typically found in paid Mermaid editors—all completely free:
+Mermalaid includes the features teams usually pay for, while staying free to use:
 
 ### Editor Features
 
-- **Monaco Editor** with syntax highlighting for Mermaid code
-- **Live Preview** with debounced updates (500ms) - See changes in real-time
-- **Visual Editor** - Drag-and-drop flowcharts with React Flow; switch to visual mode for supported diagrams
-- **Real-time Syntax Validation** - Instant error detection and feedback
-- **Auto-save** to localStorage - Never lose your work
-- **Dark/Light Mode** - Work in your preferred theme
-- **beautiful-mermaid Themes** - Multiple themes (GitHub Light/Dark, Tokyo Night, Catppuccin, Dracula, Nord, and more) that style both diagrams and the app UI
-- **Toast Notifications** - Clear feedback for actions (save, export, errors)
-- **AI Syntax Fix** - Copy-pasted the diagram from somewhere but it has syntax errors? 🤖 Let AI fix it ✨ for you. (**You will need an OpenAI API key, it's __stored locally__ in your machine so it's only yours**).
+- **Monaco Editor** - Write Mermaid with robust syntax highlighting
+- **Live Preview** - See updates in real time with smooth debounced rendering (500ms)
+- **Visual Editor** - Drag and connect flowchart nodes, then sync changes back to code
+- **Real-time Syntax Validation** - Catch errors early and fix faster
+- **Auto-save** - Keep work in local storage so progress is not lost
+- **Dark/Light Mode** - Work comfortably in your preferred theme
+- **beautiful-mermaid Themes** - Style both diagrams and app UI with curated themes
+- **Toast Notifications** - Get clear feedback for save, export, and error actions
+- **AI Syntax Fix** - Fix broken Mermaid syntax quickly using your own OpenAI API key (stored locally on your machine)
 
 ### File Management
 
-- **Open Files** - Import `.mmd`, `.txt`, or `.md` files with Mermaid code
-- **Save Diagrams** - Export your Mermaid diagrams to local files
+- **Open Files** - Import `.mmd`, `.txt`, or `.md` files
+- **Save Diagrams** - Export Mermaid diagrams to local files
 - **Export Options**:
   - **SVG Export** - Vector graphics for presentations and documents
   - **PNG Export** - Raster images for documentation and web use
-  - **ASCII Export** - Unicode box-drawing for terminals (flowcharts, state, sequence, class, ER diagrams)
-- **Copy to Clipboard** - Export code blocks ready for Markdown, GitHub, or documentation
-- **Private URL share** - **Copy private link** puts the diagram in `#v1.<payload>` only (fragment, not query). The payload is compressed, encrypted locally with AES-GCM (Web Crypto), then base64url-encoded. There is no upload and no server sees the ciphertext in HTTP requests (fragments are not sent). Anyone who has the full link can decrypt it; treat links like secrets.
+- **ASCII Export** - Unicode box-drawing for terminals (flowcharts, state, sequence, class, ER diagrams)
+- **Copy to Clipboard** - Copy Markdown-ready Mermaid blocks for docs and GitHub
+- **Private URL Share** - **Copy private link** stores encrypted diagram data in the URL fragment only (no upload, no server-side storage)
 
 ### Mermaid Diagram Types Supported
 
-Create unlimited diagrams of all types:
+Create diagrams across the full Mermaid ecosystem:
 
 - **Flowcharts** (`graph`, `flowchart`)
 - **Sequence Diagrams** (`sequenceDiagram`)
@@ -74,7 +74,7 @@ Create unlimited diagrams of all types:
 - **Gantt Charts** (`gantt`)
 - **Pie Charts** (`pie`)
 - **Git Graphs** (`gitGraph`)
-- **And More** - Full Mermaid.js support
+- **And More** - Broad Mermaid.js coverage
 
 ### Cross-Platform Support
 
@@ -104,14 +104,14 @@ Mermalaid uses Tauri instead of Electron for a superior experience:
 
 ## 📚 Use Cases - When to Use Mermalaid
 
-Mermalaid is perfect for:
+Mermalaid works well for:
 
-- **Software Developers** - Document architecture, workflows, and system designs
-- **Technical Writers** - Create diagrams for documentation and tutorials
-- **Project Managers** - Visualize project flows and processes
+- **Software Developers** - Document architecture, workflows, and system design
+- **Technical Writers** - Add clear diagrams to docs and tutorials
+- **Project Managers** - Visualize processes and delivery plans
 - **Students** - Create diagrams for assignments and presentations
-- **DevOps Engineers** - Document infrastructure and deployment pipelines
-- **Anyone** - Who needs to create Mermaid diagrams without limits or costs
+- **DevOps Engineers** - Map infrastructure and deployment pipelines
+- **Anyone** - Build Mermaid diagrams without limits or subscriptions
 
 ## 🎨 Example Mermaid Diagrams
 
@@ -221,7 +221,7 @@ open /Applications/Mermalaid.app
 
 ## 🤝 Contributing
 
-Mermalaid is open source and welcomes contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+Mermalaid is source-available and welcomes contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 Areas where contributions are especially welcome:
 - Additional Mermaid diagram types
@@ -256,14 +256,16 @@ Areas where contributions are especially welcome:
 
 This work is licensed under a [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License](http://creativecommons.org/licenses/by-nc-sa/4.0/).
 
-**CC BY-NC-SA 4.0** - Free to use, modify, and share (non-commercial)
+**CC BY-NC-SA 4.0** - Free to use, modify, and share for non-commercial use.
+
+Because this license includes a non-commercial clause, Mermalaid is source-available rather than OSI open source.
 
 ## 🌟 Why Choose Mermalaid Over Other Mermaid Editors?
 
 | Feature | Mermalaid | Other Tools |
 |---------|-----------|-------------|
 | **Cost** | ✅ 100% Free | ❌ Free tier with limits, paid for unlimited |
-| **Open Source** | ✅ Yes, fully open | ❌ Usually closed source |
+| **Source-available** | ✅ Yes (CC BY-NC-SA 4.0, non-commercial) | ❌ Usually closed source |
 | **Document Limits** | ✅ Unlimited | ❌ Often 3-5 documents max |
 | **Sign-Up Required** | ✅ No | ❌ Usually required |
 | **Privacy** | ✅ Local storage only | ❌ Cloud sync required |
@@ -272,28 +274,14 @@ This work is licensed under a [Creative Commons Attribution-NonCommercial-ShareA
 | **Desktop App** | ✅ Native macOS | ❌ Often web-only |
 | **Visual Editor** | ✅ Yes (flowcharts) | ❌ Usually code-only |
 
-## 🎯 SEO Keywords & Search Terms
-
-Mermalaid is optimized for these search terms:
-- **free mermaid editor**
-- **mermaid diagram editor free**
-- **open source mermaid editor**
-- **free mermaid chart creator**
-- **mermaid diagram tool free**
-- **online mermaid editor free**
-- **mermaid flowchart editor**
-- **free mermaid diagram generator**
-- **mermaid editor no sign up**
-- **best free mermaid tool**
-
 ---
 
 **⭐ Star this repo** if you find Mermalaid useful for creating free, unlimited Mermaid diagrams!
 
-**🔗 Share Mermalaid** with others who need a completely free, open-source Mermaid editor.
+**🔗 Share Mermalaid** with others who need a completely free, source-available Mermaid editor.
 
 **💬 Have questions?** Open an issue or check our documentation.
 
 ---
 
-*Mermalaid - The #1 Free Mermaid Diagram Editor. Completely Open Source. 100% Free. Forever.*
+*Mermalaid - Free Mermaid Diagram Editor. Source-available. 100% free. Forever.*

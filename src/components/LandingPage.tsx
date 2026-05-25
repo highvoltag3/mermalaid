@@ -97,7 +97,7 @@ const heroHighlights = [
 
 const trustSignals = [
   { label: 'Free Mermaid editor', value: 'No sign-up, subuscriptions or lifetime licenses ' },
-  { label: 'Open source', value: 'Source available on GitHub' },
+  { label: 'Source-available', value: 'Code available on GitHub' },
   { label: 'Built for Mac', value: 'Universal MacOS app; Intel and Apple Silicon' },
   { label: 'Local-first', value: 'Browser storage and offline Mac workflows' },
 ]
@@ -226,9 +226,9 @@ const comparisonPoints = [
       'If you are comparing Mermaid live editors, Mermalaid adds a cleaner path between quick browser use, offline Mac work, visual flowchart editing, privacy with zero server involvement and export.',
   },
   {
-    title: 'Open source, adaptable, and built with the community',
+    title: 'Source-available, adaptable, and built with the community',
     description:
-      'Because Mermalaid is open source, anyone can inspect the code, adapt it to their own workflow, and contribute improvements that benefit the broader Mermaid community.',
+      'Because Mermalaid is source-available, anyone can inspect the code, adapt it to their own workflow, and contribute improvements that benefit the broader Mermaid community.',
   },
 ]
 
@@ -236,7 +236,7 @@ const comparisonRows = [
   { label: 'Use in the browser', mermalaid: 'Yes', browserOnly: 'Yes', localOnly: 'No' },
   { label: 'Use offline on ', mermalaid: 'Yes', browserOnly: 'Limited', localOnly: 'Yes' },
   { label: 'Switch between quick edits and heavier local work', mermalaid: 'Yes', browserOnly: 'No', localOnly: 'Limited' },
-  { label: 'Open source and no sign-up for the web editor', mermalaid: 'Yes', browserOnly: 'Varies', localOnly: 'Varies' },
+  { label: 'Source-available and no sign-up for the web editor', mermalaid: 'Yes', browserOnly: 'Varies', localOnly: 'Varies' },
 ]
 
 const useCases = [
@@ -271,7 +271,7 @@ const faqs = [
   {
     question: 'Is Mermalaid free?',
     answer:
-      'Yes. Mermalaid is free to use with no sign-up required for the web editor. The project is open source under the CC BY-NC-SA 4.0 license.',
+      'Yes. Mermalaid is free to use with no sign-up required for the web editor. The project is source-available under the CC BY-NC-SA 4.0 license.',
   },
   {
     question: 'Can I use Mermalaid online?',
@@ -301,7 +301,7 @@ const faqs = [
   {
     question: 'Is Mermalaid open source?',
     answer:
-      'Yes. The project is available on GitHub, so you can inspect the code, follow releases, contribute changes, and star the repository if it is useful.',
+      'Mermalaid is source-available on GitHub under CC BY-NC-SA 4.0. You can inspect the code, follow releases, and contribute changes for non-commercial use.',
   },
 ]
 
@@ -436,7 +436,7 @@ export default function LandingPage({
               ))}
             </ul>
             <p className="landing-hero-privacy-note">
-              Local-first workflows, open source code, and private-link sharing when you need to send a diagram.
+              Local-first workflows, source-available code, and private-link sharing when you need to send a diagram.
             </p>
           </div>
           <div className="landing-hero-visual">
@@ -705,7 +705,7 @@ export default function LandingPage({
             <a href="#faq">FAQ</a>
             <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer">GitHub</a>
           </nav>
-          <p className="landing-footer-copy">&copy; {new Date().getFullYear()} Mermalaid. Open source under CC BY-NC-SA 4.0.</p>
+          <p className="landing-footer-copy">&copy; {new Date().getFullYear()} Mermalaid. Source-available (CC BY-NC-SA 4.0, non-commercial).</p>
         </div>
       </footer>
     </div>
