@@ -12,7 +12,7 @@ Disallow: /.git/
 # Allow all assets
 Allow: /assets/
 Allow: /images/
-Allow: /favicon.ico
+Allow: /mermalaid-logo.svg
 Allow: /robots.txt
 Allow: /sitemap.xml
 

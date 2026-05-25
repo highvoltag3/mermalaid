@@ -694,7 +694,7 @@ ${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</di
           <div className="toolbar-mobile-brand">
             <img
               className="toolbar-mobile-logo"
-              src={publicAssetPath('apple-touch-icon.png')}
+              src={publicAssetPath('mermalaid-logo.svg')}
               width={56}
               height={56}
               alt="Mermalaid"

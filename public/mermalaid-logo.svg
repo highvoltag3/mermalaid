@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-labelledby="title desc">
+  <title id="title">Mermalaid logo</title>
+  <desc id="desc">A blue rounded square with a white Mermaid diagram line.</desc>
+  <defs>
+    <linearGradient id="bg" x1="12" y1="108" x2="108" y2="12" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2563eb" />
+      <stop offset="1" stop-color="#14b8a6" />
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="104" height="104" rx="26" fill="url(#bg)" />
+  <path d="M32 36h20l16 24 16-24h12v48H82V62L68 84 54 62v22H40V50h-8z" fill="#fff" opacity=".95" />
+  <circle cx="32" cy="36" r="7" fill="#dbeafe" />
+  <circle cx="96" cy="36" r="7" fill="#ccfbf1" />
+  <circle cx="68" cy="84" r="7" fill="#f8fafc" />
+</svg>
