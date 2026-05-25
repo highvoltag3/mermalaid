@@ -16,7 +16,6 @@ logs
 
 # Environment files (keep example files)
 !.env.example
-!env.example
 
 # Documentation files to keep local only
 github_dario_novoa_io.pub

@@ -13,6 +13,7 @@ Mermalaid is a client-side Mermaid diagram editor (React 18 + TypeScript + Vite)
 | Dev server | `npm run dev` (port 5173) |
 | Unit tests | `npm run test` (Vitest, jsdom) |
 | E2E tests | `npm run test:e2e` (Playwright, requires Chromium) |
+| E2E (production build) | `npm run test:e2e:preview` (builds `dist`, then `vite preview`) |
 | Type check | `npx tsc --noEmit` |
 | Lint | `npx eslint .` |
 | Build | `npm run build` |

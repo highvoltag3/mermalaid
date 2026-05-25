@@ -8,8 +8,6 @@ This guide explains how to deploy Mermalaid to Vercel as a static Vite app.
 - Access to the GitHub repository
 - Node.js 20.19+ for local build testing
 
-No Appwrite project, Appwrite API key, or scheduled keep-alive deployment is required.
-
 ## Build Configuration
 
 The repository includes `vercel.json` with the settings Vercel needs:
@@ -68,14 +66,31 @@ npm run preview
 
 The preview server serves the built files from `dist`.
 
+Run production smoke tests against the built bundle:
+
+```bash
+npm run test:e2e:preview
+```
+
+This builds `dist`, serves it with `vite preview`, and runs Playwright (including static asset checks for `og-image.png`).
+
+## Social preview images
+
+Open Graph and Twitter cards use `public/og-image.png` and `public/twitter-image.png` (1200×630). They are generated from `src-tauri/icons/icon_512x512@2x.png` on a brand-colored canvas:
+
+```bash
+pip3 install pillow
+python3 scripts/generate-og-image.py
+```
+
+Commit the updated PNGs after regenerating.
+
 ## How Deployment Runs
 
 1. **Vercel Git integration** - Vercel builds and deploys the app when GitHub sends branch, pull request, and `main` updates.
 2. **Preview deployments** - Pull requests and feature branches get preview URLs automatically.
 3. **Production deployments** - Pushes to `main` deploy to production.
 4. **Manual deployments** - Maintainers can still use the Vercel CLI if needed.
-
-The previous Appwrite keep-alive workflow has been removed because Vercel does not require scheduled redeploys to keep a static app active.
 
 ### Desktop releases are separate from the web app
 
@@ -99,6 +114,11 @@ The previous Appwrite keep-alive workflow has been removed because Vercel does n
 
 - Confirm `vercel.json` contains the SPA rewrite from `/(.*)` to `/index.html`.
 - Redeploy after changing routing configuration.
+
+### Social preview image missing or wrong
+
+- Confirm `public/og-image.png` exists and is copied into `dist` after `npm run build`.
+- Regenerate with `python3 scripts/generate-og-image.py` if the app icon changes.
 
 ## Build Optimization
 
