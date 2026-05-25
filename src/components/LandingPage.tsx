@@ -128,13 +128,13 @@ const stats = [
   { value: '0', label: 'sign-ups required', detail: 'Start creating instantly' },
   { value: '100%', label: 'local & private', detail: 'Nothing leaves your device' },
   { value: '10+', label: 'diagram types', detail: 'Every Mermaid type supported' },
-  { value: '\u221E', label: 'open source forever', detail: 'CC BY-NC-SA 4.0 license' },
+  { value: '\u221E', label: 'source-available', detail: 'CC BY-NC-SA 4.0 (non-commercial)' },
 ]
 
 const faqs = [
   {
     question: 'Is Mermalaid really free?',
-    answer: 'Yes, Mermalaid is 100% free with no hidden costs, no premium tiers, and no usage limits. Create unlimited Mermaid diagrams without ever paying a cent. The project is open source under the CC BY-NC-SA 4.0 license.',
+    answer: 'Yes, Mermalaid is 100% free with no hidden costs, no premium tiers, and no usage limits. Create unlimited Mermaid diagrams without ever paying a cent. The project is source-available (CC BY-NC-SA 4.0, non-commercial).',
   },
   {
     question: 'Do I need to create an account to use Mermalaid?',
@@ -153,8 +153,8 @@ const faqs = [
     answer: 'The visual editor lets you edit flowcharts by dragging and dropping nodes, drawing connections between them, and double-clicking to edit labels. Changes are automatically synced back to the Mermaid code, giving you both visual and code-based editing.',
   },
   {
-    question: 'Is Mermalaid open source?',
-    answer: 'Yes. Mermalaid is fully open source and available on GitHub. You can inspect the code, contribute improvements, or fork the project for your own use.',
+    question: 'Is Mermalaid open source or source-available?',
+    answer: 'Mermalaid is source-available on GitHub under CC BY-NC-SA 4.0. You can inspect the code, contribute improvements, and use, modify, or share it for non-commercial purposes.',
   },
   {
     question: 'What is Mermaid.js?',
@@ -260,7 +260,7 @@ export default function LandingPage() {
           <div className="landing-hero-text">
             <div className="landing-hero-badge">
               <span className="landing-hero-badge-dot" />
-              Open Source &middot; 100% Free &middot; No Sign-Up
+              Source-available &middot; 100% Free &middot; No Sign-Up
             </div>
             <p className="landing-hero-privacy-note">
               Your diagrams never leave your device. No tracking, no cloud, no analytics.
@@ -304,7 +304,7 @@ export default function LandingPage() {
           <p className="landing-section-label">Capabilities</p>
           <h2>Everything You Need to Create Mermaid Diagrams</h2>
           <p className="landing-section-sub">
-            A professional-grade Mermaid editor with features that rival paid tools &mdash; completely free and open source.
+            A professional-grade Mermaid editor with features that rival paid tools &mdash; completely free and source-available.
           </p>
           <div className="landing-features-hero-grid">
             {heroFeatures.map((f, i) => (
@@ -446,7 +446,7 @@ export default function LandingPage() {
             <a href="https://github.com/highvoltag3/mermalaid" target="_blank" rel="noopener noreferrer">GitHub</a>
             <a href="https://mermaid.js.org/intro/" target="_blank" rel="noopener noreferrer">Docs</a>
           </nav>
-          <p className="landing-footer-copy">&copy; {new Date().getFullYear()} Mermalaid. Open source under CC BY-NC-SA 4.0.</p>
+          <p className="landing-footer-copy">&copy; {new Date().getFullYear()} Mermalaid. Source-available (CC BY-NC-SA 4.0, non-commercial).</p>
         </div>
       </footer>
     </div>
