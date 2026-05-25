@@ -8,7 +8,7 @@ const useDevHttps = process.env.DEV_HTTPS === '1'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react(), ...(useDevHttps ? [basicSsl()] : [])],
-  base: '/', // Vercel serves the app from the site root.
+  base: '/',
   server: {
     port: parseInt(process.env.PORT || '5173'),
     host: true,

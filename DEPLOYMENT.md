@@ -54,7 +54,7 @@ Important:
 - Vite embeds `VITE_` variables at build time.
 - `VITE_` variables are visible in the browser bundle.
 - Never commit `.env` files with real credentials.
-- Use `.env.example` as the local template.
+- Use [.env.example](.env.example) as the local template.
 
 ## Local Build Testing
 
