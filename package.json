@@ -3,6 +3,9 @@
   "version": "1.6.2",
   "type": "module",
   "license": "CC-BY-NC-SA-4.0",
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "overrides": {
     "dompurify": "^3.2.4",
     "lodash-es": "^4.18.0"
@@ -15,6 +18,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "test:e2e:preview": "E2E_PREVIEW=1 playwright test",
     "test:e2e:ui": "playwright test --ui",
     "release": "node scripts/release.mjs",
     "release:patch": "node scripts/release.mjs patch",

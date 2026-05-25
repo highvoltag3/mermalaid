@@ -2,7 +2,7 @@
 
 This directory contains GitHub Actions workflows for automating tasks in this repository.
 
-**Appwrite Sites:** `keep-appwrite-active.yml` builds the web app and deploys the generated `dist` directory to Appwrite Sites every 5 days. See [DEPLOYMENT.md](../../DEPLOYMENT.md).
+**Web app hosting:** Vercel Git integration builds and deploys the generated `dist` directory. See [docs/DEPLOYMENT.md](../../docs/DEPLOYMENT.md).
 
 ## Workflows
 
@@ -19,15 +19,8 @@ Automatically creates GitHub releases and builds Tauri macOS applications when v
 
 **Secrets:** Uses the default `GITHUB_TOKEN` only (no extra repository secrets required for this workflow).
 
-### `keep-appwrite-active.yml`
+### Vercel deployments
 
-Builds and deploys the static web app to Appwrite Sites so the project receives a real deployment on a recurring schedule.
+The web app does not need a scheduled GitHub Actions deployment. Import the repository into Vercel and let Vercel create preview deployments for pull requests and production deployments for `main`.
 
-**Trigger:** Every 5 days and manual dispatch.
-
-**Secrets:**
-
-- `APPWRITE_ENDPOINT`
-- `APPWRITE_PROJECT_ID`
-- `APPWRITE_API_KEY`
-- `APPWRITE_SITE_ID`
+No repository secrets are required for the default static Vite deployment.

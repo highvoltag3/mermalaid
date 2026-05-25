@@ -30,3 +30,17 @@ jobs:
       - run: npm run test:e2e
         env:
           CI: true
+
+  e2e-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install chromium --with-deps
+      - run: npm run test:e2e:preview
+        env:
+          CI: true

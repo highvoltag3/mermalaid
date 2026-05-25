@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
 
-const port = Number(process.env.PORT || 5173)
+const useProductionPreview = process.env.E2E_PREVIEW === '1'
+const port = Number(process.env.PORT || (useProductionPreview ? 4173 : 5173))
 const baseURL = `http://127.0.0.1:${port}`
 
 export default defineConfig({
@@ -18,11 +19,18 @@ export default defineConfig({
     permissions: ['clipboard-read', 'clipboard-write'],
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
-  webServer: {
-    // Avoid `host: true` from vite.config (networkInterfaces); keep E2E stable in CI/sandbox.
-    command: `npm run dev -- --host 127.0.0.1 --port ${port} --strictPort`,
-    url: baseURL,
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-  },
+  webServer: useProductionPreview
+    ? {
+        command: `npm run build && npm run preview -- --host 127.0.0.1 --port ${port} --strictPort`,
+        url: baseURL,
+        reuseExistingServer: !process.env.CI,
+        timeout: 180_000,
+      }
+    : {
+        // Avoid `host: true` from vite.config (networkInterfaces); keep E2E stable in CI/sandbox.
+        command: `npm run dev -- --host 127.0.0.1 --port ${port} --strictPort`,
+        url: baseURL,
+        reuseExistingServer: !process.env.CI,
+        timeout: 120_000,
+      },
 })

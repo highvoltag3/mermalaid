@@ -6,7 +6,7 @@ Thank you for your interest in contributing to Mermalaid! This document provides
 
 ### Prerequisites
 
-- **Node.js** 18+ and npm
+- **Node.js** 20.19+ and npm
 - **Rust** (Tauri will prompt to install if missing)
 - **macOS** (for building macOS apps)
 - Basic familiarity with React, TypeScript, and Rust
