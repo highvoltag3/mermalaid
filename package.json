@@ -59,7 +59,7 @@
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "@vitejs/plugin-basic-ssl": "^2.3.0",
-    "@vitejs/plugin-react": "^5.1.0",
+    "@vitejs/plugin-react": "^5.2.0",
     "eslint": "^9.39.4",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
@@ -67,7 +67,7 @@
     "globals": "^17.4.0",
     "jsdom": "^27.2.0",
     "typescript": "^5.2.2",
-    "vite": "^7.3.2",
+    "vite": "^8.0.16",
     "vitest": "^4.0.18"
   }
 }
