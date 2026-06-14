@@ -110,7 +110,7 @@ const previewCards: PreviewCard[] = [
       'Use the full-featured online editor when you want to sketch fast, share a private link, or jump into Mermaid without installing anything.',
     image: '/editor-hero-demo.svg',
     alt: 'Browser-based Mermalaid Mermaid editor with code on the left and rendered diagram preview on the right',
-    ctaLabel: 'Try Online',
+    ctaLabel: 'Go to Editor',
     ctaHref: '/editor',
     isInternal: true,
   },
@@ -161,7 +161,7 @@ const modeCards = [
     description:
       'The browser version is the fastest way to start diagramming. It is ideal for quick edits, reviewing Mermaid snippets, and sharing a link without asking anyone to install software.',
     bullets: ['No install required', 'Fast access from any modern browser', 'Useful for quick edits, previews, and sharing'],
-    ctaLabel: 'Try Online',
+    ctaLabel: 'Go to Editor',
     ctaHref: '/editor',
     isInternal: true,
   },
@@ -394,7 +394,7 @@ export default function LandingPage({
           </div>
           <ThemeSwitcher theme={theme} setTheme={setTheme} />
           <Link to="/editor" className="landing-nav-cta">
-            Try Online
+            Go to Editor
             <span className="landing-nav-cta-arrow">&rarr;</span>
           </Link>
         </div>
@@ -421,7 +421,7 @@ export default function LandingPage({
             </p>
             <div className="landing-hero-actions">
               <Link to="/editor" className="landing-btn landing-btn-primary">
-                Try Online
+                Go to Editor
               </Link>
               <a href={MAC_DOWNLOAD_URL} target="_blank" rel="noopener noreferrer" className="landing-btn landing-btn-secondary">
                 Download for 
@@ -678,7 +678,7 @@ export default function LandingPage({
           <p>Open the free Mermaid editor online, download the native Mac app, or inspect the project on GitHub.</p>
           <div className="landing-final-actions">
             <Link to="/editor" className="landing-btn landing-btn-primary landing-btn-lg">
-              Try Online
+              Go to Editor
             </Link>
             <a href={MAC_DOWNLOAD_URL} target="_blank" rel="noopener noreferrer" className="landing-btn landing-btn-secondary landing-btn-lg">
               Download for Mac

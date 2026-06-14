@@ -74,7 +74,7 @@ describe('App (web)', () => {
       </MemoryRouter>,
     )
     await waitFor(() => {
-      expect(screen.getAllByRole('link', { name: /try online/i }).length).toBeGreaterThan(0)
+      expect(screen.getAllByRole('link', { name: /go to editor/i }).length).toBeGreaterThan(0)
       expect(screen.getAllByRole('link', { name: /download for mac/i }).length).toBeGreaterThan(0)
       expect(screen.getAllByRole('link', { name: /view on github/i }).length).toBeGreaterThan(0)
     })
