@@ -42,7 +42,8 @@ const MERMAID_ID_PATTERN = '[A-Za-z0-9_][A-Za-z0-9_.:-]*'
 const NODE_SHAPE_PATTERNS: { regex: RegExp; shape: NodeShapeType; labelGroup: number }[] = [
   { regex: new RegExp(`(${MERMAID_ID_PATTERN})\\{\\{([^}]+)\\}\\}`), shape: 'hexagon', labelGroup: 2 },
   { regex: new RegExp(`(${MERMAID_ID_PATTERN})\\[\\[([^\\]]+)\\]\\]`), shape: 'subroutine', labelGroup: 2 },
-  { regex: new RegExp(`(${MERMAID_ID_PATTERN})\\(\\(([^)]+)\\)\\)`), shape: 'doublecircle', labelGroup: 2 },
+  { regex: new RegExp(`(${MERMAID_ID_PATTERN})\\(\\(\\(([^)]+)\\)\\)\\)`), shape: 'doublecircle', labelGroup: 2 },
+  { regex: new RegExp(`(${MERMAID_ID_PATTERN})\\(\\(([^)]+)\\)\\)`), shape: 'circle', labelGroup: 2 },
   { regex: new RegExp(`(${MERMAID_ID_PATTERN})\\[\\(([^)\\]]*)\\)\\]`), shape: 'cylinder', labelGroup: 2 },
   { regex: new RegExp(`(${MERMAID_ID_PATTERN})\\(\\[([^\\]]*)\\]\\)`), shape: 'stadium', labelGroup: 2 },
   { regex: new RegExp(`(${MERMAID_ID_PATTERN})\\[\\/([^\\]\\\\]+)\\\\]`), shape: 'trapezoid', labelGroup: 2 },
