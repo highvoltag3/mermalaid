@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, type CSSProperties } from 'react'
 import { Handle, Position, NodeToolbar } from '@xyflow/react'
 import type { MermaidNode } from '../../utils/mermaidParser'
 import { useTheme } from '../../hooks/useTheme'
@@ -9,6 +9,8 @@ export interface CustomNodeData {
   label: string
   shape: MermaidNode['shape']
   id: string
+  width?: number
+  height?: number
   isEditing?: boolean
   onLabelChange?: (id: string, label: string) => void
   onStartEditing?: (id: string) => void
@@ -84,7 +86,12 @@ export default function CustomNode({ data, selected }: { data: CustomNodeData; s
     return `node-shape-${shape}`
   }
 
-  const handleColor = isDark ? '#4a9eff' : '#1976d2'
+  const handleColor = 'var(--ve-accent, #1976d2)'
+
+  const nodeStyle: CSSProperties | undefined =
+    data.width && data.height
+      ? { width: data.width, height: data.height, minWidth: data.width, minHeight: data.height }
+      : undefined
 
   return (
     <>
@@ -137,6 +144,7 @@ export default function CustomNode({ data, selected }: { data: CustomNodeData; s
 
       <div
         className={`visual-node ${getShapeClass()} ${isDark ? 'dark' : ''} ${selected ? 'selected' : ''}`}
+        style={nodeStyle}
         onDoubleClick={(e) => {
           e.stopPropagation()
           data.onStartEditing?.(data.id)

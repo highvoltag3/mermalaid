@@ -9,17 +9,17 @@
 /* Header toolbar */
 .visual-editor-header {
   padding: 6px 12px;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--ve-header-border, #e0e0e0);
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  background: #fafafa;
+  background: var(--ve-header-bg, #fafafa);
 }
 
 .visual-editor-header.dark {
-  border-bottom-color: #404040;
-  background: #252525;
+  border-bottom-color: var(--ve-header-border, #404040);
+  background: var(--ve-header-bg, #252525);
 }
 
 .ve-header-actions {
@@ -114,13 +114,13 @@
 .visual-editor-hint {
   font-size: 10px;
   font-weight: 400;
-  color: #999;
+  color: var(--ve-muted-text, #999999);
   white-space: nowrap;
   flex-shrink: 0;
 }
 
 .visual-editor-header.dark .visual-editor-hint {
-  color: #666;
+  color: var(--ve-muted-text, #666666);
 }
 
 /* Editor content */
@@ -130,11 +130,11 @@
 }
 
 .visual-editor-content .react-flow {
-  background-color: #f8f9fa;
+  background-color: var(--ve-canvas-bg, #f8f9fa);
 }
 
 .visual-editor-content .react-flow.dark {
-  background-color: #1a1a1a;
+  background-color: var(--ve-canvas-bg, #1a1a1a);
 }
 
 /* Edge label editor */
@@ -145,20 +145,20 @@
 .edge-label-input {
   border: none;
   outline: none;
-  background: #fff;
-  color: #333;
+  background: var(--ve-edge-label-bg, #ffffff);
+  color: var(--ve-node-text, #333333);
   font-size: 12px;
   font-weight: 500;
   text-align: center;
   padding: 4px 8px;
   border-radius: 4px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  border: 2px solid #4a9eff;
+  border: 2px solid var(--ve-accent, #4a9eff);
 }
 
 .edge-label-input.dark {
-  background: #2d2d2d;
-  color: #d4d4d4;
+  background: var(--ve-edge-label-bg, #2d2d2d);
+  color: var(--ve-node-text, #d4d4d4);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
@@ -186,6 +186,10 @@
 
 /* Edge styling when selected */
 .react-flow__edge.selected .react-flow__edge-path {
-  stroke: #4a9eff;
+  stroke: var(--ve-accent, #4a9eff);
   stroke-width: 2;
+}
+
+.visual-editor-container .react-flow__edge-path {
+  stroke: var(--ve-edge-stroke, #999999);
 }

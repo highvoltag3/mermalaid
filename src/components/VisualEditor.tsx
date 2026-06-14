@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import {
   ReactFlow,
   Background,
@@ -17,12 +17,19 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import type { ParsedMermaidDiagram, MermaidNode, MermaidEdge } from '../utils/mermaidParser'
+import type { MermaidYamlConfig } from '../utils/mermaidYamlConfig'
 import { generateMermaidCode } from '../utils/mermaidGenerator'
 import { useTheme } from '../hooks/useTheme'
 import { isAppThemeDark } from '../utils/mermaidThemes'
 import { useAutoLayout } from '../hooks/useAutoLayout'
+import { useMermaidSvgLayout } from '../hooks/useMermaidSvgLayout'
 import { useUndoRedo } from '../hooks/useUndoRedo'
 import { useVisualEditorKeyboard } from '../hooks/useVisualEditorKeyboard'
+import { buildFlowEdges, buildFlowNodes } from '../utils/visualEditorGraph'
+import {
+  getVisualEditorCssVars,
+  getVisualEditorEdgeStyle,
+} from '../utils/visualEditorTheme'
 import CustomNode from './visual-editor/CustomNode'
 import AddNodeToolbar from './visual-editor/AddNodeToolbar'
 import ContextMenu, { ContextMenuState } from './visual-editor/ContextMenu'
@@ -31,6 +38,8 @@ import './VisualEditor.css'
 
 interface VisualEditorProps {
   parsedDiagram: ParsedMermaidDiagram
+  diagramCode: string
+  yamlConfig?: MermaidYamlConfig
   onCodeChange: (code: string) => void
 }
 
@@ -44,11 +53,27 @@ function generateNodeId(existingNodes: Node[]): string {
   return `node_${nodeCounter}`
 }
 
-function VisualEditorInner({ parsedDiagram, onCodeChange }: VisualEditorProps) {
+function VisualEditorInner({
+  parsedDiagram,
+  diagramCode,
+  yamlConfig,
+  onCodeChange,
+}: VisualEditorProps) {
   const { mermaidTheme } = useTheme()
   const isDark = isAppThemeDark(mermaidTheme)
+  const themeVars = useMemo(
+    () => getVisualEditorCssVars(mermaidTheme, yamlConfig),
+    [mermaidTheme, yamlConfig],
+  )
   const containerRef = useRef<HTMLDivElement>(null)
   const reactFlowInstance = useReactFlow()
+  const svgLayoutAppliedRef = useRef('')
+
+  const nodeIds = useMemo(
+    () => parsedDiagram.nodes.map((node) => node.id),
+    [parsedDiagram.nodes],
+  )
+  const svgLayouts = useMermaidSvgLayout(diagramCode, nodeIds, mermaidTheme, yamlConfig)
 
   const { applyLayout } = useAutoLayout(parsedDiagram.direction)
   const { pushState, undo, redo, canUndo, canRedo } = useUndoRedo()
@@ -60,41 +85,66 @@ function VisualEditorInner({ parsedDiagram, onCodeChange }: VisualEditorProps) {
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
   const [contextFlowPos, setContextFlowPos] = useState<{ x: number; y: number } | null>(null)
 
-  // Build initial nodes from parsed diagram with dagre layout
-  const initialNodes = useMemo<Node[]>(() => {
-    const rawNodes = parsedDiagram.nodes.map((node) => ({
-      id: node.id,
-      type: 'custom' as const,
-      position: { x: 0, y: 0 },
-      data: { label: node.label, shape: node.shape, id: node.id },
-    }))
-    const rawEdges = parsedDiagram.edges.map((edge) => ({
-      id: `${edge.source}-${edge.target}`,
-      source: edge.source,
-      target: edge.target,
-    }))
-    return applyLayout(rawNodes, rawEdges)
-  }, [parsedDiagram.nodes, parsedDiagram.edges, applyLayout])
+  const initialNodes = useMemo(
+    () => buildFlowNodes(parsedDiagram, { applyLayout }),
+    [parsedDiagram, applyLayout],
+  )
 
-  const initialEdges = useMemo<Edge[]>(() => {
-    return parsedDiagram.edges.map((edge) => ({
-      id: `${edge.source}-${edge.target}`,
-      source: edge.source,
-      target: edge.target,
-      label: edge.label || '',
-      type: 'smoothstep',
-      markerEnd: edge.type !== 'line' ? { type: MarkerType.ArrowClosed } : undefined,
-      style: edge.type === 'thick'
-        ? { strokeWidth: 3 }
-        : edge.type === 'dotted'
-          ? { strokeDasharray: '5 5' }
-          : undefined,
-      data: { type: edge.type },
-    }))
-  }, [parsedDiagram.edges])
+  const initialEdges = useMemo(
+    () => buildFlowEdges(parsedDiagram.edges, themeVars),
+    [parsedDiagram.edges, themeVars],
+  )
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
+
+  useEffect(() => {
+    if (svgLayouts !== null) return
+    const timer = setTimeout(() => reactFlowInstance.fitView({ padding: 0.2 }), 80)
+    return () => clearTimeout(timer)
+  }, [svgLayouts, reactFlowInstance])
+
+  useEffect(() => {
+    if (svgLayouts === null) return
+
+    const layoutKey = `${diagramCode}\u0000${svgLayouts.size}`
+    if (svgLayoutAppliedRef.current === layoutKey) return
+    svgLayoutAppliedRef.current = layoutKey
+
+    if (svgLayouts.size === 0) {
+      setTimeout(() => reactFlowInstance.fitView({ padding: 0.2 }), 50)
+      return
+    }
+
+    setNodes((current) =>
+      buildFlowNodes(parsedDiagram, { layouts: svgLayouts, existingNodes: current }),
+    )
+    setTimeout(() => reactFlowInstance.fitView({ padding: 0.2 }), 50)
+  }, [svgLayouts, diagramCode, parsedDiagram, reactFlowInstance, setNodes])
+
+  useEffect(() => {
+    setEdges((current) =>
+      current.map((edge) => {
+        const edgeType = (edge.data?.type as MermaidEdge['type'] | undefined) ?? 'arrow'
+        return {
+          ...edge,
+          markerEnd:
+            edgeType !== 'line'
+              ? { type: MarkerType.ArrowClosed, color: themeVars['--ve-edge-stroke'] }
+              : undefined,
+          style: getVisualEditorEdgeStyle(themeVars, edgeType),
+          labelStyle: {
+            fill: themeVars['--ve-node-text'],
+            fontWeight: 500,
+          },
+          labelBgStyle: {
+            fill: themeVars['--ve-edge-label-bg'],
+            fillOpacity: 0.95,
+          },
+        }
+      }),
+    )
+  }, [themeVars, setEdges])
 
   // Inject callbacks into node data so CustomNode can call them
   const nodesWithCallbacks = useMemo(() => {
@@ -147,33 +197,12 @@ function VisualEditorInner({ parsedDiagram, onCodeChange }: VisualEditorProps) {
 
     isUpdatingFromCodeRef.current = true
 
-    const newNodes = parsedDiagram.nodes.map((node, index) => {
-      const existingNode = nodes.find((n) => n.id === node.id)
-      return {
-        id: node.id,
-        type: 'custom' as const,
-        position: existingNode?.position || {
-          x: (index % 3) * 200 + 50,
-          y: Math.floor(index / 3) * 150 + 50,
-        },
-        data: { label: node.label, shape: node.shape, id: node.id },
-      }
+    const newNodes = buildFlowNodes(parsedDiagram, {
+      layouts: svgLayouts,
+      existingNodes: nodes,
     })
 
-    const newEdges = parsedDiagram.edges.map((edge) => ({
-      id: `${edge.source}-${edge.target}`,
-      source: edge.source,
-      target: edge.target,
-      label: edge.label || '',
-      type: 'smoothstep' as const,
-      markerEnd: edge.type !== 'line' ? { type: MarkerType.ArrowClosed } : undefined,
-      style: edge.type === 'thick'
-        ? { strokeWidth: 3 }
-        : edge.type === 'dotted'
-          ? { strokeDasharray: '5 5' }
-          : undefined,
-      data: { type: edge.type },
-    }))
+    const newEdges = buildFlowEdges(parsedDiagram.edges, themeVars)
 
     if (preserveNodePositionsOnNextSyncRef.current) {
       preserveNodePositionsOnNextSyncRef.current = false
@@ -217,7 +246,11 @@ function VisualEditorInner({ parsedDiagram, onCodeChange }: VisualEditorProps) {
             {
               ...params,
               type: 'smoothstep',
-              markerEnd: { type: MarkerType.ArrowClosed },
+              markerEnd: {
+                type: MarkerType.ArrowClosed,
+                color: themeVars['--ve-edge-stroke'],
+              },
+              style: getVisualEditorEdgeStyle(themeVars, 'arrow'),
               data: { type: 'arrow' },
             },
             eds
@@ -225,7 +258,7 @@ function VisualEditorInner({ parsedDiagram, onCodeChange }: VisualEditorProps) {
         )
       }
     },
-    [setEdges, pushState, nodes, edges]
+    [setEdges, pushState, nodes, edges, themeVars]
   )
 
   // Node drag stop -> push undo state
@@ -418,18 +451,17 @@ function VisualEditorInner({ parsedDiagram, onCodeChange }: VisualEditorProps) {
             ? {
                 ...e,
                 data: { ...e.data, type: edgeType },
-                markerEnd: edgeType !== 'line' ? { type: MarkerType.ArrowClosed } : undefined,
-                style: edgeType === 'thick'
-                  ? { strokeWidth: 3 }
-                  : edgeType === 'dotted'
-                    ? { strokeDasharray: '5 5' }
+                markerEnd:
+                  edgeType !== 'line'
+                    ? { type: MarkerType.ArrowClosed, color: themeVars['--ve-edge-stroke'] }
                     : undefined,
+                style: getVisualEditorEdgeStyle(themeVars, edgeType),
               }
             : e
         )
       )
     },
-    [pushState, nodes, edges, setEdges]
+    [pushState, nodes, edges, setEdges, themeVars]
   )
 
   // Edit label from context menu
@@ -467,7 +499,12 @@ function VisualEditorInner({ parsedDiagram, onCodeChange }: VisualEditorProps) {
   )
 
   return (
-    <div className="visual-editor-container" ref={containerRef} tabIndex={0}>
+    <div
+      className="visual-editor-container"
+      ref={containerRef}
+      tabIndex={0}
+      style={themeVars as CSSProperties}
+    >
       <div className={`visual-editor-header ${isDark ? 'dark' : ''}`}>
         <div className="ve-header-actions">
           <AddNodeToolbar onAddNode={(shape) => addNode(shape)} />
@@ -522,17 +559,24 @@ function VisualEditorInner({ parsedDiagram, onCodeChange }: VisualEditorProps) {
           onNodeContextMenu={handleNodeContextMenu}
           onEdgeContextMenu={handleEdgeContextMenu}
           nodeTypes={nodeTypes}
-          fitView
+          defaultEdgeOptions={{
+            style: getVisualEditorEdgeStyle(themeVars, 'arrow'),
+            markerEnd: {
+              type: MarkerType.ArrowClosed,
+              color: themeVars['--ve-edge-stroke'],
+            },
+          }}
+          fitView={false}
           className={isDark ? 'dark' : ''}
           nodesDraggable={true}
           nodesConnectable={true}
           elementsSelectable={true}
           deleteKeyCode={null}
         >
-          <Background color={isDark ? '#333' : '#e8e8e8'} gap={20} />
+          <Background color={themeVars['--ve-header-border']} gap={20} />
           <Controls showInteractive={false} />
           <MiniMap
-            nodeColor={isDark ? '#3d3d3d' : '#e8e8e8'}
+            nodeColor={themeVars['--ve-node-fill']}
             maskColor={isDark ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.08)'}
           />
 

@@ -431,6 +431,8 @@ export default function Preview({
         </div>
         <VisualEditor
           parsedDiagram={parsedDiagram}
+          diagramCode={codeForBeautifulMermaid}
+          yamlConfig={yamlConfig}
           onCodeChange={handleCodeChange}
         />
       </div>

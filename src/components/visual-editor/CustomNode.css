@@ -6,11 +6,12 @@
   align-items: center;
   justify-content: center;
   cursor: grab;
-  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease, filter 0.15s ease;
   position: relative;
-  background-color: #ffffff;
-  border: 2px solid #ddd;
-  color: #333;
+  background-color: var(--ve-node-fill, #ffffff);
+  border: 2px solid var(--ve-node-border, #999999);
+  color: var(--ve-node-text, #333333);
+  font-family: "trebuchet ms", verdana, arial, sans-serif;
 }
 
 .visual-node:active {
@@ -18,9 +19,9 @@
 }
 
 .visual-node.dark {
-  background-color: #2d2d2d;
-  border-color: #555;
-  color: #d4d4d4;
+  background-color: var(--ve-node-fill, #2d2d2d);
+  border-color: var(--ve-node-border, #555555);
+  color: var(--ve-node-text, #d4d4d4);
 }
 
 .visual-node:hover {
@@ -32,8 +33,8 @@
 }
 
 .visual-node.selected {
-  border-color: #4a9eff;
-  box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.25);
+  border-color: var(--ve-accent, #4a9eff);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ve-accent, #4a9eff) 25%, transparent);
 }
 
 /* Clip-path shapes can't use box-shadow for selection - handled via filter above */
@@ -49,9 +50,8 @@
   min-height: 60px;
   outline: 2px solid;
   outline-offset: 3px;
-  outline-color: #ddd;
+  outline-color: var(--ve-node-border, #999999);
 }
-.node-shape-doublecircle.dark { outline-color: #555; }
 
 /* Clip-path shapes use drop-shadow for borders since clip-path clips borders */
 .node-shape-diamond,
@@ -61,16 +61,7 @@
 .node-shape-trapezoid,
 .node-shape-trapezoidAlt {
   border: none;
-  filter: drop-shadow(0 0 0 #999) drop-shadow(0 0 2px #aaa);
-}
-
-.node-shape-diamond.dark,
-.node-shape-rhombus.dark,
-.node-shape-hexagon.dark,
-.node-shape-parallelogram.dark,
-.node-shape-trapezoid.dark,
-.node-shape-trapezoidAlt.dark {
-  filter: drop-shadow(0 0 0 #888) drop-shadow(0 0 2px #666);
+  filter: drop-shadow(0 0 0 var(--ve-node-border, #999999));
 }
 
 .node-shape-diamond.selected,
@@ -79,7 +70,7 @@
 .node-shape-parallelogram.selected,
 .node-shape-trapezoid.selected,
 .node-shape-trapezoidAlt.selected {
-  filter: drop-shadow(0 0 0 #4a9eff) drop-shadow(0 0 3px #4a9eff);
+  filter: drop-shadow(0 0 0 var(--ve-accent, #4a9eff)) drop-shadow(0 0 3px var(--ve-accent, #4a9eff));
 }
 
 .node-shape-diamond:hover,
@@ -100,21 +91,14 @@
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3)) drop-shadow(0 0 2px #666);
 }
 
-/* Subtle fill colors for different shapes (inspired by Mermaid's palette) */
+/* Subtle fill colors for clip-path shapes */
 .node-shape-diamond,
 .node-shape-rhombus {
-  background-color: #f9f0ff;
-}
-.node-shape-diamond.dark,
-.node-shape-rhombus.dark {
-  background-color: #352d3d;
+  background-color: var(--ve-diamond-fill, var(--ve-node-fill, #ffffff));
 }
 
 .node-shape-hexagon {
-  background-color: #fff3e0;
-}
-.node-shape-hexagon.dark {
-  background-color: #3d2d1a;
+  background-color: var(--ve-hexagon-fill, var(--ve-node-fill, #ffffff));
 }
 
 .node-shape-diamond,
@@ -150,12 +134,8 @@
   border-radius: 4px;
   border-left: 5px double;
   border-right: 5px double;
-  border-left-color: #ddd;
-  border-right-color: #ddd;
-}
-.node-shape-subroutine.dark {
-  border-left-color: #555;
-  border-right-color: #555;
+  border-left-color: var(--ve-node-border, #999999);
+  border-right-color: var(--ve-node-border, #999999);
 }
 
 .node-shape-cylinder {
@@ -188,13 +168,13 @@
   font-weight: 500;
   text-align: center;
   padding: 2px 4px;
-  border-bottom: 2px solid #4a9eff;
+  border-bottom: 2px solid var(--ve-accent, #4a9eff);
   pointer-events: all;
   min-width: 40px;
 }
 
 .node-edit-input.dark {
-  color: #d4d4d4;
+  color: var(--ve-node-text, #d4d4d4);
 }
 
 /* Handles - hidden by default, shown on hover/select */
@@ -232,8 +212,8 @@
 .node-toolbar {
   display: flex;
   gap: 4px;
-  background: #fff;
-  border: 1px solid #e0e0e0;
+  background: var(--ve-toolbar-bg, #ffffff);
+  border: 1px solid var(--ve-toolbar-border, #e0e0e0);
   border-radius: 8px;
   padding: 4px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
