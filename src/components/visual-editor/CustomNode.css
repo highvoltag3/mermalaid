@@ -53,13 +53,94 @@
   outline-color: var(--ve-node-border, #999999);
 }
 
-/* Clip-path shapes use drop-shadow for borders since clip-path clips borders */
+/* SVG-backed shapes (diamond, hexagon, etc.) use real stroke instead of clip-path */
+.visual-node.uses-svg-shape {
+  background: transparent;
+  border: none;
+  clip-path: none;
+  filter: none;
+}
+
+.visual-node.uses-svg-shape .node-shape-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.visual-node.uses-svg-shape .node-shape-svg polygon {
+  fill: var(--ve-node-fill, #ffffff);
+  stroke: var(--ve-node-border, #999999);
+  stroke-width: 2;
+}
+
+.visual-node.uses-svg-shape.node-shape-diamond .node-shape-svg polygon,
+.visual-node.uses-svg-shape.node-shape-rhombus .node-shape-svg polygon {
+  fill: var(--ve-diamond-fill, var(--ve-node-fill, #ffffff));
+}
+
+.visual-node.uses-svg-shape.node-shape-hexagon .node-shape-svg polygon {
+  fill: var(--ve-hexagon-fill, var(--ve-node-fill, #ffffff));
+}
+
+.visual-node.uses-svg-shape.selected .node-shape-svg polygon {
+  stroke: var(--ve-accent, #4a9eff);
+  stroke-width: 2.5;
+}
+
+.visual-node.uses-svg-shape.selected {
+  box-shadow: none;
+}
+
+.visual-node.uses-svg-shape:hover .node-shape-svg polygon {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.12));
+}
+
+.visual-node.uses-svg-shape.dark:hover .node-shape-svg polygon {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
+}
+
+.visual-node.uses-svg-shape .node-content {
+  position: relative;
+  z-index: 1;
+}
+
 .node-shape-diamond,
-.node-shape-rhombus,
-.node-shape-hexagon,
+.node-shape-rhombus {
+  min-width: 120px;
+  min-height: 70px;
+  padding: 16px 32px;
+}
+
+.node-shape-hexagon {
+  min-width: 120px;
+  padding: 8px 28px;
+}
+
 .node-shape-parallelogram,
 .node-shape-trapezoid,
 .node-shape-trapezoidAlt {
+  padding: 8px 20px;
+}
+
+.node-shape-parallelogram {
+  min-width: 120px;
+}
+
+.node-shape-trapezoid,
+.node-shape-trapezoidAlt {
+  min-width: 120px;
+}
+
+/* Legacy clip-path fallback (unused when uses-svg-shape is active) */
+.node-shape-diamond:not(.uses-svg-shape),
+.node-shape-rhombus:not(.uses-svg-shape),
+.node-shape-hexagon:not(.uses-svg-shape),
+.node-shape-parallelogram:not(.uses-svg-shape),
+.node-shape-trapezoid:not(.uses-svg-shape),
+.node-shape-trapezoidAlt:not(.uses-svg-shape) {
   border: none;
   filter:
     drop-shadow(1px 0 0 var(--ve-node-border, #999999))
@@ -68,70 +149,27 @@
     drop-shadow(0 -1px 0 var(--ve-node-border, #999999));
 }
 
-.node-shape-diamond.selected,
-.node-shape-rhombus.selected,
-.node-shape-hexagon.selected,
-.node-shape-parallelogram.selected,
-.node-shape-trapezoid.selected,
-.node-shape-trapezoidAlt.selected {
-  filter: drop-shadow(0 0 0 var(--ve-accent, #4a9eff)) drop-shadow(0 0 3px var(--ve-accent, #4a9eff));
-}
-
-.node-shape-diamond:hover,
-.node-shape-rhombus:hover,
-.node-shape-hexagon:hover,
-.node-shape-parallelogram:hover,
-.node-shape-trapezoid:hover,
-.node-shape-trapezoidAlt:hover {
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15)) drop-shadow(0 0 2px #aaa);
-}
-
-.node-shape-diamond.dark:hover,
-.node-shape-rhombus.dark:hover,
-.node-shape-hexagon.dark:hover,
-.node-shape-parallelogram.dark:hover,
-.node-shape-trapezoid.dark:hover,
-.node-shape-trapezoidAlt.dark:hover {
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3)) drop-shadow(0 0 2px #666);
-}
-
-/* Subtle fill colors for clip-path shapes */
-.node-shape-diamond,
-.node-shape-rhombus {
+.node-shape-diamond:not(.uses-svg-shape),
+.node-shape-rhombus:not(.uses-svg-shape) {
   background-color: var(--ve-diamond-fill, var(--ve-node-fill, #ffffff));
-}
-
-.node-shape-hexagon {
-  background-color: var(--ve-hexagon-fill, var(--ve-node-fill, #ffffff));
-}
-
-.node-shape-diamond,
-.node-shape-rhombus {
   clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
-  min-width: 120px;
-  min-height: 70px;
-  padding: 16px 32px;
 }
 
-.node-shape-hexagon {
+.node-shape-hexagon:not(.uses-svg-shape) {
+  background-color: var(--ve-hexagon-fill, var(--ve-node-fill, #ffffff));
   clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
-  min-width: 120px;
-  padding: 8px 28px;
 }
 
-.node-shape-parallelogram {
+.node-shape-parallelogram:not(.uses-svg-shape) {
   clip-path: polygon(15% 0%, 100% 0%, 85% 100%, 0% 100%);
-  padding: 8px 24px;
 }
 
-.node-shape-trapezoid {
+.node-shape-trapezoid:not(.uses-svg-shape) {
   clip-path: polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%);
-  padding: 8px 20px;
 }
 
-.node-shape-trapezoidAlt {
+.node-shape-trapezoidAlt:not(.uses-svg-shape) {
   clip-path: polygon(0% 0%, 100% 0%, 80% 100%, 20% 100%);
-  padding: 8px 20px;
 }
 
 .node-shape-subroutine {

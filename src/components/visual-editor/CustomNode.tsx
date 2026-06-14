@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback, type CSSProperties } from 're
 import { Handle, Position, NodeToolbar } from '@xyflow/react'
 import type { MermaidNode } from '../../utils/mermaidParser'
 import { resolveNodeDisplaySize } from '../../utils/visualEditorNodeDimensions'
+import NodeShapeSvg, { usesSvgShapeBackdrop } from './NodeShapeSvg'
 import { useTheme } from '../../hooks/useTheme'
 import { isAppThemeDark } from '../../utils/mermaidThemes'
 import './CustomNode.css'
@@ -89,8 +90,11 @@ export default function CustomNode({ data, selected }: { data: CustomNodeData; s
 
   const handleColor = 'var(--ve-accent, #1976d2)'
 
+  const shape = data.shape || 'rect'
+  const svgShape = usesSvgShapeBackdrop(shape)
+
   const displaySize = resolveNodeDisplaySize(
-    data.shape || 'rect',
+    shape,
     data.width,
     data.height,
     data.label,
@@ -154,13 +158,14 @@ export default function CustomNode({ data, selected }: { data: CustomNodeData; s
       )}
 
       <div
-        className={`visual-node ${getShapeClass()} ${isDark ? 'dark' : ''} ${selected ? 'selected' : ''}`}
+        className={`visual-node ${getShapeClass()} ${svgShape ? 'uses-svg-shape' : ''} ${isDark ? 'dark' : ''} ${selected ? 'selected' : ''}`}
         style={nodeStyle}
         onDoubleClick={(e) => {
           e.stopPropagation()
           data.onStartEditing?.(data.id)
         }}
       >
+        {svgShape && <NodeShapeSvg shape={shape} />}
         {HANDLE_POSITIONS.map(({ position, id }) => (
           <Handle
             key={`source-${id}`}
