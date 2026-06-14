@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback, type CSSProperties } from 'react'
 import { Handle, Position, NodeToolbar } from '@xyflow/react'
 import type { MermaidNode } from '../../utils/mermaidParser'
+import { resolveNodeDisplaySize } from '../../utils/visualEditorNodeDimensions'
 import { useTheme } from '../../hooks/useTheme'
 import { isAppThemeDark } from '../../utils/mermaidThemes'
 import './CustomNode.css'
@@ -88,10 +89,20 @@ export default function CustomNode({ data, selected }: { data: CustomNodeData; s
 
   const handleColor = 'var(--ve-accent, #1976d2)'
 
-  const nodeStyle: CSSProperties | undefined =
-    data.width && data.height
-      ? { width: data.width, height: data.height, minWidth: data.width, minHeight: data.height }
-      : undefined
+  const displaySize = resolveNodeDisplaySize(
+    data.shape || 'rect',
+    data.width,
+    data.height,
+    data.label,
+  )
+  const nodeStyle: CSSProperties | undefined = displaySize
+    ? {
+        width: displaySize.width,
+        height: displaySize.height,
+        minWidth: displaySize.width,
+        minHeight: displaySize.height,
+      }
+    : undefined
 
   return (
     <>

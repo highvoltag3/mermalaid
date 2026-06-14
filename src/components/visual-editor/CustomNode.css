@@ -61,7 +61,11 @@
 .node-shape-trapezoid,
 .node-shape-trapezoidAlt {
   border: none;
-  filter: drop-shadow(0 0 0 var(--ve-node-border, #999999));
+  filter:
+    drop-shadow(1px 0 0 var(--ve-node-border, #999999))
+    drop-shadow(-1px 0 0 var(--ve-node-border, #999999))
+    drop-shadow(0 1px 0 var(--ve-node-border, #999999))
+    drop-shadow(0 -1px 0 var(--ve-node-border, #999999));
 }
 
 .node-shape-diamond.selected,

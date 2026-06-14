@@ -1,6 +1,7 @@
 import { MarkerType, type Edge, type Node } from '@xyflow/react'
 import type { MermaidEdge, ParsedMermaidDiagram } from './mermaidParser'
 import type { MermaidNodeLayout } from './mermaidSvgLayout'
+import { layoutForMermaidNode } from './visualEditorNodeDimensions'
 import {
   getVisualEditorEdgeStyle,
   type VisualEditorCssVars,
@@ -44,16 +45,19 @@ export function buildFlowNodes(
   const rawNodes = parsedDiagram.nodes.map((node, index) => {
     const existing = existingById.get(node.id)
     const layout = layouts?.get(node.id)
+    const normalizedLayout = layout
+      ? layoutForMermaidNode(node, layout)
+      : null
 
-    const position = existing?.position ?? (layout
-      ? { x: layout.x, y: layout.y }
+    const position = existing?.position ?? (normalizedLayout
+      ? { x: normalizedLayout.x, y: normalizedLayout.y }
       : {
           x: (index % 3) * 200 + 50,
           y: Math.floor(index / 3) * 150 + 50,
         })
 
-    const width = layout?.width ?? existing?.data?.width
-    const height = layout?.height ?? existing?.data?.height
+    const width = normalizedLayout?.width ?? existing?.data?.width
+    const height = normalizedLayout?.height ?? existing?.data?.height
 
     return {
       id: node.id,
