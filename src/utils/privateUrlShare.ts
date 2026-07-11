@@ -347,7 +347,7 @@ export function getPrivateShareErrorMessage(err: unknown): string {
  * Origin for links copied/shared: web uses the current site; Tauri uses the public web app (not `tauri://`).
  * Override with `VITE_PUBLIC_SHARE_BASE_URL` (https origin, optional path) for forks or staging.
  */
-function getShareLinkOrigin(): string {
+export function getShareLinkOrigin(): string {
   const configured = import.meta.env.VITE_PUBLIC_SHARE_BASE_URL?.trim()
   if (configured) {
     try {

@@ -116,6 +116,32 @@ A rendered PNG should appear in the channel within a few seconds.
 [create-app]: https://api.slack.com/apps?new_app=1&manifest_yaml=display_information%3A%0A%20%20name%3A%20Mermalaid%0A%20%20description%3A%20Render%20Mermaid.js%20diagrams%20right%20inside%20Slack.%0A%20%20background_color%3A%20%22%231f6feb%22%0Afeatures%3A%0A%20%20bot_user%3A%0A%20%20%20%20display_name%3A%20mermalaid%0A%20%20%20%20always_online%3A%20true%0A%20%20slash_commands%3A%0A%20%20%20%20-%20command%3A%20%2Fmermalaid%0A%20%20%20%20%20%20url%3A%20https%3A%2F%2FYOUR_DOMAIN%2Fapi%2Fslack%2Fcommands%0A%20%20%20%20%20%20description%3A%20Render%20a%20Mermaid%20diagram%20and%20post%20it%20in%20the%20channel%0A%20%20%20%20%20%20usage_hint%3A%20%22%5Boptional%20Mermaid%20code%5D%22%0A%20%20%20%20%20%20should_escape%3A%20false%0Aoauth_config%3A%0A%20%20scopes%3A%0A%20%20%20%20bot%3A%0A%20%20%20%20%20%20-%20commands%0A%20%20%20%20%20%20-%20chat%3Awrite%0A%20%20%20%20%20%20-%20chat%3Awrite.public%0A%20%20%20%20%20%20-%20files%3Awrite%0A%20%20%20%20%20%20-%20channels%3Ajoin%0Asettings%3A%0A%20%20interactivity%3A%0A%20%20%20%20is_enabled%3A%20true%0A%20%20%20%20request_url%3A%20https%3A%2F%2FYOUR_DOMAIN%2Fapi%2Fslack%2Finteractions%0A%20%20org_deploy_enabled%3A%20false%0A%20%20socket_mode_enabled%3A%20false%0A%20%20token_rotation_enabled%3A%20false%0A
 [deploy]: https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fhighvoltag3%2Fmermalaid&env=SLACK_BOT_TOKEN%2CSLACK_SIGNING_SECRET&envDescription=Bot+token+%28xoxb-%E2%80%A6%29+and+signing+secret+from+your+Slack+app&envLink=https%3A%2F%2Fgithub.com%2Fhighvoltag3%2Fmermalaid%2Fblob%2Fmain%2Fslack%2FREADME.md&project-name=mermalaid-slack&repository-name=mermalaid-slack
 
+## Diagram previews when a link is pasted (link unfurling)
+
+Slack (and Discord, X, iMessage, …) unfurl a pasted link by fetching it
+server-side and reading its Open Graph tags. The private `#v1.` share links are
+encrypted in the URL **fragment**, which is never sent to any server, so they
+can only ever unfurl to the static logo.
+
+For a diagram preview, the editor's **"Preview link"** button copies a separate,
+**public** link: `https://<domain>/p?c=<gzip+base64url of the diagram>`. That
+page serves per-diagram OG tags whose `og:image` points at
+[`/api/og`](../api/og.ts), which renders the diagram to a PNG with the same
+headless-Chromium renderer. So pasting a preview link shows the diagram, not the
+logo — anywhere that unfurls Open Graph.
+
+- The image is content-addressed by `(c, theme)` and cached hard on the CDN, so
+  only the first unfurl pays for a render. The button also warms that cache when
+  you copy the link.
+- **This link is public** — the diagram is readable by the server, Slack, and
+  anyone who has the link. Use the private (encrypted) link for anything
+  sensitive.
+- **Known limitation:** `/api/og` is necessarily unauthenticated (Slack's crawler
+  fetches it with no credentials), so it's an open render endpoint. It's bounded
+  by a decoded-size cap + a 25s render timeout + CDN caching, but there's no
+  per-caller rate limiting yet. If abuse is a concern, add rate limiting or
+  switch to server-signed `c` values (a clean follow-up).
+
 ## Local development
 
 Rendering works locally against a system Chrome (no `@sparticuz/chromium`

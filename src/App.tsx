@@ -22,6 +22,7 @@ import {
   getPrivateShareErrorMessage,
   isPrivateShareHash,
 } from './utils/privateUrlShare'
+import { decodePublicDiagram } from './utils/publicShareLink'
 import { extractMermaidCode, extractAllMermaidBlocks } from './utils/mermaidCodeBlock'
 import { getAppThemeCssVars, isAppThemeDark } from './utils/mermaidThemes'
 import { initNativeAppMenu, setNativeMenuHandlerSource } from './nativeAppMenu'
@@ -214,6 +215,34 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
       cancelled = true
     }
   }, [location.hash, showToast])
+
+  /** Web: open a diagram from a public preview link (`/editor?c=…`). */
+  useEffect(() => {
+    if (isTauri()) return
+    const c = new URLSearchParams(location.search).get('c')
+    if (!c) return
+
+    let cancelled = false
+    void (async () => {
+      try {
+        const source = await decodePublicDiagram(c)
+        if (cancelled) return
+        setCode(source)
+        documentPathRef.current = null
+        // Strip the param so it doesn't linger or re-trigger.
+        window.history.replaceState(null, '', location.pathname)
+        showToast('Opened diagram from shared link')
+      } catch {
+        if (cancelled) return
+        window.history.replaceState(null, '', location.pathname)
+        showToast('Could not open the shared diagram link.', 'error')
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [location.search, showToast])
 
   /** Finder / Explorer / argv: open the requested file instead of restoring draft (issue #41). */
   useMountEffect(() => {
