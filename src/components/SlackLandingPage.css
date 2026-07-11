@@ -1,0 +1,256 @@
+/* Slack landing page — builds on LandingPage.css tokens (--lp-*, .landing-dark). */
+
+/* ── How it works ── */
+.slack-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-top: 40px;
+}
+
+.slack-step {
+  position: relative;
+  padding: 28px 24px 24px;
+  background: var(--lp-surface-raised);
+  border: 1px solid var(--lp-border);
+  border-radius: var(--lp-r-md);
+  box-shadow: var(--lp-shadow-sm);
+}
+
+.slack-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--lp-r-full);
+  background: var(--lp-primary);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 14px;
+}
+
+.slack-step h3 {
+  font-size: 1.12rem;
+  margin: 0 0 8px;
+  color: var(--lp-ink);
+}
+
+.slack-step p {
+  color: var(--lp-ink-secondary);
+  font-size: 0.96rem;
+  line-height: 1.6;
+}
+
+/* ── Example code block ── */
+.slack-example {
+  margin-top: 32px;
+}
+
+.slack-code {
+  margin: 0;
+  padding: 20px 22px;
+  background: var(--lp-surface-sunken);
+  border: 1px solid var(--lp-border);
+  border-radius: var(--lp-r-md);
+  overflow-x: auto;
+  font-family: var(--lp-mono);
+  font-size: 0.9rem;
+  line-height: 1.65;
+  color: var(--lp-ink);
+  white-space: pre;
+  tab-size: 2;
+}
+
+/* ── Setup list ── */
+.slack-setup-list {
+  margin: 36px 0 28px;
+  padding: 0;
+  list-style: none;
+  counter-reset: slack-setup;
+  display: grid;
+  gap: 14px;
+  max-width: 760px;
+}
+
+.slack-setup-list li {
+  counter-increment: slack-setup;
+  position: relative;
+  padding: 16px 18px 16px 56px;
+  background: var(--lp-surface-raised);
+  border: 1px solid var(--lp-border);
+  border-radius: var(--lp-r-sm);
+  color: var(--lp-ink-secondary);
+  line-height: 1.55;
+}
+
+.slack-setup-list li::before {
+  content: counter(slack-setup);
+  position: absolute;
+  left: 16px;
+  top: 14px;
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--lp-r-full);
+  background: var(--lp-primary-muted);
+  color: var(--lp-primary);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.slack-setup-list code,
+.slack-example-section code,
+.landing-hero-sub code {
+  font-family: var(--lp-mono);
+  font-size: 0.86em;
+  background: var(--lp-primary-muted);
+  color: var(--lp-primary);
+  padding: 1px 6px;
+  border-radius: 5px;
+}
+
+/* ── Slack message mock (hero visual) ── */
+.slack-mock {
+  width: 100%;
+  max-width: 440px;
+  margin-left: auto;
+  background: var(--lp-surface-raised);
+  border: 1px solid var(--lp-border);
+  border-radius: var(--lp-r-lg);
+  box-shadow: var(--lp-shadow-lg);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.slack-mock-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.slack-mock-avatar {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--lp-primary), #14b8a6);
+  color: #fff;
+  font-weight: 800;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.slack-mock-body {
+  min-width: 0;
+  flex: 1;
+}
+
+.slack-mock-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.slack-mock-name {
+  font-weight: 700;
+  color: var(--lp-ink);
+  font-size: 0.95rem;
+}
+
+.slack-mock-app-tag {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--lp-surface-sunken);
+  color: var(--lp-ink-muted);
+  border: 1px solid var(--lp-border);
+}
+
+.slack-mock-time {
+  font-size: 0.78rem;
+  color: var(--lp-ink-faint);
+}
+
+.slack-mock-comment {
+  font-size: 0.92rem;
+  color: var(--lp-ink-secondary);
+  margin: 0 0 10px;
+}
+
+.slack-mock-mention {
+  color: var(--lp-primary);
+  background: var(--lp-primary-muted);
+  padding: 0 4px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.slack-mock-file {
+  background: #ffffff;
+  border: 1px solid var(--lp-border);
+  border-radius: var(--lp-r-sm);
+  padding: 14px;
+}
+
+.slack-mock-diagram {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.slack-glyph-node {
+  fill: #ececff;
+  stroke: #9370db;
+  stroke-width: 1.5;
+}
+
+.slack-glyph-edge {
+  fill: none;
+  stroke: #333333;
+  stroke-width: 1.5;
+}
+
+.slack-glyph-text {
+  fill: #1f2328;
+  font-family: 'Trebuchet MS', var(--lp-sans);
+  font-size: 12px;
+  text-anchor: middle;
+}
+
+.slack-mock-command {
+  font-family: var(--lp-mono);
+  font-size: 0.82rem;
+  color: var(--lp-ink-muted);
+  background: var(--lp-surface-sunken);
+  border: 1px solid var(--lp-border);
+  border-radius: var(--lp-r-sm);
+  padding: 10px 12px;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.slack-mock-slash {
+  color: var(--lp-primary);
+  font-weight: 600;
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .slack-steps {
+    grid-template-columns: 1fr;
+  }
+  .slack-mock {
+    margin: 0 auto;
+  }
+}
