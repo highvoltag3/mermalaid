@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest'
 import {
   encodePublicDiagram,
   decodePublicDiagram,
-  buildPublicPreviewUrl,
   assemblePreviewUrl,
   PublicShareLinkError,
 } from './publicShareLink'
@@ -32,12 +31,11 @@ describe('publicShareLink (client)', () => {
   })
 
   it('builds a /p?c= URL whose c the server can decode', async () => {
-    const url = await buildPublicPreviewUrl('https://mermalaid.com', 'graph TD; A-->B', 'dark')
+    const c = await encodePublicDiagram('graph TD; A-->B')
+    const url = assemblePreviewUrl('https://mermalaid.com', c, 'dark')
     expect(url.startsWith('https://mermalaid.com/p?c=')).toBe(true)
     expect(url).toContain('&t=dark')
-    const c = new URL(url).searchParams.get('c')
-    expect(c).toBeTruthy()
-    expect(serverDecode(c as string)).toBe('graph TD; A-->B')
+    expect(serverDecode(new URL(url).searchParams.get('c') as string)).toBe('graph TD; A-->B')
   })
 
   it('assemblePreviewUrl appends the signature when provided', () => {
@@ -50,8 +48,7 @@ describe('publicShareLink (client)', () => {
   })
 
   it('throws oversized for a diagram too big for a link', async () => {
-    await expect(
-      buildPublicPreviewUrl('https://mermalaid.com', pseudoRandom(12_000)),
-    ).rejects.toBeInstanceOf(PublicShareLinkError)
+    const c = await encodePublicDiagram(pseudoRandom(12_000))
+    expect(() => assemblePreviewUrl('https://mermalaid.com', c)).toThrow(PublicShareLinkError)
   })
 })

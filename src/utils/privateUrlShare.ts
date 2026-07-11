@@ -4,6 +4,7 @@
  */
 
 import { isTauri } from '@tauri-apps/api/core'
+import { bytesToBase64Url, base64UrlToBytes } from './base64url'
 
 /** Web origin used in shared URLs when running in Tauri (`tauri://` is not openable in browsers). */
 const DESKTOP_DEFAULT_SHARE_ORIGIN = 'https://mermalaid.com'
@@ -68,27 +69,6 @@ function throwIfWebCryptoUnavailableForPrivateShare(): void {
     'unsupported',
     'Web Crypto is not available here, so private links cannot be created or opened. Try another browser or update.',
   )
-}
-
-function bytesToBase64Url(bytes: Uint8Array): string {
-  let binary = ''
-  const chunk = 0x8000
-  for (let i = 0; i < bytes.length; i += chunk) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + chunk))
-  }
-  const b64 = btoa(binary)
-  return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
-}
-
-function base64UrlToBytes(s: string): Uint8Array {
-  const padLen = (4 - (s.length % 4)) % 4
-  const padded = s.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat(padLen)
-  const bin = atob(padded)
-  const out = new Uint8Array(bin.length)
-  for (let i = 0; i < bin.length; i += 1) {
-    out[i] = bin.charCodeAt(i)
-  }
-  return out
 }
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number, timeoutError: Error): Promise<T> {

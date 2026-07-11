@@ -25,11 +25,9 @@ export default async function handler(req: Request): Promise<Response> {
   // On any failure, fall back to the static logo so the unfurl still shows something.
   const fallback = () => Response.redirect(new URL('/og-image.png', url.origin).toString(), 302)
 
-  // Over the per-IP limit → serve the logo (a cheap redirect, no render).
-  if (await isRateLimited(req)) return fallback()
-
+  // Cheap, local rejects first (no network) — junk and bad-signature requests
+  // don't cost a rate-limit round-trip.
   if (!c) return fallback()
-
   // When signing is enabled, only render links this server vouched for.
   if (!verifyPreview(c, theme, url.searchParams.get('s'))) return fallback()
 
@@ -39,6 +37,9 @@ export default async function handler(req: Request): Promise<Response> {
   } catch {
     return fallback()
   }
+
+  // Rate-limit immediately before the (expensive) render, so only real renders count.
+  if (await isRateLimited(req)) return fallback()
 
   try {
     const png = await renderMermaidToPng(source, theme)

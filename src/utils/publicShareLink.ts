@@ -13,6 +13,8 @@
  * fetches it) can read the diagram. Use the private link for anything sensitive.
  */
 
+import { bytesToBase64Url, base64UrlToBytes } from './base64url'
+
 /** Keep pasted URLs under Slack's messaging-safe URL length. */
 export const PUBLIC_PREVIEW_MAX_URL_LENGTH = 3990
 
@@ -25,57 +27,13 @@ export class PublicShareLinkError extends Error {
   }
 }
 
-function bytesToBase64Url(bytes: Uint8Array): string {
-  let binary = ''
-  const chunk = 0x8000
-  for (let i = 0; i < bytes.length; i += chunk) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + chunk))
-  }
-  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
-}
-
-function base64UrlToBytes(s: string): Uint8Array {
-  const padLen = (4 - (s.length % 4)) % 4
-  const padded = s.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat(padLen)
-  const bin = atob(padded)
-  const out = new Uint8Array(bin.length)
-  for (let i = 0; i < bin.length; i += 1) out[i] = bin.charCodeAt(i)
-  return out
-}
-
-async function collectStream(readable: ReadableStream<Uint8Array>): Promise<Uint8Array> {
-  const reader = readable.getReader()
-  const chunks: Uint8Array[] = []
-  let total = 0
-  for (;;) {
-    const { done, value } = await reader.read()
-    if (done) break
-    if (value) {
-      chunks.push(value)
-      total += value.length
-    }
-  }
-  const out = new Uint8Array(total)
-  let offset = 0
-  for (const ch of chunks) {
-    out.set(ch, offset)
-    offset += ch.length
-  }
-  return out
-}
-
 async function streamThrough(mode: 'compress' | 'decompress', data: Uint8Array): Promise<Uint8Array> {
   const stream =
     mode === 'compress' ? new CompressionStream('gzip') : new DecompressionStream('gzip')
   const writer = stream.writable.getWriter()
-  // Write + close without awaiting first, so reading can drain concurrently.
-  const pump = (async () => {
-    await writer.write(data as BufferSource)
-    await writer.close()
-  })()
-  const out = await collectStream(stream.readable as ReadableStream<Uint8Array>)
-  await pump
-  return out
+  void writer.write(data as BufferSource)
+  void writer.close()
+  return new Uint8Array(await new Response(stream.readable).arrayBuffer())
 }
 
 export async function encodePublicDiagram(source: string): Promise<string> {
@@ -140,14 +98,4 @@ export async function requestPreviewSignature(
   } catch {
     return null
   }
-}
-
-/** Convenience (network-free): encode + assemble an unsigned preview URL. */
-export async function buildPublicPreviewUrl(
-  origin: string,
-  source: string,
-  serverTheme?: string,
-  signature?: string,
-): Promise<string> {
-  return assemblePreviewUrl(origin, await encodePublicDiagram(source), serverTheme, signature)
 }

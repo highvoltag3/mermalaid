@@ -7,11 +7,8 @@
  * the user even when the bot isn't a member of the channel — chat.postEphemeral
  * silently fails for non-member channels, which is the common case here.
  */
-import {
-  renderMermaidToPng,
-  MermaidRenderError,
-  type ServerMermaidTheme,
-} from './renderMermaid.js'
+import { renderMermaidToPng, MermaidRenderError } from './renderMermaid.js'
+import type { ServerMermaidTheme } from './serverThemes.js'
 import {
   uploadImageToChannel,
   tryJoinConversation,

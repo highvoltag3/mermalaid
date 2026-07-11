@@ -18,9 +18,6 @@ import { join } from 'node:path'
 import type { Browser, LaunchOptions } from 'puppeteer-core'
 import type { ServerMermaidTheme } from './serverThemes.js'
 
-// Re-export so existing importers of these from this module keep working.
-export * from './serverThemes.js'
-
 const require = createRequire(import.meta.url)
 
 /** Background painted behind the diagram so the PNG reads well in Slack. */
