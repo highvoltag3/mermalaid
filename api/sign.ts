@@ -11,6 +11,7 @@
 import { decodePublicDiagram, PublicShareDecodeError } from './_lib/publicShare.js'
 import { isServerMermaidTheme } from './_lib/serverThemes.js'
 import { signPreview, isSigningEnabled } from './_lib/previewSigning.js'
+import { isRateLimited } from './_lib/rateLimit.js'
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -29,6 +30,7 @@ export default async function handler(req: Request): Promise<Response> {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS })
   if (req.method !== 'POST') return json({ error: 'method_not_allowed' }, 405)
   if (!isSigningEnabled()) return json({ error: 'signing_disabled' }, 503)
+  if (await isRateLimited(req)) return json({ error: 'rate_limited' }, 429)
 
   let body: { c?: unknown; t?: unknown }
   try {

@@ -148,11 +148,27 @@ signing. Then:
   render API, or fed a tampered `c`.
 - Leave it unset and preview links work unsigned (any diagram renders).
 
-Note: signing gates the render endpoint, but the signer (`/api/sign`) is itself
-reachable by the browser and does no rendering, so a determined script could
-still request a signature and then a render. For hard per-caller limits, add a
-platform rate limit (e.g. Vercel Firewall) in front of `/api/og` and `/api/sign`
-— no code or datastore needed.
+### Per-IP rate limiting
+
+`/api/og` and `/api/sign` call Vercel's WAF Rate Limiting SDK
+([`@vercel/firewall`](https://vercel.com/docs/vercel-firewall/vercel-waf/rate-limiting-sdk),
+see [`api/_lib/rateLimit.ts`](../api/_lib/rateLimit.ts)) — no datastore. Because
+the check runs inside the function, it only counts cache **misses** (actual
+renders), and it **fails open** (does nothing off Vercel, in local dev, or
+before the rule exists), so nothing breaks by default.
+
+To turn it on, create the matching Firewall rule once (works on Hobby, which
+allows one rate-limit rule):
+
+1. Vercel dashboard → your project → **Firewall → Configure → + New Rule**.
+2. **If** condition: `@vercel/firewall` with **Rate limit ID** = `mermalaid-preview`
+   (the ID in `rateLimit.ts`).
+3. **Then**: **Rate Limit** — pick a window + request limit (e.g. 60 requests /
+   60s per IP), key = **IP**. Save and **Publish**.
+
+Both endpoints share the one `mermalaid-preview` bucket per IP, which bounds
+renders (the expensive path) even via the sign-then-render route. Adjust the
+limit to taste; raise it (or add more rules on Pro) if it's too strict.
 
 ## Local development
 

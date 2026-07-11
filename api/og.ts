@@ -12,6 +12,7 @@ import { renderMermaidToPng } from './_lib/renderMermaid.js'
 import { isServerMermaidTheme, type ServerMermaidTheme } from './_lib/serverThemes.js'
 import { decodePublicDiagram } from './_lib/publicShare.js'
 import { verifyPreview } from './_lib/previewSigning.js'
+import { isRateLimited } from './_lib/rateLimit.js'
 
 export default async function handler(req: Request): Promise<Response> {
   if (req.method !== 'GET') return new Response('Method Not Allowed', { status: 405 })
@@ -23,6 +24,9 @@ export default async function handler(req: Request): Promise<Response> {
 
   // On any failure, fall back to the static logo so the unfurl still shows something.
   const fallback = () => Response.redirect(new URL('/og-image.png', url.origin).toString(), 302)
+
+  // Over the per-IP limit → serve the logo (a cheap redirect, no render).
+  if (await isRateLimited(req)) return fallback()
 
   if (!c) return fallback()
 
