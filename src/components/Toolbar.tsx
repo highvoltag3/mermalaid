@@ -47,14 +47,22 @@ import {
   buildPrivateShareUrl,
   encodePrivateShareHash,
   getPrivateShareErrorMessage,
+  getShareLinkOrigin,
   PrivateShareError,
 } from '../utils/privateUrlShare'
+import {
+  assemblePreviewUrl,
+  encodePublicDiagram,
+  PublicShareLinkError,
+  requestPreviewSignature,
+} from '../utils/publicShareLink'
 import './Toolbar.css'
 
 /** Must cover compress (up to ~1.5s wall) + importKey + encrypt (each up to 2.5s) on slow devices. */
 const PRIVATE_LINK_ENCODE_TIMEOUT_MS = 10_000
 const PRIVATE_LINK_BUSY_MIN_MS = 300
 const PRIVATE_LINK_BUTTON_TITLE = 'Copy a private link (encrypted in the URL fragment only). The URL also appears in the address bar.'
+const PREVIEW_LINK_BUTTON_TITLE = 'Copy a public preview link. Pasting it in Slack, Discord, etc. shows the rendered diagram. The diagram is readable by anyone with the link — use the private link for anything sensitive.'
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number, timeoutMessage: string): Promise<T> {
   return new Promise<T>((resolve, reject) => {
@@ -176,6 +184,7 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
   const setShowMobileActions = setShowMobileActionsProp ?? setShowMobileActionsState
   const [isFixing, setIsFixing] = useState(false)
   const [isCopyingPrivateLink, setIsCopyingPrivateLink] = useState(false)
+  const [isCopyingPreviewLink, setIsCopyingPreviewLink] = useState(false)
   const hasMultipleBlocks = mermaidBlocks.length > 1
 
   useEffect(() => {
@@ -595,6 +604,53 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
     }
   }
 
+  const handleCopyPreviewLink = async () => {
+    if (isCopyingPreviewLink) return
+    setIsCopyingPreviewLink(true)
+    try {
+      if (!activeCode.trim()) {
+        showToast('Nothing to share yet.', 'error')
+        return
+      }
+
+      // Public (not encrypted): the diagram is readable by the server so link
+      // unfurls (Slack, etc.) can render a preview. Encode the extracted diagram.
+      const origin = getShareLinkOrigin()
+      const serverTheme = isDark ? 'dark' : 'default'
+      const c = await encodePublicDiagram(activeCode)
+      // When the deployment enables signing, get a signature so /api/og accepts it.
+      const signature = await requestPreviewSignature(origin, c, serverTheme)
+      const url = assemblePreviewUrl(origin, c, serverTheme, signature ?? undefined)
+
+      // Warm the render cache so the first unfurl is instant (fire-and-forget).
+      void fetch(url.replace('/p?', '/api/og?'), { mode: 'no-cors' }).catch(() => {})
+
+      let clipboardOk = false
+      try {
+        await copyPlainTextWhenReady(() => Promise.resolve(url))
+        clipboardOk = true
+      } catch {
+        clipboardOk = false
+      }
+
+      showToast(
+        clipboardOk
+          ? 'Public preview link copied — pasting it in Slack shows the diagram.'
+          : 'Could not copy the link to the clipboard. Try again.',
+        clipboardOk ? 'success' : 'error',
+      )
+    } catch (err) {
+      if (err instanceof PublicShareLinkError) {
+        showToast(err.message, 'error')
+        return
+      }
+      console.error('[mermalaid] Copy preview link failed', err)
+      showToast('Could not create a preview link. Please try again.', 'error')
+    } finally {
+      setIsCopyingPreviewLink(false)
+    }
+  }
+
   const handleExportAllSVG = async () => {
     if (mermaidBlocks.length === 0) {
       showToast('No diagrams to export', 'error')
@@ -803,6 +859,24 @@ ${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</di
                 >
                   {isCopyingPrivateLink ? 'Creating link…' : 'Share'}
                 </button>
+                <button
+                  type="button"
+                  disabled={isCopyingPreviewLink}
+                  aria-busy={isCopyingPreviewLink}
+                  onClick={() => {
+                    void (async () => {
+                      try {
+                        await handleCopyPreviewLink()
+                      } finally {
+                        setShowMobileActions(false)
+                      }
+                    })()
+                  }}
+                  className="toolbar-btn"
+                  title={PREVIEW_LINK_BUTTON_TITLE}
+                >
+                  {isCopyingPreviewLink ? 'Creating link…' : 'Preview link'}
+                </button>
                 <button type="button" onClick={() => { handleCopyCode(); setShowMobileActions(false) }} className="toolbar-btn">
                   Copy Code
                 </button>
@@ -946,6 +1020,18 @@ ${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</di
               title={PRIVATE_LINK_BUTTON_TITLE}
             >
               {isCopyingPrivateLink ? 'Creating link…' : 'Share'}
+            </button>
+            <button
+              type="button"
+              disabled={isCopyingPreviewLink}
+              aria-busy={isCopyingPreviewLink}
+              onClick={() => {
+                void handleCopyPreviewLink()
+              }}
+              className="toolbar-btn"
+              title={PREVIEW_LINK_BUTTON_TITLE}
+            >
+              {isCopyingPreviewLink ? 'Creating link…' : 'Preview link'}
             </button>
             {error && (
               <button

@@ -4,9 +4,26 @@
   "installCommand": "npm ci",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "functions": {
+    "api/slack/interactions.ts": {
+      "maxDuration": 60,
+      "includeFiles": "node_modules/mermaid/dist/**"
+    },
+    "api/slack/commands.ts": {
+      "maxDuration": 15
+    },
+    "api/og.ts": {
+      "maxDuration": 60,
+      "includeFiles": "node_modules/mermaid/dist/**"
+    }
+  },
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/p",
+      "destination": "/api/preview"
+    },
+    {
+      "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
   ]

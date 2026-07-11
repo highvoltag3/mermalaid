@@ -2,6 +2,8 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import UpdateAvailableBanner from './UpdateAvailableBanner'
 import type { LatestReleaseInfo } from '../utils/githubRelease'
+import { usePrefersDark } from '../hooks/usePrefersDark'
+import { useFadeInSections } from '../hooks/useFadeInSections'
 import './LandingPage.css'
 
 interface LandingPageProps {
@@ -326,43 +328,15 @@ export default function LandingPage({
     return 'system'
   })
 
-  const [resolvedDark, setResolvedDark] = useState(false)
+  const prefersDark = usePrefersDark()
+  const resolvedDark = theme === 'system' ? prefersDark : theme === 'dark'
 
+  // Persist the explicit theme choice; resolution itself is derived above.
   useEffect(() => {
-    try { localStorage.setItem('mermalaid-landing-theme', theme) } catch {}
-
-    if (theme !== 'system') {
-      setResolvedDark(theme === 'dark')
-      return
-    }
-
-    const mq = window.matchMedia('(prefers-color-scheme: dark)')
-    setResolvedDark(mq.matches)
-    const handler = (e: MediaQueryListEvent) => setResolvedDark(e.matches)
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
+    try { localStorage.setItem('mermalaid-landing-theme', theme) } catch { /* SSR / private browsing */ }
   }, [theme])
 
-  useEffect(() => {
-    const root = rootRef.current
-    if (!root) return
-
-    const sections = root.querySelectorAll('.fade-in-section')
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('visible')
-            observer.unobserve(entry.target)
-          }
-        })
-      },
-      { threshold: 0.15, rootMargin: '-60px 0px' }
-    )
-
-    sections.forEach((s) => observer.observe(s))
-    return () => observer.disconnect()
-  }, [])
+  useFadeInSections(rootRef)
 
   const stagger = (i: number): CSSProperties => ({
     transitionDelay: `${i * 60}ms`,
@@ -389,6 +363,7 @@ export default function LandingPage({
             <a href="#modes">Online vs Mac</a>
             <a href="#features">Features</a>
             <a href="#compare">Compare</a>
+            <Link to="/slack">Slack</Link>
             <a href="#faq">FAQ</a>
             <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer">GitHub</a>
           </div>
@@ -699,6 +674,7 @@ export default function LandingPage({
           </div>
           <nav className="landing-footer-nav">
             <Link to="/editor">Editor</Link>
+            <Link to="/slack">Slack</Link>
             <a href="#modes">Online vs Mac</a>
             <a href="#features">Features</a>
             <a href="#compare">Compare</a>
