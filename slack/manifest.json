@@ -1,0 +1,42 @@
+{
+  "display_information": {
+    "name": "Mermalaid",
+    "description": "Render Mermaid.js diagrams right inside Slack.",
+    "background_color": "#1f6feb"
+  },
+  "features": {
+    "bot_user": {
+      "display_name": "mermalaid",
+      "always_online": true
+    },
+    "slash_commands": [
+      {
+        "command": "/mermalaid",
+        "url": "https://YOUR_DOMAIN/api/slack/commands",
+        "description": "Render a Mermaid diagram and post it in the channel",
+        "usage_hint": "[optional Mermaid code]",
+        "should_escape": false
+      }
+    ]
+  },
+  "oauth_config": {
+    "scopes": {
+      "bot": [
+        "commands",
+        "chat:write",
+        "chat:write.public",
+        "files:write",
+        "channels:join"
+      ]
+    }
+  },
+  "settings": {
+    "interactivity": {
+      "is_enabled": true,
+      "request_url": "https://YOUR_DOMAIN/api/slack/interactions"
+    },
+    "org_deploy_enabled": false,
+    "socket_mode_enabled": false,
+    "token_rotation_enabled": false
+  }
+}

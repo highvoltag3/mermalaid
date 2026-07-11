@@ -12,6 +12,7 @@ import Editor from './components/Editor'
 import Preview from './components/Preview'
 import Toolbar, { type ToolbarRef } from './components/Toolbar'
 import LandingPage from './components/LandingPage'
+import SlackLandingPage from './components/SlackLandingPage'
 import UpdateAvailableBanner from './components/UpdateAvailableBanner'
 import type { LatestReleaseInfo } from './utils/githubRelease'
 import { isDiagramImportFileName } from './utils/diagramImportFiles'
@@ -448,6 +449,14 @@ function App() {
                 pendingRelease={pendingRelease}
                 onDismissPendingRelease={dismissPendingRelease}
               />
+            }
+          />
+          <Route
+            path="/slack"
+            element={
+              isTauri()
+                ? <Navigate to="/editor" replace />
+                : <SlackLandingPage />
             }
           />
         </Routes>
