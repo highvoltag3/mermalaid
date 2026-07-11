@@ -17,6 +17,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "mcp:build": "npm --prefix mcp install && npm --prefix mcp run build",
+    "mcp:test": "npm --prefix mcp test",
     "test:e2e": "playwright test",
     "test:e2e:preview": "E2E_PREVIEW=1 playwright test",
     "test:e2e:ui": "playwright test --ui",

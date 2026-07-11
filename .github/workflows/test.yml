@@ -17,6 +17,22 @@ jobs:
       - run: npm ci
       - run: npm run test
 
+  mcp:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: mcp/package-lock.json
+      - run: npm ci
+        working-directory: mcp
+      - run: npm run build
+        working-directory: mcp
+      - run: npm test
+        working-directory: mcp
+
   e2e:
     runs-on: ubuntu-latest
     steps:

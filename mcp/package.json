@@ -1,0 +1,36 @@
+{
+  "name": "mermalaid-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Local MCP server that bridges AI agents to a live Mermalaid diagram editor.",
+  "license": "CC-BY-NC-SA-4.0",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "bin": {
+    "mermalaid-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -w -p tsconfig.json",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "ws": "^8.21.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/ws": "^8.18.1",
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.10"
+  }
+}

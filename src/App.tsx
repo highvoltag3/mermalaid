@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useLayoutEffect } from 'react'
+import { useState, useEffect, useRef, useLayoutEffect, useCallback } from 'react'
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { invoke, isTauri } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
@@ -13,6 +13,9 @@ import Preview from './components/Preview'
 import Toolbar, { type ToolbarRef } from './components/Toolbar'
 import LandingPage from './components/LandingPage'
 import UpdateAvailableBanner from './components/UpdateAvailableBanner'
+import { useAgentBridge } from './hooks/useAgentBridge'
+import { AgentBridgeProvider } from './contexts/AgentBridgeContext'
+import { useExternalFileWatch } from './hooks/useExternalFileWatch'
 import type { LatestReleaseInfo } from './utils/githubRelease'
 import { isDiagramImportFileName } from './utils/diagramImportFiles'
 import {
@@ -155,7 +158,15 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
   const [mobileWorkspacePanel, setMobileWorkspacePanel] = useState<MobileWorkspacePanel>('preview')
   const [selectedBlockIndex, setSelectedBlockIndex] = useState(0)
   const documentPathRef = useRef<string | null>(null)
+  // Mirror the document path into state so the external-file watcher can react to it.
+  const [documentPath, setDocumentPathState] = useState<string | null>(null)
+  const setDocumentPath = useCallback((path: string | null) => {
+    documentPathRef.current = path
+    setDocumentPathState(path)
+  }, [])
   const toolbarRef = useRef<ToolbarRef>(null)
+  const agentBridge = useAgentBridge({ code, setCode, error })
+  const { markSaved: markDocumentSaved } = useExternalFileWatch({ documentPath, code, setCode })
 
   // Compute mermaid blocks from the code
   const mermaidBlocks = extractAllMermaidBlocks(code)
@@ -197,7 +208,7 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
         const state = await decodePrivateShareHash(hash)
         if (cancelled) return
         setCode(state.code)
-        documentPathRef.current = null
+        setDocumentPath(null)
         clearUrlFragment()
         showToast('Opened diagram from private link')
       } catch (e) {
@@ -224,7 +235,7 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
       try {
         const state = await decodePrivateShareHash(hash)
         setCode(state.code)
-        documentPathRef.current = null
+        setDocumentPath(null)
         clearUrlFragment()
         showToast('Opened diagram from private link')
         return 'loaded'
@@ -329,6 +340,7 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
   const showPreviewPanel = !isSmartphoneLayout || mobileWorkspacePanel === 'preview'
 
   return (
+    <AgentBridgeProvider value={agentBridge}>
     <div
       className={`app ${isAppThemeDark(mermaidTheme) ? 'app-theme-dark' : 'app-theme-light'} ${isSmartphoneLayout ? 'app-mobile' : ''} ${isKeyboardOpen ? 'app-mobile-keyboard-open' : ''}`}
       style={getAppThemeCssVars(mermaidTheme) as React.CSSProperties}
@@ -350,6 +362,8 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
         activeCode={activeCode}
         mermaidBlocks={mermaidBlocks}
         documentPathRef={documentPathRef}
+        setDocumentPath={setDocumentPath}
+        onDocumentSaved={markDocumentSaved}
         isMobile={isSmartphoneLayout}
       />
       <div className="app-content">
@@ -412,6 +426,7 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
         </div>
       )}
     </div>
+    </AgentBridgeProvider>
   )
 }
 
