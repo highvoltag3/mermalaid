@@ -8,12 +8,10 @@
  * The response is content-addressed by (c, theme), so it's cached hard on the
  * CDN — only the first unfurl pays for a render.
  */
-import {
-  renderMermaidToPng,
-  isServerMermaidTheme,
-  type ServerMermaidTheme,
-} from './_lib/renderMermaid.js'
+import { renderMermaidToPng } from './_lib/renderMermaid.js'
+import { isServerMermaidTheme, type ServerMermaidTheme } from './_lib/serverThemes.js'
 import { decodePublicDiagram } from './_lib/publicShare.js'
+import { verifyPreview } from './_lib/previewSigning.js'
 
 export default async function handler(req: Request): Promise<Response> {
   if (req.method !== 'GET') return new Response('Method Not Allowed', { status: 405 })
@@ -27,6 +25,9 @@ export default async function handler(req: Request): Promise<Response> {
   const fallback = () => Response.redirect(new URL('/og-image.png', url.origin).toString(), 302)
 
   if (!c) return fallback()
+
+  // When signing is enabled, only render links this server vouched for.
+  if (!verifyPreview(c, theme, url.searchParams.get('s'))) return fallback()
 
   let source: string
   try {

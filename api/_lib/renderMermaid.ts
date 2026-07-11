@@ -16,22 +16,12 @@ import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { Browser, LaunchOptions } from 'puppeteer-core'
+import type { ServerMermaidTheme } from './serverThemes.js'
+
+// Re-export so existing importers of these from this module keep working.
+export * from './serverThemes.js'
 
 const require = createRequire(import.meta.url)
-
-/** Mermaid built-in themes we expose in the Slack modal. */
-export type ServerMermaidTheme = 'default' | 'dark' | 'forest' | 'neutral'
-
-export const SERVER_MERMAID_THEMES: ServerMermaidTheme[] = [
-  'default',
-  'dark',
-  'forest',
-  'neutral',
-]
-
-export function isServerMermaidTheme(value: string): value is ServerMermaidTheme {
-  return (SERVER_MERMAID_THEMES as string[]).includes(value)
-}
 
 /** Background painted behind the diagram so the PNG reads well in Slack. */
 const THEME_BACKGROUND: Record<ServerMermaidTheme, string> = {

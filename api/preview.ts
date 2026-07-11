@@ -7,7 +7,8 @@
  * unfurled. The page body shows the diagram and an "Open in editor" link.
  */
 import { decodePublicDiagram, PublicShareDecodeError } from './_lib/publicShare.js'
-import { isServerMermaidTheme } from './_lib/renderMermaid.js'
+import { isServerMermaidTheme } from './_lib/serverThemes.js'
+import { verifyPreview } from './_lib/previewSigning.js'
 
 /** Escape a value for safe interpolation into an HTML attribute (double-quoted). */
 function attr(value: string): string {
@@ -45,12 +46,15 @@ export default async function handler(req: Request): Promise<Response> {
   const url = new URL(req.url)
   const c = url.searchParams.get('c')
   const themeParam = url.searchParams.get('t') ?? url.searchParams.get('theme') ?? ''
-  const theme = isServerMermaidTheme(themeParam) ? themeParam : ''
+  const theme = isServerMermaidTheme(themeParam) ? themeParam : 'default'
+  const signature = url.searchParams.get('s')
 
   const redirectToEditor = () =>
     Response.redirect(new URL('/editor', url.origin).toString(), 302)
 
   if (!c) return redirectToEditor()
+  // When signing is enabled, only serve preview pages for links we vouched for.
+  if (!verifyPreview(c, theme, signature)) return redirectToEditor()
 
   let source: string
   try {
@@ -60,7 +64,9 @@ export default async function handler(req: Request): Promise<Response> {
     throw err
   }
 
-  const query = `c=${encodeURIComponent(c)}${theme ? `&t=${encodeURIComponent(theme)}` : ''}`
+  const params = new URLSearchParams({ c, t: theme })
+  if (signature) params.set('s', signature)
+  const query = params.toString()
   const ogImage = `${url.origin}/api/og?${query}`
   const editorUrl = `${url.origin}/editor?${query}`
   const title = diagramTitle(source)

@@ -7,7 +7,7 @@ import {
   SERVER_MERMAID_THEMES,
   isServerMermaidTheme,
   type ServerMermaidTheme,
-} from './renderMermaid.js'
+} from './serverThemes.js'
 
 export const RENDER_CALLBACK_ID = 'mermalaid_render'
 export const CODE_BLOCK_ID = 'code_block'

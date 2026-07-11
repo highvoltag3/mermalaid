@@ -95,17 +95,19 @@ export async function decodePublicDiagram(c: string): Promise<string> {
 }
 
 /**
- * Build a shareable preview URL: `${origin}/p?c=<compressed>&t=<theme>`.
+ * Assemble `${origin}/p?c=<compressed>&t=<theme>[&s=<signature>]` (network-free).
  * Throws PublicShareLinkError('oversized') if it exceeds the messaging limit.
  */
-export async function buildPublicPreviewUrl(
+export function assemblePreviewUrl(
   origin: string,
-  source: string,
+  c: string,
   serverTheme?: string,
-): Promise<string> {
-  const c = await encodePublicDiagram(source)
-  // base64url is URL-safe, so `c` needs no further encoding.
-  const url = `${origin}/p?c=${c}${serverTheme ? `&t=${encodeURIComponent(serverTheme)}` : ''}`
+  signature?: string,
+): string {
+  const params = new URLSearchParams({ c })
+  if (serverTheme) params.set('t', serverTheme)
+  if (signature) params.set('s', signature)
+  const url = `${origin}/p?${params.toString()}`
   if (url.length > PUBLIC_PREVIEW_MAX_URL_LENGTH) {
     throw new PublicShareLinkError(
       'oversized',
@@ -113,4 +115,39 @@ export async function buildPublicPreviewUrl(
     )
   }
   return url
+}
+
+/**
+ * Ask the server to sign (c, theme) so the render endpoint will accept the link.
+ * Returns the signature, or null when signing is disabled (503) or unreachable —
+ * the caller then builds an unsigned link (which only renders on deployments
+ * that have signing disabled).
+ */
+export async function requestPreviewSignature(
+  origin: string,
+  c: string,
+  serverTheme: string,
+): Promise<string | null> {
+  try {
+    const res = await fetch(`${origin}/api/sign`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ c, t: serverTheme }),
+    })
+    if (!res.ok) return null
+    const data = (await res.json()) as { s?: unknown }
+    return typeof data.s === 'string' ? data.s : null
+  } catch {
+    return null
+  }
+}
+
+/** Convenience (network-free): encode + assemble an unsigned preview URL. */
+export async function buildPublicPreviewUrl(
+  origin: string,
+  source: string,
+  serverTheme?: string,
+  signature?: string,
+): Promise<string> {
+  return assemblePreviewUrl(origin, await encodePublicDiagram(source), serverTheme, signature)
 }

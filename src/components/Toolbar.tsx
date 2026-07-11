@@ -47,7 +47,12 @@ import {
   getShareLinkOrigin,
   PrivateShareError,
 } from '../utils/privateUrlShare'
-import { buildPublicPreviewUrl, PublicShareLinkError } from '../utils/publicShareLink'
+import {
+  assemblePreviewUrl,
+  encodePublicDiagram,
+  PublicShareLinkError,
+  requestPreviewSignature,
+} from '../utils/publicShareLink'
 import './Toolbar.css'
 
 /** Must cover compress (up to ~1.5s wall) + importKey + encrypt (each up to 2.5s) on slow devices. */
@@ -578,8 +583,12 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
 
       // Public (not encrypted): the diagram is readable by the server so link
       // unfurls (Slack, etc.) can render a preview. Encode the extracted diagram.
+      const origin = getShareLinkOrigin()
       const serverTheme = isDark ? 'dark' : 'default'
-      const url = await buildPublicPreviewUrl(getShareLinkOrigin(), activeCode, serverTheme)
+      const c = await encodePublicDiagram(activeCode)
+      // When the deployment enables signing, get a signature so /api/og accepts it.
+      const signature = await requestPreviewSignature(origin, c, serverTheme)
+      const url = assemblePreviewUrl(origin, c, serverTheme, signature ?? undefined)
 
       // Warm the render cache so the first unfurl is instant (fire-and-forget).
       void fetch(url.replace('/p?', '/api/og?'), { mode: 'no-cors' }).catch(() => {})

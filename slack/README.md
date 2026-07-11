@@ -136,11 +136,23 @@ logo — anywhere that unfurls Open Graph.
 - **This link is public** — the diagram is readable by the server, Slack, and
   anyone who has the link. Use the private (encrypted) link for anything
   sensitive.
-- **Known limitation:** `/api/og` is necessarily unauthenticated (Slack's crawler
-  fetches it with no credentials), so it's an open render endpoint. It's bounded
-  by a decoded-size cap + a 25s render timeout + CDN caching, but there's no
-  per-caller rate limiting yet. If abuse is a concern, add rate limiting or
-  switch to server-signed `c` values (a clean follow-up).
+
+### Signed links (recommended)
+
+Set **`PREVIEW_LINK_SECRET`** (e.g. `openssl rand -hex 32`) to enable link
+signing. Then:
+
+- The editor gets a signature from [`/api/sign`](../api/sign.ts) when you copy a
+  preview link, and `/api/og` + `/api/preview` **reject anything without a valid
+  signature** — so the render endpoint can't be hotlinked, embedded as a free
+  render API, or fed a tampered `c`.
+- Leave it unset and preview links work unsigned (any diagram renders).
+
+Note: signing gates the render endpoint, but the signer (`/api/sign`) is itself
+reachable by the browser and does no rendering, so a determined script could
+still request a signature and then a render. For hard per-caller limits, add a
+platform rate limit (e.g. Vercel Firewall) in front of `/api/og` and `/api/sign`
+— no code or datastore needed.
 
 ## Local development
 

@@ -3,6 +3,7 @@ import {
   encodePublicDiagram,
   decodePublicDiagram,
   buildPublicPreviewUrl,
+  assemblePreviewUrl,
   PublicShareLinkError,
 } from './publicShareLink'
 import { decodePublicDiagram as serverDecode } from '../../api/_lib/publicShare'
@@ -37,6 +38,15 @@ describe('publicShareLink (client)', () => {
     const c = new URL(url).searchParams.get('c')
     expect(c).toBeTruthy()
     expect(serverDecode(c as string)).toBe('graph TD; A-->B')
+  })
+
+  it('assemblePreviewUrl appends the signature when provided', () => {
+    expect(assemblePreviewUrl('https://mermalaid.com', 'ABC', 'dark', 'SIGVAL')).toBe(
+      'https://mermalaid.com/p?c=ABC&t=dark&s=SIGVAL',
+    )
+    expect(assemblePreviewUrl('https://mermalaid.com', 'ABC', 'dark')).toBe(
+      'https://mermalaid.com/p?c=ABC&t=dark',
+    )
   })
 
   it('throws oversized for a diagram too big for a link', async () => {
