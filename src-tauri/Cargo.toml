@@ -23,6 +23,7 @@ tauri = { version = "2.9.2", features = [] }
 url = "2.5"
 # Keep major.minor in sync with @tauri-apps/plugin-* in package.json (Tauri CLI checks this).
 tauri-plugin-dialog = "2.6"
-tauri-plugin-fs = "2.4"
+# `watch` pulls in notify/notify-debouncer-full for external-file change detection (issue #91).
+tauri-plugin-fs = { version = "2.4", features = ["watch"] }
 tauri-plugin-opener = "2.5"
 tauri-plugin-clipboard-manager = "2.3"

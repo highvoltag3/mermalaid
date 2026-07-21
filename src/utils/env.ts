@@ -39,6 +39,31 @@ export function isAIFixerEnabled(): boolean {
 }
 
 /**
+ * Check if the live AI Agent bridge (local MCP WebSocket) feature is enabled.
+ * Enabled by default; set VITE_ENABLE_AGENT_BRIDGE=false to hide it.
+ */
+export function isAgentBridgeEnabled(): boolean {
+  return import.meta.env.VITE_ENABLE_AGENT_BRIDGE !== 'false'
+}
+
+/** Host the editor dials for the local agent bridge (loopback only). */
+export function getAgentBridgeHost(): string {
+  return import.meta.env.VITE_AGENT_BRIDGE_HOST || '127.0.0.1'
+}
+
+/** Port the editor dials for the local agent bridge (matches the mermalaid-mcp default). */
+export function getAgentBridgePort(): number {
+  const raw = import.meta.env.VITE_AGENT_BRIDGE_PORT
+  const n = raw ? Number.parseInt(raw, 10) : NaN
+  return Number.isFinite(n) && n > 0 ? n : 7337
+}
+
+/** Full ws:// URL for the local agent bridge. */
+export function getAgentBridgeUrl(): string {
+  return `ws://${getAgentBridgeHost()}:${getAgentBridgePort()}`
+}
+
+/**
  * Check if running in production
  */
 export function isProduction(): boolean {

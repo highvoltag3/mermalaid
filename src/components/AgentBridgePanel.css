@@ -1,0 +1,101 @@
+/* Agent bridge pairing panel — builds on the shared .settings-modal chrome (Settings.css). */
+
+.agent-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.agent-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--text-secondary);
+  flex: 0 0 auto;
+}
+
+.agent-status-connected .agent-status-dot {
+  background: #2ea043;
+  box-shadow: 0 0 0 3px rgba(46, 160, 67, 0.2);
+}
+.agent-status-connecting .agent-status-dot {
+  background: #d29922;
+  animation: agent-pulse 1s ease-in-out infinite;
+}
+.agent-status-disconnected .agent-status-dot {
+  background: #8b949e;
+}
+.agent-status-rejected .agent-status-dot,
+.agent-status-error .agent-status-dot {
+  background: #d1242f;
+}
+.agent-status-superseded .agent-status-dot {
+  background: #e8730c;
+}
+
+@keyframes agent-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.agent-code-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--input-border);
+  border-radius: 4px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: monospace;
+  font-size: 18px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  transition: border-color 0.2s;
+}
+
+.agent-code-input:focus {
+  outline: none;
+  border-color: var(--input-focus);
+}
+
+.agent-steps {
+  margin: 16px 0 0 0;
+  padding-left: 20px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.agent-steps code,
+.settings-description code,
+.settings-hint code,
+.agent-error-note code {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 0.9em;
+}
+
+.agent-error-note {
+  margin: 12px 0 0 0;
+  padding: 10px 12px;
+  border-radius: 4px;
+  background: rgba(210, 153, 34, 0.12);
+  border: 1px solid rgba(210, 153, 34, 0.4);
+  color: var(--text-primary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.button-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

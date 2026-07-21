@@ -35,6 +35,9 @@ import {
   isMermaidAboutKeywordOnly,
 } from '../utils/mermalaidInfoText'
 import Settings from './Settings'
+import AgentBridgePanel from './AgentBridgePanel'
+import { useAgentBridgeContext } from '../hooks/useAgentBridgeContext'
+import type { BridgeStatus } from '../agentBridge/bridgeClient'
 import { rebuildNativeAppMenu } from '../nativeAppMenu'
 import { addRecentFile, recentFileLabel, removeRecentFile } from '../utils/recentFiles'
 import { copyPlainTextWhenReady, formatClipboardFailureMessage } from '../utils/copyToClipboard'
@@ -114,6 +117,10 @@ interface ToolbarProps {
   mermaidBlocks: MermaidBlock[]
   /** Tauri: path of the file last opened or saved (null = unsaved) */
   documentPathRef: MutableRefObject<string | null>
+  /** Updates both the path ref and the mirrored state that drives the external-file watcher. */
+  setDocumentPath: (path: string | null) => void
+  /** Records content Mermalaid wrote to disk so its own save isn't seen as an external change. */
+  onDocumentSaved?: (content: string) => void
   isMobile?: boolean
   /** Smartphone bottom bar uses the same sheet; this toggles it. */
   showMobileActions?: boolean
@@ -134,6 +141,24 @@ export interface ToolbarRef {
   openMobileActions?: () => void
 }
 
+const AGENT_STATUS_COLOR: Record<BridgeStatus, string> = {
+  disconnected: '#8b949e',
+  connecting: '#d29922',
+  connected: '#2ea043',
+  rejected: '#d1242f',
+  superseded: '#e8730c',
+  error: '#d1242f',
+}
+
+const AGENT_STATUS_TITLE: Record<BridgeStatus, string> = {
+  disconnected: 'AI Agent — not connected',
+  connecting: 'AI Agent — connecting…',
+  connected: 'AI Agent — connected',
+  rejected: 'AI Agent — pairing failed',
+  superseded: 'AI Agent — taken over by another tab',
+  error: 'AI Agent — connection problem',
+}
+
 const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
   code,
   setCode,
@@ -141,6 +166,8 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
   activeCode,
   mermaidBlocks,
   documentPathRef,
+  setDocumentPath,
+  onDocumentSaved,
   isMobile = false,
   showMobileActions: showMobileActionsProp,
   setShowMobileActions: setShowMobileActionsProp,
@@ -149,7 +176,9 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
   const { showToast } = useToast()
   const isDark = isAppThemeDark(mermaidTheme)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const agentBridge = useAgentBridgeContext()
   const [showSettings, setShowSettings] = useState(false)
+  const [showAgentPanel, setShowAgentPanel] = useState(false)
   const [showMobileActionsState, setShowMobileActionsState] = useState(false)
   const showMobileActions = showMobileActionsProp ?? showMobileActionsState
   const setShowMobileActions = setShowMobileActionsProp ?? setShowMobileActionsState
@@ -189,7 +218,7 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
   const handleNew = () => {
     if (confirm('Create a new diagram? Unsaved changes will be lost.')) {
       setCode('graph TD\n    A[Start] --> B[End]')
-      documentPathRef.current = null
+      setDocumentPath(null)
     }
   }
 
@@ -225,7 +254,7 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
     try {
       const content = await readTextFile(path)
       setCode(content)
-      documentPathRef.current = path
+      setDocumentPath(path)
       addRecentFile(path)
       await rebuildNativeAppMenu()
       showToast(`Loaded ${recentFileLabel(path)}`)
@@ -282,6 +311,7 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
     if (isTauri() && documentPathRef.current) {
       try {
         await writeTextFile(documentPathRef.current, code)
+        onDocumentSaved?.(code)
         showToast(`Saved ${recentFileLabel(documentPathRef.current)}`)
       } catch (err) {
         console.error('Save error:', err)
@@ -311,7 +341,8 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
       })
       if (!path) return
       await writeTextFile(path, code)
-      documentPathRef.current = path
+      onDocumentSaved?.(code)
+      setDocumentPath(path)
       addRecentFile(path)
       await rebuildNativeAppMenu()
       showToast(`Saved ${recentFileLabel(path)}`)
@@ -338,7 +369,8 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
       })
       if (!path) return
       await writeTextFile(path, code)
-      documentPathRef.current = path
+      onDocumentSaved?.(code)
+      setDocumentPath(path)
       addRecentFile(path)
       await rebuildNativeAppMenu()
       showToast(`Saved ${recentFileLabel(path)}`)
@@ -1026,6 +1058,27 @@ ${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</di
                 </option>
               ))}
             </select>
+            {agentBridge?.enabled && (
+              <button
+                onClick={() => setShowAgentPanel(true)}
+                className="toolbar-btn"
+                title={AGENT_STATUS_TITLE[agentBridge.status]}
+              >
+                <span
+                  style={{
+                    display: 'inline-block',
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    marginRight: 6,
+                    verticalAlign: 'middle',
+                    background: AGENT_STATUS_COLOR[agentBridge.status],
+                  }}
+                  aria-hidden="true"
+                />
+                Agent
+              </button>
+            )}
             <button onClick={() => setShowSettings(true)} className="toolbar-btn" title="Settings">
               ⚙️
             </button>
@@ -1047,6 +1100,7 @@ ${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</di
         </div>
       )}
       <Settings isOpen={showSettings} onClose={() => setShowSettings(false)} />
+      <AgentBridgePanel isOpen={showAgentPanel} onClose={() => setShowAgentPanel(false)} />
     </>
   )
 })

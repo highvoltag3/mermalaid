@@ -10,6 +10,8 @@
     "dialog:default",
     "opener:default",
     "clipboard-manager:allow-write-text",
+    "fs:allow-watch",
+    "fs:allow-unwatch",
     "core:window:allow-maximize",
     "core:window:allow-unminimize",
     "core:window:allow-show",

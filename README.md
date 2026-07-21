@@ -54,6 +54,7 @@ Mermalaid includes the features teams usually pay for, while staying free to use
 ### File Management
 
 - **Open Files** - Import `.mmd`, `.txt`, or `.md` files
+- **Live Reload (desktop)** - Edit the open file in any external editor; Mermalaid re-renders on save
 - **Save Diagrams** - Export Mermaid diagrams to local files
 - **Export Options**:
   - **SVG Export** - Vector graphics for presentations and documents
@@ -236,6 +237,7 @@ Areas where contributions are especially welcome:
 - [Contributing Guide](CONTRIBUTING.md) - How to contribute to Mermalaid
 - [Project Structure](PROJECT_STRUCTURE.md) - Codebase organization and file structure
 - [Deployment Guide](docs/DEPLOYMENT.md) - Deploy the Mermalaid web version on Vercel
+- [AI Agent Integration](docs/AGENT_INTEGRATION.md) - Let Claude, Cursor & other MCP agents edit diagrams live
 
 ## 🐛 Troubleshooting
 

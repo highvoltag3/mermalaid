@@ -17,6 +17,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "mcp:build": "npm --prefix mcp install && npm --prefix mcp run build",
+    "mcp:test": "npm --prefix mcp test",
     "typecheck:api": "tsc -p api/tsconfig.json",
     "render:sample": "node scripts/render-mermaid-sample.mjs",
     "test:e2e": "playwright test",
