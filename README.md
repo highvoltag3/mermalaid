@@ -42,6 +42,7 @@ Mermalaid includes the features teams usually pay for, while staying free to use
 
 - **Monaco Editor** - Write Mermaid with robust syntax highlighting
 - **Live Preview** - See updates in real time with smooth debounced rendering (500ms)
+- **Resizable Panels** - Drag the divider to set the editor width; your layout is saved across sessions
 - **Visual Editor** - Drag and connect flowchart nodes, then sync changes back to code
 - **Real-time Syntax Validation** - Catch errors early and fix faster
 - **Auto-save** - Keep work in local storage so progress is not lost

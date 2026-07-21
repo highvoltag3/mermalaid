@@ -1,0 +1,41 @@
+/* Draggable editor/preview separator (GitHub #91). Sits in the .app-content flex row. */
+.panel-divider {
+  flex: 0 0 6px;
+  align-self: stretch;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: col-resize;
+  /* Keep touch drags from scrolling the page while resizing. */
+  touch-action: none;
+  background-color: transparent;
+  transition: background-color 0.15s ease;
+}
+
+.panel-divider:hover,
+.panel-divider:focus-visible {
+  outline: none;
+  background-color: color-mix(in srgb, var(--app-accent) 18%, transparent);
+}
+
+/* Center grip line — the visible affordance that this edge is draggable. */
+.panel-divider-handle {
+  width: 2px;
+  height: 28px;
+  border-radius: 999px;
+  background-color: var(--app-border);
+  transition: background-color 0.15s ease, height 0.15s ease;
+}
+
+.panel-divider:hover .panel-divider-handle,
+.panel-divider:focus-visible .panel-divider-handle {
+  height: 40px;
+  background-color: var(--app-accent);
+}
+
+/* While dragging, keep the resize cursor everywhere and stop text selection. */
+body.is-resizing-panels {
+  cursor: col-resize;
+  user-select: none;
+}

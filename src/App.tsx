@@ -8,8 +8,10 @@ import { useTheme } from './hooks/useTheme'
 import { useUpdateCheck } from './hooks/useUpdateCheck'
 import { useMountEffect } from './hooks/useMountEffect'
 import { useToast } from './hooks/useToast'
+import { useEditorWidth, clampEditorWidth, viewportWidth } from './hooks/useEditorWidth'
 import Editor from './components/Editor'
 import Preview from './components/Preview'
+import PanelDivider from './components/PanelDivider'
 import Toolbar, { type ToolbarRef } from './components/Toolbar'
 import LandingPage from './components/LandingPage'
 import SlackLandingPage from './components/SlackLandingPage'
@@ -157,6 +159,8 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
   const [code, setCode] = useState('graph TD\n    A[Start] --> B{Decision}\n    B -->|Yes| C[Action 1]\n    B -->|No| D[Action 2]\n    C --> E[End]\n    D --> E')
   const [error, setError] = useState<string | null>(null)
   const [isEditorCollapsed, setIsEditorCollapsed] = useState(false)
+  const [editorWidth, setEditorWidth] = useEditorWidth()
+  const [containerWidth, setContainerWidth] = useState(viewportWidth)
   const [mobileWorkspacePanel, setMobileWorkspacePanel] = useState<MobileWorkspacePanel>('preview')
   const [selectedBlockIndex, setSelectedBlockIndex] = useState(0)
   const documentPathRef = useRef<string | null>(null)
@@ -166,6 +170,7 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
     documentPathRef.current = path
     setDocumentPathState(path)
   }, [])
+  const appContentRef = useRef<HTMLDivElement>(null)
   const toolbarRef = useRef<ToolbarRef>(null)
   const agentBridge = useAgentBridge({ code, setCode, error })
   const { markSaved: markDocumentSaved } = useExternalFileWatch({ documentPath, code, setCode })
@@ -185,6 +190,19 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
       setSelectedBlockIndex(0)
     }
   }, [mermaidBlocks.length])
+
+  // Track the live width of the split row so we can clamp the applied editor width without
+  // ever mutating the user's saved preference (they keep their wide layout after a shrink).
+  useMountEffect(() => {
+    const el = appContentRef.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver((entries) => {
+      const measured = entries[0]?.contentRect.width
+      if (measured && measured > 0) setContainerWidth(measured)
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
+  })
 
   useMountEffect(() => {
     try { localStorage.setItem('mermalaid-has-used-editor', '1') } catch {}
@@ -368,6 +386,8 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
 
   const showEditorPanel = !isSmartphoneLayout || mobileWorkspacePanel === 'editor'
   const showPreviewPanel = !isSmartphoneLayout || mobileWorkspacePanel === 'preview'
+  // Applied width is the saved preference clamped to the current window; the saved value is untouched.
+  const appliedEditorWidth = clampEditorWidth(editorWidth, containerWidth)
 
   return (
     <AgentBridgeProvider value={agentBridge}>
@@ -396,7 +416,7 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
         onDocumentSaved={markDocumentSaved}
         isMobile={isSmartphoneLayout}
       />
-      <div className="app-content">
+      <div className="app-content" ref={appContentRef}>
         {showEditorPanel && (
           <Editor
             code={code}
@@ -408,6 +428,14 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
             isCollapsed={isSmartphoneLayout ? false : isEditorCollapsed}
             onToggleCollapsed={() => setIsEditorCollapsed((collapsed) => !collapsed)}
             isMobile={isSmartphoneLayout}
+            width={appliedEditorWidth}
+          />
+        )}
+        {!isSmartphoneLayout && !isEditorCollapsed && (
+          <PanelDivider
+            width={appliedEditorWidth}
+            onWidthChange={setEditorWidth}
+            containerWidth={containerWidth}
           />
         )}
         {showPreviewPanel && (

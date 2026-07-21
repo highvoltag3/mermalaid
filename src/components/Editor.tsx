@@ -88,6 +88,8 @@ interface EditorProps {
   isCollapsed: boolean
   onToggleCollapsed: () => void
   isMobile?: boolean
+  /** Desktop split-view width in px (GitHub #91). Ignored on mobile and while collapsed. */
+  width?: number
 }
 
 function CollapseEditorIcon() {
@@ -115,6 +117,7 @@ export default function Editor({
   mermaidBlocks, selectedBlockIndex, setSelectedBlockIndex,
   isCollapsed, onToggleCollapsed,
   isMobile = false,
+  width,
 }: EditorProps) {
   const { mermaidTheme } = useTheme()
   const debounceTimer = useRef<NodeJS.Timeout>()
@@ -310,8 +313,18 @@ export default function Editor({
     return () => disposable.dispose()
   }, [mermaidBlocks, selectedBlockIndex, setSelectedBlockIndex, editorReady])
 
+  // Fixed basis drives the resizable split; the preview pane (flex: 1) fills the rest.
+  // Collapsed/mobile fall back to their CSS-class layout, so leave the style off then.
+  const panelStyle: React.CSSProperties | undefined =
+    !isMobile && !isCollapsed && typeof width === 'number'
+      ? { flex: `0 0 ${width}px` }
+      : undefined
+
   return (
-    <div className={`editor-container ${isCollapsed ? 'collapsed' : ''} ${isMobile ? 'editor-container-mobile' : ''}`}>
+    <div
+      className={`editor-container ${isCollapsed ? 'collapsed' : ''} ${isMobile ? 'editor-container-mobile' : ''}`}
+      style={panelStyle}
+    >
       <div className="editor-header">
         {!isCollapsed && <span>Editor</span>}
         <div className="editor-header-controls">
