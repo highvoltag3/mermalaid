@@ -26,10 +26,10 @@ If you need a **free Mermaid editor** without limits, subscriptions, or account 
 
 Visit [Mermalaid](https://mermalaid.com) to start creating Mermaid diagrams instantly in your browser—no installation needed.
 
-### Download Desktop App (macOS)
+### Download Desktop App (macOS and Windows)
 
 1. Download the latest release from [GitHub Releases](https://github.com/highvoltag3/mermalaid/releases)
-2. Install the `.dmg` file
+2. Install the `.dmg` file on macOS or the x64 `.exe` setup file on Windows
 3. Start creating unlimited free Mermaid diagrams
 4. 🏴‍☠️ IMPORTANT: Follow this step: [Installing the Desktop App](#installing-the-desktop-app).
 
@@ -185,13 +185,13 @@ This will:
 # Build web assets
 npm run build
 
-# Build macOS desktop app
+# Build the desktop app for the current platform
 npm run tauri:build
 ```
 
 The built app will be in `src-tauri/target/release/bundle/`:
-- `.app` file for macOS
-- `.dmg` installer
+- macOS: `.app` bundle and `.dmg` installer
+- Windows: x64 NSIS `.exe` installer
 
 ### Installing the Desktop App
 

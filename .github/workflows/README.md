@@ -8,7 +8,7 @@ This directory contains GitHub Actions workflows for automating tasks in this re
 
 ### `release.yml`
 
-Automatically creates GitHub releases and builds Tauri macOS applications when version tags are pushed.
+Automatically creates GitHub releases and builds Tauri applications for macOS and Windows when version tags are pushed.
 
 **Trigger:** Push tags matching `v*` (e.g., `v1.0.0`)
 
@@ -16,6 +16,7 @@ Automatically creates GitHub releases and builds Tauri macOS applications when v
 
 - GitHub Release draft
 - macOS `.app` bundle and `.dmg` installer
+- Windows x64 NSIS `.exe` installer
 
 **Secrets:** Uses the default `GITHUB_TOKEN` only (no extra repository secrets required for this workflow).
 
