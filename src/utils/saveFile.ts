@@ -59,6 +59,22 @@ function isAbortError(err: unknown): boolean {
   return err instanceof DOMException && err.name === 'AbortError'
 }
 
+/**
+ * Picker failures where falling back to an anchor download is appropriate.
+ * Chromium throws SecurityError / NotAllowedError when transient user activation
+ * is gone (e.g. after awaiting html2canvas or other async work before the picker).
+ */
+function isSavePickerFallbackError(err: unknown): boolean {
+  if (!(err instanceof DOMException)) return false
+  switch (err.name) {
+    case 'SecurityError':
+    case 'NotAllowedError':
+      return true
+    default:
+      return false
+  }
+}
+
 /** Build SaveFileOptions for a single extension / MIME pair. */
 export function saveFileKind(
   suggestedName: string,
@@ -144,7 +160,8 @@ export async function saveBlob(blob: Blob, options: SaveFileOptions): Promise<Sa
       return { outcome: 'saved', fileName: handle.name || suggestedName }
     } catch (err) {
       if (isAbortError(err)) return { outcome: 'cancelled' }
-      throw err
+      if (!isSavePickerFallbackError(err)) throw err
+      // Fall through to anchor download when activation/security blocks the picker.
     }
   }
 

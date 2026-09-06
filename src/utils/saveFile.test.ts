@@ -135,6 +135,55 @@ describe('saveBlob', () => {
     }
   })
 
+  it.each([
+    ['SecurityError', 'Must be handling a user gesture'],
+    ['NotAllowedError', 'Permission denied'],
+  ] as const)(
+    'falls back to anchor download when showSaveFilePicker throws %s',
+    async (errorName, message) => {
+      const click = vi.fn()
+      vi.stubGlobal(
+        'showSaveFilePicker',
+        vi.fn().mockRejectedValue(new DOMException(message, errorName)),
+      )
+      vi.spyOn(document.body, 'appendChild').mockImplementation((node) => node)
+      vi.spyOn(document.body, 'removeChild').mockImplementation((node) => node)
+      vi.stubGlobal('URL', {
+        createObjectURL: vi.fn(() => 'blob:x'),
+        revokeObjectURL: vi.fn(),
+      })
+      vi.spyOn(document, 'createElement').mockReturnValue({
+        href: '',
+        download: '',
+        click,
+      } as unknown as HTMLAnchorElement)
+
+      try {
+        const result = await saveBlob(new Blob(['code'], { type: 'text/plain' }), TEXT_OPTIONS)
+        expect(click).toHaveBeenCalled()
+        expect(result).toEqual({ outcome: 'downloaded', fileName: 'diagram.mmd' })
+      } finally {
+        vi.restoreAllMocks()
+        vi.unstubAllGlobals()
+      }
+    },
+  )
+
+  it('rethrows unexpected picker errors', async () => {
+    vi.stubGlobal(
+      'showSaveFilePicker',
+      vi.fn().mockRejectedValue(new DOMException('disk full', 'QuotaExceededError')),
+    )
+
+    try {
+      await expect(
+        saveBlob(new Blob(['code'], { type: 'text/plain' }), TEXT_OPTIONS),
+      ).rejects.toMatchObject({ name: 'QuotaExceededError' })
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
+
   it('falls back to anchor download when no picker is available', async () => {
     const click = vi.fn()
     vi.spyOn(document.body, 'appendChild').mockImplementation((node) => node)
