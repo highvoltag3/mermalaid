@@ -6,6 +6,11 @@ import { expect, test } from '@playwright/test'
  */
 test.describe('Editor toolbar (web)', () => {
   test.beforeEach(async ({ page }) => {
+    // File System Access save picker is not usable under Playwright. Force the
+    // anchor-download fallback so Save / Export still emit download events.
+    await page.addInitScript(() => {
+      Reflect.deleteProperty(window, 'showSaveFilePicker')
+    })
     await page.goto('/editor')
     await expect(page.locator('.preview-svg-host')).toBeVisible({ timeout: 30_000 })
   })
