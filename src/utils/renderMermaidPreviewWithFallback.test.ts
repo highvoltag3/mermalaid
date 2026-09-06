@@ -71,7 +71,7 @@ describe('renderMermaidPreviewWithFallback', () => {
     expect(result.primaryError).toBe('Namespace and class share the same name')
   })
 
-  it('keeps primaryError when compat-normalized official render succeeds', async () => {
+  it('clears primaryError when compat-normalized official render succeeds', async () => {
     normalizeMermaidForBeautifulMermaid.mockImplementation(
       (code: string) => `${code}\n%% normalized`,
     )
@@ -88,7 +88,7 @@ describe('renderMermaidPreviewWithFallback', () => {
 
     expect(result).toEqual({
       svg: '<svg>compat</svg>',
-      primaryError: 'Parse error on line 2',
+      primaryError: null,
     })
     expect(renderBeautifulMermaid).not.toHaveBeenCalled()
   })

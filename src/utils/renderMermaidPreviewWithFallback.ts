@@ -63,7 +63,9 @@ export async function renderMermaidPreviewWithFallback(options: {
           previewThemeOptions,
           officialYamlConfig,
         )
-        return { svg, primaryError }
+        // Compat rewrite still uses official Mermaid. Do not treat it as a
+        // silent fallback that should keep the original error banner.
+        return { svg, primaryError: null }
       } catch {
         // Continue to about-panel / beautiful-mermaid fallbacks.
       }
