@@ -2,20 +2,38 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const isTauri = vi.hoisted(() => vi.fn(() => false))
 const saveDialog = vi.hoisted(() => vi.fn())
-const writeTextFile = vi.hoisted(() => vi.fn())
 const writeFile = vi.hoisted(() => vi.fn())
 
 vi.mock('@tauri-apps/api/core', () => ({ isTauri }))
 vi.mock('@tauri-apps/plugin-dialog', () => ({ save: saveDialog }))
-vi.mock('@tauri-apps/plugin-fs', () => ({ writeTextFile, writeFile }))
+vi.mock('@tauri-apps/plugin-fs', () => ({ writeFile }))
 
-import { downloadBlob, saveBlob } from './saveFile'
+import { downloadBlob, saveBlob, saveFileKind, toastMessageForSaveResult } from './saveFile'
 
 const TEXT_OPTIONS = {
   suggestedName: 'diagram.mmd',
   filters: [{ name: 'Mermaid', extensions: ['mmd'] }],
   acceptTypes: [{ description: 'Mermaid', accept: { 'text/plain': ['.mmd'] } }],
 }
+
+describe('saveFileKind', () => {
+  it('builds filter and accept metadata for one extension', () => {
+    expect(saveFileKind('diagram.svg', 'SVG', 'svg', 'image/svg+xml')).toEqual({
+      suggestedName: 'diagram.svg',
+      filters: [{ name: 'SVG', extensions: ['svg'] }],
+      acceptTypes: [{ description: 'SVG', accept: { 'image/svg+xml': ['.svg'] } }],
+    })
+  })
+})
+
+describe('toastMessageForSaveResult', () => {
+  it('returns null for cancel and a verb+name otherwise', () => {
+    expect(toastMessageForSaveResult({ outcome: 'cancelled' }, 'Saved')).toBeNull()
+    expect(
+      toastMessageForSaveResult({ outcome: 'downloaded', fileName: 'diagram.mmd' }, 'Saved'),
+    ).toBe('Saved diagram.mmd')
+  })
+})
 
 describe('downloadBlob', () => {
   it('creates an anchor download and revokes the object URL', () => {
@@ -49,14 +67,13 @@ describe('saveBlob', () => {
   beforeEach(() => {
     isTauri.mockReturnValue(false)
     saveDialog.mockReset()
-    writeTextFile.mockReset()
     writeFile.mockReset()
   })
 
-  it('uses the Tauri save dialog and writeTextFile for text blobs', async () => {
+  it('uses the Tauri save dialog and writeFile', async () => {
     isTauri.mockReturnValue(true)
     saveDialog.mockResolvedValue('/Users/me/docs/flow.mmd')
-    writeTextFile.mockResolvedValue(undefined)
+    writeFile.mockResolvedValue(undefined)
 
     const result = await saveBlob(new Blob(['graph TD'], { type: 'text/plain' }), TEXT_OPTIONS)
 
@@ -64,29 +81,14 @@ describe('saveBlob', () => {
       filters: TEXT_OPTIONS.filters,
       defaultPath: 'diagram.mmd',
     })
-    expect(writeTextFile).toHaveBeenCalledWith('/Users/me/docs/flow.mmd', 'graph TD')
+    expect(writeFile).toHaveBeenCalled()
+    const [, bytes] = writeFile.mock.calls[0]
+    expect(new TextDecoder().decode(bytes)).toBe('graph TD')
     expect(result).toEqual({
       outcome: 'saved',
       path: '/Users/me/docs/flow.mmd',
       fileName: 'flow.mmd',
     })
-  })
-
-  it('uses writeFile for binary blobs on Tauri', async () => {
-    isTauri.mockReturnValue(true)
-    saveDialog.mockResolvedValue('/tmp/diagram.png')
-    writeFile.mockResolvedValue(undefined)
-    const bytes = new Uint8Array([1, 2, 3])
-
-    const result = await saveBlob(new Blob([bytes], { type: 'image/png' }), {
-      suggestedName: 'diagram.png',
-      filters: [{ name: 'PNG', extensions: ['png'] }],
-      acceptTypes: [{ description: 'PNG', accept: { 'image/png': ['.png'] } }],
-    })
-
-    expect(writeFile).toHaveBeenCalled()
-    expect(writeTextFile).not.toHaveBeenCalled()
-    expect(result.outcome).toBe('saved')
   })
 
   it('returns cancelled when the Tauri dialog is dismissed', async () => {
@@ -95,7 +97,7 @@ describe('saveBlob', () => {
 
     const result = await saveBlob(new Blob(['x'], { type: 'text/plain' }), TEXT_OPTIONS)
     expect(result).toEqual({ outcome: 'cancelled' })
-    expect(writeTextFile).not.toHaveBeenCalled()
+    expect(writeFile).not.toHaveBeenCalled()
   })
 
   it('uses showSaveFilePicker when available on the web', async () => {

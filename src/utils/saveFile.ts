@@ -5,7 +5,8 @@
 
 import { isTauri } from '@tauri-apps/api/core'
 import { save } from '@tauri-apps/plugin-dialog'
-import { writeFile, writeTextFile } from '@tauri-apps/plugin-fs'
+import { writeFile } from '@tauri-apps/plugin-fs'
+import { recentFileLabel } from './recentFiles'
 
 export type SaveFileFilter = {
   name: string
@@ -58,10 +59,35 @@ function isAbortError(err: unknown): boolean {
   return err instanceof DOMException && err.name === 'AbortError'
 }
 
-function fileNameFromPath(path: string): string {
-  const normalized = path.replace(/\\/g, '/')
-  const parts = normalized.split('/')
-  return parts[parts.length - 1] || path
+/** Build SaveFileOptions for a single extension / MIME pair. */
+export function saveFileKind(
+  suggestedName: string,
+  filterName: string,
+  extension: string,
+  mimeType: string,
+): SaveFileOptions {
+  return {
+    suggestedName,
+    filters: [{ name: filterName, extensions: [extension] }],
+    acceptTypes: [
+      { description: filterName, accept: { [mimeType]: [`.${extension}`] } },
+    ],
+  }
+}
+
+/** User-facing toast body, or null when the user cancelled. */
+export function toastMessageForSaveResult(result: SaveFileResult, verb: string): string | null {
+  switch (result.outcome) {
+    case 'cancelled':
+      return null
+    case 'saved':
+    case 'downloaded':
+      return `${verb} ${result.fileName}`
+    default: {
+      const _exhaustive: never = result
+      return _exhaustive
+    }
+  }
 }
 
 /** Trigger a browser download with the given filename (no picker). */
@@ -88,17 +114,6 @@ function readBlobAsArrayBuffer(blob: Blob): Promise<ArrayBuffer> {
   })
 }
 
-async function writeBlobToTauriPath(path: string, blob: Blob): Promise<void> {
-  const buffer = await readBlobAsArrayBuffer(blob)
-  const isText =
-    blob.type.startsWith('text/') || blob.type === 'image/svg+xml' || blob.type === ''
-  if (isText) {
-    await writeTextFile(path, new TextDecoder().decode(buffer))
-    return
-  }
-  await writeFile(path, new Uint8Array(buffer))
-}
-
 /**
  * Prompt the user to save `blob` (or download it when no picker is available).
  * Cancellation returns `{ outcome: 'cancelled' }` without throwing.
@@ -112,8 +127,8 @@ export async function saveBlob(blob: Blob, options: SaveFileOptions): Promise<Sa
       defaultPath: options.defaultPath ?? suggestedName,
     })
     if (!path) return { outcome: 'cancelled' }
-    await writeBlobToTauriPath(path, blob)
-    return { outcome: 'saved', path, fileName: fileNameFromPath(path) }
+    await writeFile(path, new Uint8Array(await readBlobAsArrayBuffer(blob)))
+    return { outcome: 'saved', path, fileName: recentFileLabel(path) }
   }
 
   const showSaveFilePicker = getShowSaveFilePicker()

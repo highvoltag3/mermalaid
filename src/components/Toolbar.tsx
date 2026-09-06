@@ -41,7 +41,7 @@ import type { BridgeStatus } from '../agentBridge/bridgeClient'
 import { rebuildNativeAppMenu } from '../nativeAppMenu'
 import { addRecentFile, recentFileLabel, removeRecentFile } from '../utils/recentFiles'
 import { copyPlainTextWhenReady, formatClipboardFailureMessage } from '../utils/copyToClipboard'
-import { saveBlob, type SaveFileAcceptType, type SaveFileFilter } from '../utils/saveFile'
+import { saveBlob, saveFileKind, toastMessageForSaveResult, type SaveFileAcceptType, type SaveFileFilter } from '../utils/saveFile'
 import {
   applyPrivateShareFullUrlToHistory,
   assertPrivateShareUrlFits,
@@ -101,54 +101,10 @@ const MERMAID_ACCEPT_TYPES: SaveFileAcceptType[] = [
   },
 ]
 
-const SVG_EXPORT = {
-  suggestedName: 'diagram.svg',
-  filters: [{ name: 'SVG', extensions: ['svg'] }] satisfies SaveFileFilter[],
-  acceptTypes: [
-    { description: 'SVG', accept: { 'image/svg+xml': ['.svg'] } },
-  ] satisfies SaveFileAcceptType[],
-}
-
-const PNG_EXPORT = {
-  suggestedName: 'diagram.png',
-  filters: [{ name: 'PNG', extensions: ['png'] }] satisfies SaveFileFilter[],
-  acceptTypes: [
-    { description: 'PNG', accept: { 'image/png': ['.png'] } },
-  ] satisfies SaveFileAcceptType[],
-}
-
-const ASCII_EXPORT = {
-  suggestedName: 'diagram.txt',
-  filters: [{ name: 'Text', extensions: ['txt'] }] satisfies SaveFileFilter[],
-  acceptTypes: [
-    { description: 'Text', accept: { 'text/plain': ['.txt'] } },
-  ] satisfies SaveFileAcceptType[],
-}
-
-const HTML_EXPORT = {
-  suggestedName: 'diagrams.html',
-  filters: [{ name: 'HTML', extensions: ['html'] }] satisfies SaveFileFilter[],
-  acceptTypes: [
-    { description: 'HTML', accept: { 'text/html': ['.html'] } },
-  ] satisfies SaveFileAcceptType[],
-}
-
-function toastForSaveResult(
-  result: Awaited<ReturnType<typeof saveBlob>>,
-  verb: string,
-): string | null {
-  switch (result.outcome) {
-    case 'cancelled':
-      return null
-    case 'saved':
-    case 'downloaded':
-      return `${verb} ${result.fileName}`
-    default: {
-      const _exhaustive: never = result
-      return _exhaustive
-    }
-  }
-}
+const SVG_EXPORT = saveFileKind('diagram.svg', 'SVG', 'svg', 'image/svg+xml')
+const PNG_EXPORT = saveFileKind('diagram.png', 'PNG', 'png', 'image/png')
+const ASCII_EXPORT = saveFileKind('diagram.txt', 'Text', 'txt', 'text/plain')
+const HTML_EXPORT = saveFileKind('diagrams.html', 'HTML', 'html', 'text/html')
 
 const LICENSE_INFO_TEXT = `Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)
 
@@ -399,8 +355,8 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
           await rebuildNativeAppMenu()
         }
       }
-      const message = toastForSaveResult(result, 'Saved')
-      if (message) showToast(message)
+      const toastMsg = toastMessageForSaveResult(result, 'Saved')
+      if (toastMsg) showToast(toastMsg)
     } catch (err) {
       console.error('Save As error:', err)
       showToast('Could not save file.', 'error')
@@ -507,8 +463,8 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
         new Blob([svgElement.outerHTML], { type: 'image/svg+xml' }),
         SVG_EXPORT,
       )
-      const message = toastForSaveResult(result, 'Exported')
-      if (message) showToast(message)
+      const toastMsg = toastMessageForSaveResult(result, 'Exported')
+      if (toastMsg) showToast(toastMsg)
     } catch (err) {
       console.error('SVG export error:', err)
       showToast('Failed to export SVG.', 'error')
@@ -542,8 +498,8 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
       }
 
       const result = await saveBlob(blob, PNG_EXPORT)
-      const message = toastForSaveResult(result, 'Exported')
-      if (message) showToast(message)
+      const toastMsg = toastMessageForSaveResult(result, 'Exported')
+      if (toastMsg) showToast(toastMsg)
     } catch (err) {
       console.error('PNG export error:', err)
       showToast('Failed to export PNG: ' + (err instanceof Error ? err.message : 'Unknown error'), 'error')
@@ -559,22 +515,20 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
     const exportText = async (text: string) => {
       try {
         const result = await saveBlob(new Blob([text], { type: 'text/plain' }), ASCII_EXPORT)
-        const message = toastForSaveResult(result, 'Exported')
-        if (message) showToast(message)
+        const toastMsg = toastMessageForSaveResult(result, 'Exported')
+        if (toastMsg) showToast(toastMsg)
       } catch (err) {
         console.error('ASCII export error:', err)
         showToast('Failed to export ASCII.', 'error')
       }
     }
     if (isMermaidAboutKeywordOnly(diagramCode)) {
-      void (async () => {
-        try {
-          await exportText(await buildMermalaidInfoText())
-        } catch (err) {
+      void buildMermalaidInfoText()
+        .then((text) => exportText(text))
+        .catch((err) => {
           console.error('ASCII export error:', err)
           showToast('Failed to export Mermalaid info.', 'error')
-        }
-      })()
+        })
       return
     }
     try {
@@ -775,8 +729,8 @@ ${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</di
     const blob = new Blob([html], { type: 'text/html' })
     try {
       const result = await saveBlob(blob, HTML_EXPORT)
-      const message = toastForSaveResult(result, `Exported ${svgs.length} diagrams as`)
-      if (message) showToast(message)
+      const toastMsg = toastMessageForSaveResult(result, `Exported ${svgs.length} diagrams as`)
+      if (toastMsg) showToast(toastMsg)
     } catch (err) {
       console.error('Export All error:', err)
       showToast('Failed to export diagrams.', 'error')
