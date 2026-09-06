@@ -6,6 +6,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 const VALID_BUMPS = new Set(["patch", "minor", "major"]);
 const TAURI_CARGO_TOML_PATH = "src-tauri/Cargo.toml";
 const TAURI_CONF_PATH = "src-tauri/tauri.conf.json";
+const TAURI_CARGO_LOCK_PATH = "src-tauri/Cargo.lock";
 
 function run(command, options = {}) {
   const output = execSync(command, {
@@ -68,6 +69,15 @@ function updateTauriVersions(version) {
     ]);
   }
 
+  const packageName = cargoToml.match(/^\[package\][\s\S]*?^name = "([^"]+)"$/m)?.[1];
+  if (!packageName) {
+    fail(`Unable to find [package] name in ${TAURI_CARGO_TOML_PATH}.`, [
+      "Ensure [package] name is present in Cargo.toml.",
+      "Update the file manually, then retry release.",
+    ]);
+  }
+  updateCargoLock(packageName, version);
+
   let tauriConfigRaw = "";
   try {
     tauriConfigRaw = readFileSync(TAURI_CONF_PATH, "utf8");
@@ -94,6 +104,42 @@ function updateTauriVersions(version) {
     writeFileSync(TAURI_CONF_PATH, `${JSON.stringify(tauriConfig, null, 2)}\n`, "utf8");
   } catch {
     fail(`Unable to write ${TAURI_CONF_PATH}.`, [
+      "Verify filesystem permissions.",
+      "Fix the issue, then retry release.",
+    ]);
+  }
+}
+
+function updateCargoLock(packageName, version) {
+  let cargoLock = "";
+  try {
+    cargoLock = readFileSync(TAURI_CARGO_LOCK_PATH, "utf8");
+  } catch {
+    fail(`Unable to read ${TAURI_CARGO_LOCK_PATH}.`, [
+      "Verify the file exists and is readable.",
+      "Fix repository state, then retry release.",
+    ]);
+  }
+
+  // Cargo rewrites this entry on the next build anyway; keeping it in the
+  // release commit means `cargo build --locked` matches the tagged version.
+  const lockEntry = new RegExp(
+    `^(name = "${packageName}"\\nversion = )"[^"]+"$`,
+    "m",
+  );
+  const updatedCargoLock = cargoLock.replace(lockEntry, `$1"${version}"`);
+
+  if (updatedCargoLock === cargoLock) {
+    fail(`Unable to update version of ${packageName} in ${TAURI_CARGO_LOCK_PATH}.`, [
+      "Run a cargo build once so Cargo.lock contains the app crate.",
+      "Retry the release command.",
+    ]);
+  }
+
+  try {
+    writeFileSync(TAURI_CARGO_LOCK_PATH, updatedCargoLock, "utf8");
+  } catch {
+    fail(`Unable to write ${TAURI_CARGO_LOCK_PATH}.`, [
       "Verify filesystem permissions.",
       "Fix the issue, then retry release.",
     ]);
@@ -198,7 +244,9 @@ function release(bump) {
   updateTauriVersions(version);
 
   try {
-    run("git add package.json package-lock.json src-tauri/Cargo.toml src-tauri/tauri.conf.json");
+    run(
+      "git add package.json package-lock.json src-tauri/Cargo.toml src-tauri/Cargo.lock src-tauri/tauri.conf.json",
+    );
     run(`git commit -m "v${version}"`);
     run(`git tag "v${version}"`);
   } catch {
@@ -210,7 +258,9 @@ function release(bump) {
 
   console.log(`Version bumped and tag created: v${version}`);
   try {
-    run("git push origin main --follow-tags", { stdio: "inherit" });
+    // `git tag` creates a lightweight tag, which `--follow-tags` does not push,
+    // so push the tag explicitly alongside main.
+    run(`git push origin main "refs/tags/v${version}"`, { stdio: "inherit" });
   } catch {
     fail("Failed to push release commit/tag to origin.", [
       "Check your network connection and git remote access.",
