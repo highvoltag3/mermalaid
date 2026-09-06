@@ -7,7 +7,7 @@ import {
   type MutableRefObject,
 } from 'react'
 import { isTauri } from '@tauri-apps/api/core'
-import { message, open, save } from '@tauri-apps/plugin-dialog'
+import { message, open } from '@tauri-apps/plugin-dialog'
 import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs'
 import html2canvas from 'html2canvas'
 import { renderMermaidAscii, renderMermaid } from 'beautiful-mermaid'
@@ -41,6 +41,7 @@ import type { BridgeStatus } from '../agentBridge/bridgeClient'
 import { rebuildNativeAppMenu } from '../nativeAppMenu'
 import { addRecentFile, recentFileLabel, removeRecentFile } from '../utils/recentFiles'
 import { copyPlainTextWhenReady, formatClipboardFailureMessage } from '../utils/copyToClipboard'
+import { saveBlob, type SaveFileAcceptType, type SaveFileFilter } from '../utils/saveFile'
 import {
   applyPrivateShareFullUrlToHistory,
   assertPrivateShareUrlFits,
@@ -86,9 +87,68 @@ function wait(ms: number): Promise<void> {
   })
 }
 
-const OPEN_FILTERS = [
-  { name: 'Mermaid / Text', extensions: ['mmd', 'txt', 'md', 'markdown'] as string[] },
+const OPEN_FILTERS: SaveFileFilter[] = [
+  { name: 'Mermaid / Text', extensions: ['mmd', 'txt', 'md', 'markdown'] },
 ]
+
+const MERMAID_ACCEPT_TYPES: SaveFileAcceptType[] = [
+  {
+    description: 'Mermaid / Text',
+    accept: {
+      'text/plain': ['.mmd', '.txt'],
+      'text/markdown': ['.md', '.markdown'],
+    },
+  },
+]
+
+const SVG_EXPORT = {
+  suggestedName: 'diagram.svg',
+  filters: [{ name: 'SVG', extensions: ['svg'] }] satisfies SaveFileFilter[],
+  acceptTypes: [
+    { description: 'SVG', accept: { 'image/svg+xml': ['.svg'] } },
+  ] satisfies SaveFileAcceptType[],
+}
+
+const PNG_EXPORT = {
+  suggestedName: 'diagram.png',
+  filters: [{ name: 'PNG', extensions: ['png'] }] satisfies SaveFileFilter[],
+  acceptTypes: [
+    { description: 'PNG', accept: { 'image/png': ['.png'] } },
+  ] satisfies SaveFileAcceptType[],
+}
+
+const ASCII_EXPORT = {
+  suggestedName: 'diagram.txt',
+  filters: [{ name: 'Text', extensions: ['txt'] }] satisfies SaveFileFilter[],
+  acceptTypes: [
+    { description: 'Text', accept: { 'text/plain': ['.txt'] } },
+  ] satisfies SaveFileAcceptType[],
+}
+
+const HTML_EXPORT = {
+  suggestedName: 'diagrams.html',
+  filters: [{ name: 'HTML', extensions: ['html'] }] satisfies SaveFileFilter[],
+  acceptTypes: [
+    { description: 'HTML', accept: { 'text/html': ['.html'] } },
+  ] satisfies SaveFileAcceptType[],
+}
+
+function toastForSaveResult(
+  result: Awaited<ReturnType<typeof saveBlob>>,
+  verb: string,
+): string | null {
+  switch (result.outcome) {
+    case 'cancelled':
+      return null
+    case 'saved':
+    case 'downloaded':
+      return `${verb} ${result.fileName}`
+    default: {
+      const _exhaustive: never = result
+      return _exhaustive
+    }
+  }
+}
 
 const LICENSE_INFO_TEXT = `Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)
 
@@ -319,33 +379,28 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
       }
       return
     }
-    const blob = new Blob([code], { type: 'text/plain' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'diagram.mmd'
-    a.click()
-    URL.revokeObjectURL(url)
-    showToast('Saved diagram.mmd')
+    await handleSaveAs()
   }
 
   const handleSaveAs = async () => {
-    if (!isTauri()) {
-      await handleSave()
-      return
-    }
     try {
-      const path = await save({
-        filters: OPEN_FILTERS,
+      const result = await saveBlob(new Blob([code], { type: 'text/plain' }), {
+        suggestedName: 'diagram.mmd',
         defaultPath: documentPathRef.current ?? 'diagram.mmd',
+        filters: OPEN_FILTERS,
+        acceptTypes: MERMAID_ACCEPT_TYPES,
       })
-      if (!path) return
-      await writeTextFile(path, code)
-      onDocumentSaved?.(code)
-      setDocumentPath(path)
-      addRecentFile(path)
-      await rebuildNativeAppMenu()
-      showToast(`Saved ${recentFileLabel(path)}`)
+      if (result.outcome === 'cancelled') return
+      if (result.outcome === 'saved') {
+        onDocumentSaved?.(code)
+        if (result.path) {
+          setDocumentPath(result.path)
+          addRecentFile(result.path)
+          await rebuildNativeAppMenu()
+        }
+      }
+      const message = toastForSaveResult(result, 'Saved')
+      if (message) showToast(message)
     } catch (err) {
       console.error('Save As error:', err)
       showToast('Could not save file.', 'error')
@@ -354,7 +409,7 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
 
   const handleDuplicate = async () => {
     if (!isTauri()) {
-      await handleSave()
+      await handleSaveAs()
       return
     }
     const base = documentPathRef.current
@@ -363,17 +418,20 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
         ? base.replace(/(\.[^.]+)$/, '-copy$1')
         : 'diagram-copy.mmd'
     try {
-      const path = await save({
-        filters: OPEN_FILTERS,
+      const result = await saveBlob(new Blob([code], { type: 'text/plain' }), {
+        suggestedName: 'diagram-copy.mmd',
         defaultPath: suggested,
+        filters: OPEN_FILTERS,
+        acceptTypes: MERMAID_ACCEPT_TYPES,
       })
-      if (!path) return
-      await writeTextFile(path, code)
-      onDocumentSaved?.(code)
-      setDocumentPath(path)
-      addRecentFile(path)
-      await rebuildNativeAppMenu()
-      showToast(`Saved ${recentFileLabel(path)}`)
+      if (result.outcome === 'cancelled') return
+      if (result.outcome === 'saved' && result.path) {
+        onDocumentSaved?.(code)
+        setDocumentPath(result.path)
+        addRecentFile(result.path)
+        await rebuildNativeAppMenu()
+        showToast(`Saved ${recentFileLabel(result.path)}`)
+      }
     } catch (err) {
       console.error('Duplicate save error:', err)
       showToast('Could not save duplicate.', 'error')
@@ -444,15 +502,17 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
       return
     }
 
-    const svgCode = svgElement.outerHTML
-    const blob = new Blob([svgCode], { type: 'image/svg+xml' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'diagram.svg'
-    a.click()
-    URL.revokeObjectURL(url)
-    showToast('Exported diagram.svg')
+    try {
+      const result = await saveBlob(
+        new Blob([svgElement.outerHTML], { type: 'image/svg+xml' }),
+        SVG_EXPORT,
+      )
+      const message = toastForSaveResult(result, 'Exported')
+      if (message) showToast(message)
+    } catch (err) {
+      console.error('SVG export error:', err)
+      showToast('Failed to export SVG.', 'error')
+    }
   }
 
   const handleExportPNG = async () => {
@@ -473,22 +533,17 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
         allowTaint: false,
       } as any)
 
-      canvas.toBlob((blob) => {
-        if (!blob) {
-          showToast('Failed to generate PNG', 'error')
-          return
-        }
+      const blob = await new Promise<Blob | null>((resolve) => {
+        canvas.toBlob((b) => resolve(b), 'image/png')
+      })
+      if (!blob) {
+        showToast('Failed to generate PNG', 'error')
+        return
+      }
 
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = 'diagram.png'
-        document.body.appendChild(a)
-        a.click()
-        document.body.removeChild(a)
-        URL.revokeObjectURL(url)
-        showToast('Exported diagram.png')
-      }, 'image/png')
+      const result = await saveBlob(blob, PNG_EXPORT)
+      const message = toastForSaveResult(result, 'Exported')
+      if (message) showToast(message)
     } catch (err) {
       console.error('PNG export error:', err)
       showToast('Failed to export PNG: ' + (err instanceof Error ? err.message : 'Unknown error'), 'error')
@@ -501,18 +556,20 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
       showToast('No diagram to export', 'error')
       return
     }
+    const exportText = async (text: string) => {
+      try {
+        const result = await saveBlob(new Blob([text], { type: 'text/plain' }), ASCII_EXPORT)
+        const message = toastForSaveResult(result, 'Exported')
+        if (message) showToast(message)
+      } catch (err) {
+        console.error('ASCII export error:', err)
+        showToast('Failed to export ASCII.', 'error')
+      }
+    }
     if (isMermaidAboutKeywordOnly(diagramCode)) {
       void (async () => {
         try {
-          const text = await buildMermalaidInfoText()
-          const blob = new Blob([text], { type: 'text/plain' })
-          const url = URL.createObjectURL(blob)
-          const a = document.createElement('a')
-          a.href = url
-          a.download = 'diagram.txt'
-          a.click()
-          URL.revokeObjectURL(url)
-          showToast('Exported diagram.txt')
+          await exportText(await buildMermalaidInfoText())
         } catch (err) {
           console.error('ASCII export error:', err)
           showToast('Failed to export Mermalaid info.', 'error')
@@ -524,14 +581,7 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
       const ascii = renderMermaidAscii(
         normalizeMermaidForBeautifulMermaid(diagramCode),
       )
-      const blob = new Blob([ascii], { type: 'text/plain' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = 'diagram.txt'
-      a.click()
-      URL.revokeObjectURL(url)
-      showToast('Exported diagram.txt')
+      void exportText(ascii)
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error'
       console.error('ASCII export error:', err)
@@ -723,13 +773,14 @@ ${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</di
 </body></html>`
 
     const blob = new Blob([html], { type: 'text/html' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'diagrams.html'
-    a.click()
-    URL.revokeObjectURL(url)
-    showToast(`Exported ${svgs.length} diagrams as HTML`)
+    try {
+      const result = await saveBlob(blob, HTML_EXPORT)
+      const message = toastForSaveResult(result, `Exported ${svgs.length} diagrams as`)
+      if (message) showToast(message)
+    } catch (err) {
+      console.error('Export All error:', err)
+      showToast('Failed to export diagrams.', 'error')
+    }
   }
 
   const handleAIFix = async () => {
