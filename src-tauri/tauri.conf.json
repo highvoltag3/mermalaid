@@ -53,7 +53,8 @@
     ],
     "targets": [
       "app",
-      "dmg"
+      "dmg",
+      "nsis"
     ],
     "icon": [
       "icons/icon_16x16.png",

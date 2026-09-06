@@ -36,25 +36,35 @@ fn enqueue_open_paths(app: &tauri::AppHandle, paths: Vec<PathBuf>) {
     let _ = app.emit("open-files", ());
 }
 
-#[cfg(any(target_os = "windows", target_os = "linux"))]
-fn collect_argv_file_paths() -> Vec<PathBuf> {
-    let mut files = Vec::new();
-
-    for maybe_file in std::env::args().skip(1) {
-        if maybe_file.starts_with('-') {
-            continue;
-        }
-
-        if let Ok(url) = url::Url::parse(&maybe_file) {
-            if let Ok(path) = url.to_file_path() {
-                files.push(path);
-            }
-        } else {
-            files.push(PathBuf::from(maybe_file));
-        }
+/// Interprets one command-line argument as a file to open, if it is one.
+///
+/// Windows and Linux hand associated files to the app as plain paths
+/// (`C:\Users\me\diagram.mmd`, `/home/me/diagram.mmd`), while some launchers
+/// pass `file://` URLs. A bare Windows path parses as a URL whose scheme is the
+/// drive letter (`c`), so only genuine `file:` URLs are decoded as URLs; a
+/// one-letter scheme is treated as a path and any other scheme (`https:`,
+/// `mailto:`, ...) is not a local file and is ignored.
+#[cfg(any(target_os = "windows", target_os = "linux", test))]
+fn argv_entry_to_path(arg: &str) -> Option<PathBuf> {
+    if arg.is_empty() || arg.starts_with('-') {
+        return None;
     }
 
-    files
+    match url::Url::parse(arg) {
+        Ok(url) if url.scheme() == "file" => url.to_file_path().ok(),
+        Ok(url) if url.scheme().len() == 1 => Some(PathBuf::from(arg)),
+        Ok(_) => None,
+        Err(_) => Some(PathBuf::from(arg)),
+    }
+}
+
+#[cfg(any(target_os = "windows", target_os = "linux", test))]
+#[cfg_attr(test, allow(dead_code))]
+fn collect_argv_file_paths() -> Vec<PathBuf> {
+    std::env::args()
+        .skip(1)
+        .filter_map(|arg| argv_entry_to_path(&arg))
+        .collect()
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -92,4 +102,66 @@ pub fn run() {
                 }
             }
         });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::argv_entry_to_path;
+    use std::path::PathBuf;
+
+    #[test]
+    fn windows_drive_letter_path_is_kept_as_a_path() {
+        let arg = r"C:\Users\bob\diagram.mmd";
+        assert_eq!(argv_entry_to_path(arg), Some(PathBuf::from(arg)));
+    }
+
+    #[test]
+    fn windows_path_with_spaces_and_lowercase_drive_is_kept() {
+        let arg = r"d:\My Diagrams\flow chart.mmd";
+        assert_eq!(argv_entry_to_path(arg), Some(PathBuf::from(arg)));
+    }
+
+    #[test]
+    fn unc_path_is_kept_as_a_path() {
+        let arg = r"\\server\share\diagram.mmd";
+        assert_eq!(argv_entry_to_path(arg), Some(PathBuf::from(arg)));
+    }
+
+    #[test]
+    fn unix_absolute_and_relative_paths_are_kept() {
+        for arg in [
+            "/home/bob/diagram.mmd",
+            "diagram.mmd",
+            "./nested/diagram.mmd",
+        ] {
+            assert_eq!(argv_entry_to_path(arg), Some(PathBuf::from(arg)));
+        }
+    }
+
+    #[test]
+    fn file_url_is_decoded_to_a_path() {
+        #[cfg(unix)]
+        assert_eq!(
+            argv_entry_to_path("file:///tmp/diagram.mmd"),
+            Some(PathBuf::from("/tmp/diagram.mmd"))
+        );
+        #[cfg(windows)]
+        assert_eq!(
+            argv_entry_to_path("file:///C:/Users/bob/diagram.mmd"),
+            Some(PathBuf::from(r"C:\Users\bob\diagram.mmd"))
+        );
+    }
+
+    #[test]
+    fn non_file_urls_flags_and_empty_args_are_ignored() {
+        for arg in [
+            "https://example.com/diagram.mmd",
+            "mailto:someone@example.com",
+            "--flag",
+            "-v",
+            "",
+        ] {
+            assert_eq!(argv_entry_to_path(arg), None, "{arg:?}");
+        }
+    }
 }

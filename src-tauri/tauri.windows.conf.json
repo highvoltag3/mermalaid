@@ -1,0 +1,15 @@
+{
+  "bundle": {
+    "fileAssociations": [
+      {
+        "ext": [
+          "mmd"
+        ],
+        "name": "Mermaid diagram",
+        "description": "Mermaid diagram source",
+        "role": "Editor",
+        "mimeType": "text/plain"
+      }
+    ]
+  }
+}
