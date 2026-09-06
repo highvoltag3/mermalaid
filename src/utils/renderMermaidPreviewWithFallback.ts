@@ -22,10 +22,6 @@ export class MermaidAboutKeywordFallback extends Error {
   }
 }
 
-function toErrorMessage(err: unknown, fallback = 'Invalid Mermaid syntax'): string {
-  return err instanceof Error ? err.message : fallback
-}
-
 /**
  * Renders with official Mermaid first, then compat normalization, then beautiful-mermaid.
  * Callers keep the SVG on success and should still surface `primaryError` when non-null
@@ -56,10 +52,11 @@ export async function renderMermaidPreviewWithFallback(options: {
     )
     return { svg, primaryError: null }
   } catch (primaryErr) {
-    const primaryError = toErrorMessage(primaryErr)
+    const primaryError =
+      primaryErr instanceof Error ? primaryErr.message : 'Invalid Mermaid syntax'
 
-    try {
-      if (normalizedForCompat !== diagramCode) {
+    if (normalizedForCompat !== diagramCode) {
+      try {
         const svg = await renderOfficialMermaidPreview(
           normalizedForCompat,
           isDark,
@@ -67,22 +64,24 @@ export async function renderMermaidPreviewWithFallback(options: {
           officialYamlConfig,
         )
         return { svg, primaryError }
-      }
-      throw primaryErr
-    } catch {
-      if (isMermaidAboutKeywordOnly(normalizedForCompat)) {
-        throw new MermaidAboutKeywordFallback()
-      }
-      const themeOptions = yamlConfig
-        ? mapMermaidConfigToThemeOptions(yamlConfig)
-        : previewThemeOptions
-      try {
-        const svg = await renderBeautifulMermaid(normalizedForCompat, themeOptions)
-        return { svg, primaryError }
       } catch {
-        // Prefer the original official Mermaid error when every path fails.
-        throw primaryErr instanceof Error ? primaryErr : new Error(primaryError)
+        // Continue to about-panel / beautiful-mermaid fallbacks.
       }
+    }
+
+    if (isMermaidAboutKeywordOnly(normalizedForCompat)) {
+      throw new MermaidAboutKeywordFallback()
+    }
+
+    const themeOptions = yamlConfig
+      ? mapMermaidConfigToThemeOptions(yamlConfig)
+      : previewThemeOptions
+    try {
+      const svg = await renderBeautifulMermaid(normalizedForCompat, themeOptions)
+      return { svg, primaryError }
+    } catch {
+      // Prefer the original official Mermaid error when every path fails.
+      throw primaryErr instanceof Error ? primaryErr : new Error(primaryError)
     }
   }
 }

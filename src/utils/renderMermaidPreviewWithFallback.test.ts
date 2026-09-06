@@ -9,13 +9,11 @@ const {
   renderBeautifulMermaid,
   normalizeMermaidForBeautifulMermaid,
   isMermaidAboutKeywordOnly,
-  mapMermaidConfigToThemeOptions,
 } = vi.hoisted(() => ({
   renderOfficialMermaidPreview: vi.fn(),
   renderBeautifulMermaid: vi.fn(),
   normalizeMermaidForBeautifulMermaid: vi.fn((code: string) => code),
   isMermaidAboutKeywordOnly: vi.fn(() => false),
-  mapMermaidConfigToThemeOptions: vi.fn(() => ({ bg: '#fff', fg: '#000' })),
 }))
 
 vi.mock('./officialMermaidPreview', () => ({
@@ -33,16 +31,6 @@ vi.mock('./normalizeMermaidForBeautifulMermaid', () => ({
 vi.mock('./mermalaidInfoText', () => ({
   isMermaidAboutKeywordOnly,
 }))
-
-vi.mock('./mermaidYamlConfig', async () => {
-  const actual = await vi.importActual<typeof import('./mermaidYamlConfig')>(
-    './mermaidYamlConfig',
-  )
-  return {
-    ...actual,
-    mapMermaidConfigToThemeOptions,
-  }
-})
 
 const baseOptions = {
   diagramCode: 'flowchart TD\n  A-->B',
