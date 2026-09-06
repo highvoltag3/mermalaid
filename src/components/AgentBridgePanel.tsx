@@ -74,7 +74,7 @@ export default function AgentBridgePanel({ isOpen, onClose }: AgentBridgePanelPr
             ) : (
               <p className="settings-description">
                 Let an AI agent (Claude Desktop, Claude Code, Cursor…) create and iterate on this
-                diagram with you, live. Start the <code>mermalaid-mcp</code> server in your agent,
+                diagram with you, live. Start the <code>@mermalaid/mcp</code> server in your agent,
                 then enter the pairing code it gives you.
               </p>
             )}
@@ -121,7 +121,7 @@ export default function AgentBridgePanel({ isOpen, onClose }: AgentBridgePanelPr
                 <li>
                   Register the server with your agent, e.g. Claude Code:
                   <br />
-                  <code>claude mcp add mermalaid -- npx mermalaid-mcp</code>
+                  <code>claude mcp add mermalaid -- npx -y @mermalaid/mcp</code>
                 </li>
                 <li>Ask the agent for the pairing code (or read it from the server logs).</li>
                 <li>Enter it above and click Connect.</li>

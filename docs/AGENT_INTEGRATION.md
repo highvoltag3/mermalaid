@@ -11,13 +11,13 @@ Everything runs on your machine. No cloud, no account, nothing leaves your devic
 
 ```
 Claude Desktop / Claude Code / Cursor
-   ⇄ (MCP over stdio)   mermalaid-mcp          ← a small local server the agent starts
+   ⇄ (MCP over stdio)   @mermalaid/mcp          ← a small local server the agent starts
         ⇄ (ws://127.0.0.1:7337)   your open Mermalaid editor (desktop app or Chrome tab)
 ```
 
-`mermalaid-mcp` is a local Node server. Your agent launches it over stdio; it also hosts a
-loopback WebSocket that the Mermalaid editor connects to. A short **pairing code** links the two
-so that only your editor can be driven.
+`@mermalaid/mcp` is a local Node server (published on npm). Your agent launches it over stdio;
+it also hosts a loopback WebSocket that the Mermalaid editor connects to. A short **pairing
+code** links the two so that only your editor can be driven.
 
 ## Prerequisites
 
@@ -27,18 +27,10 @@ so that only your editor can be driven.
 
 ## Quick start
 
-1. **Build the server** (from the repo root):
+1. **Register the server with your agent.** For Claude Code:
 
    ```bash
-   npm run mcp:build
-   ```
-
-   This installs and compiles the `mcp/` package to `mcp/dist`.
-
-2. **Register it with your agent.** For Claude Code:
-
-   ```bash
-   claude mcp add mermalaid -- node /absolute/path/to/mermalaid/mcp/dist/index.js
+   claude mcp add mermalaid -- npx -y @mermalaid/mcp
    ```
 
    For Claude Desktop / Cursor, add to the MCP servers config:
@@ -47,19 +39,22 @@ so that only your editor can be driven.
    {
      "mcpServers": {
        "mermalaid": {
-         "command": "node",
-         "args": ["/absolute/path/to/mermalaid/mcp/dist/index.js"]
+         "command": "npx",
+         "args": ["-y", "@mermalaid/mcp"]
        }
      }
    }
    ```
 
-3. **Open Mermalaid**, click **AI Agent** in the toolbar.
+   Contributors developing the bridge from this repo can build locally instead
+   (`npm run mcp:build`) and point the agent at `mcp/dist/index.js`.
 
-4. **Ask the agent for the pairing code** (it also prints to the server logs), enter it in the
+2. **Open Mermalaid**, click **AI Agent** in the toolbar.
+
+3. **Ask the agent for the pairing code** (it also prints to the server logs), enter it in the
    panel, and click **Connect**. The status dot turns green.
 
-5. **Collaborate.** Ask the agent to draw or change the diagram — it appears live. Keep editing;
+4. **Collaborate.** Ask the agent to draw or change the diagram — it appears live. Keep editing;
    the agent sees your changes too.
 
 ## MCP tools

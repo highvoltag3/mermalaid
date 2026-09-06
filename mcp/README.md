@@ -1,4 +1,4 @@
-# mermalaid-mcp
+# @mermalaid/mcp
 
 A local [MCP](https://modelcontextprotocol.io) server that bridges an AI agent to a **live
 Mermalaid editor**. The agent can read the current diagram, replace it (changes appear instantly
@@ -7,40 +7,37 @@ in the user's editor), validate syntax, and render the diagram to an image it ca
 It speaks MCP to the agent over **stdio**, and hosts a **loopback WebSocket** (`127.0.0.1:7337`)
 that the Mermalaid editor connects to. Nothing leaves the machine.
 
-See the full guide: [`../docs/AGENT_INTEGRATION.md`](../docs/AGENT_INTEGRATION.md).
+Full guide (install, pairing, tools, security):
+[docs/AGENT_INTEGRATION.md](https://github.com/highvoltag3/mermalaid/blob/main/docs/AGENT_INTEGRATION.md).
 
-## Build
+## Install / register with an agent
+
+```bash
+claude mcp add mermalaid -- npx -y @mermalaid/mcp
+```
+
+Claude Desktop / Cursor: `"command": "npx", "args": ["-y", "@mermalaid/mcp"]` (see the guide for the full JSON).
+
+The server prints the pairing code and bridge URL to stderr on startup. The agent can also fetch
+them with the `get_pairing_code` tool.
+
+## Develop from this repo
 
 ```bash
 npm install
 npm run build      # compiles to dist/
+npm run dev        # tsc --watch
+npm test
+npm run typecheck
 ```
 
 Or from the repo root: `npm run mcp:build`.
 
-## Register with an agent
-
-**Claude Code**
+To point an agent at a local build instead of the published package:
 
 ```bash
 claude mcp add mermalaid -- node /absolute/path/to/mermalaid/mcp/dist/index.js
 ```
-
-**Claude Desktop / Cursor** (MCP servers config)
-
-```json
-{
-  "mcpServers": {
-    "mermalaid": {
-      "command": "node",
-      "args": ["/absolute/path/to/mermalaid/mcp/dist/index.js"]
-    }
-  }
-}
-```
-
-The server prints the pairing code and bridge URL to stderr on startup; the agent can also fetch
-them with the `get_pairing_code` tool.
 
 ## Tools
 
@@ -60,14 +57,6 @@ them with the `get_pairing_code` tool.
 | Host | `--host <h>` | `MERMALAID_BRIDGE_HOST` | `127.0.0.1` |
 | Extra origins | `--origins <csv>` | `MERMALAID_BRIDGE_ORIGINS` | (none) |
 | Allow localhost dev origins | `--dev` | `MERMALAID_BRIDGE_DEV` | off |
-
-## Develop
-
-```bash
-npm run dev        # tsc --watch
-npm test           # vitest (node env)
-npm run typecheck
-```
 
 ## Security model
 
