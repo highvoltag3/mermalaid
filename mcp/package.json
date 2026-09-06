@@ -1,10 +1,26 @@
 {
-  "name": "mermalaid-mcp",
+  "name": "@mermalaid/mcp",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
   "description": "Local MCP server that bridges AI agents to a live Mermalaid diagram editor.",
   "license": "CC-BY-NC-SA-4.0",
+  "author": "Dario Novoa (highvoltag3)",
+  "homepage": "https://github.com/highvoltag3/mermalaid/tree/main/mcp",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/highvoltag3/mermalaid.git",
+    "directory": "mcp"
+  },
+  "bugs": {
+    "url": "https://github.com/highvoltag3/mermalaid/issues"
+  },
+  "keywords": [
+    "mermaid",
+    "mcp",
+    "mermalaid",
+    "diagram",
+    "ai-agent"
+  ],
   "engines": {
     "node": ">=20.19.0"
   },
@@ -12,12 +28,18 @@
     "mermalaid-mcp": "dist/index.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "LICENSE",
+    "README.md"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsc -w -p tsconfig.json",
     "start": "node dist/index.js",
+    "prepublishOnly": "npm run build",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest"

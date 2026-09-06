@@ -1,4 +1,4 @@
-# mermalaid-mcp
+# @mermalaid/mcp
 
 A local [MCP](https://modelcontextprotocol.io) server that bridges an AI agent to a **live
 Mermalaid editor**. The agent can read the current diagram, replace it (changes appear instantly
@@ -9,21 +9,12 @@ that the Mermalaid editor connects to. Nothing leaves the machine.
 
 See the full guide: [`../docs/AGENT_INTEGRATION.md`](../docs/AGENT_INTEGRATION.md).
 
-## Build
-
-```bash
-npm install
-npm run build      # compiles to dist/
-```
-
-Or from the repo root: `npm run mcp:build`.
-
-## Register with an agent
+## Install / register with an agent
 
 **Claude Code**
 
 ```bash
-claude mcp add mermalaid -- node /absolute/path/to/mermalaid/mcp/dist/index.js
+claude mcp add mermalaid -- npx -y @mermalaid/mcp
 ```
 
 **Claude Desktop / Cursor** (MCP servers config)
@@ -32,15 +23,32 @@ claude mcp add mermalaid -- node /absolute/path/to/mermalaid/mcp/dist/index.js
 {
   "mcpServers": {
     "mermalaid": {
-      "command": "node",
-      "args": ["/absolute/path/to/mermalaid/mcp/dist/index.js"]
+      "command": "npx",
+      "args": ["-y", "@mermalaid/mcp"]
     }
   }
 }
 ```
 
-The server prints the pairing code and bridge URL to stderr on startup; the agent can also fetch
+The server prints the pairing code and bridge URL to stderr on startup. The agent can also fetch
 them with the `get_pairing_code` tool.
+
+## Develop from this repo
+
+```bash
+npm install
+npm run build      # compiles to dist/
+npm test
+npm run typecheck
+```
+
+Or from the repo root: `npm run mcp:build`.
+
+To point an agent at a local build instead of the published package:
+
+```bash
+claude mcp add mermalaid -- node /absolute/path/to/mermalaid/mcp/dist/index.js
+```
 
 ## Tools
 
@@ -60,14 +68,6 @@ them with the `get_pairing_code` tool.
 | Host | `--host <h>` | `MERMALAID_BRIDGE_HOST` | `127.0.0.1` |
 | Extra origins | `--origins <csv>` | `MERMALAID_BRIDGE_ORIGINS` | (none) |
 | Allow localhost dev origins | `--dev` | `MERMALAID_BRIDGE_DEV` | off |
-
-## Develop
-
-```bash
-npm run dev        # tsc --watch
-npm test           # vitest (node env)
-npm run typecheck
-```
 
 ## Security model
 
