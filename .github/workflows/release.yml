@@ -6,10 +6,14 @@ on:
       - 'v*'
 
 jobs:
+  # Runs once per tag so that the two platform builds share a single draft
+  # release instead of racing tauri-action's find-or-create logic.
   prepare-release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    outputs:
+      release_id: ${{ steps.create.outputs.release_id }}
     steps:
       - name: Check for existing release
         env:
@@ -21,7 +25,7 @@ jobs:
           if gh release view "$TAG_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             RELEASE_STATE=$(gh release view "$TAG_NAME" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft)
             if [ "$RELEASE_STATE" = "true" ]; then
-              echo "Draft release already exists. Deleting it so tauri-action can recreate it."
+              echo "Draft release already exists. Deleting it so a fresh one can be created."
               gh release delete "$TAG_NAME" --repo "$GITHUB_REPOSITORY" --yes
             else
               echo "ERROR: Published release already exists for tag $TAG_NAME"
@@ -31,6 +35,24 @@ jobs:
           else
             echo "No existing release found."
           fi
+
+      - name: Create draft release
+        id: create
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          RELEASE_ID=$(gh api -X POST "repos/$GITHUB_REPOSITORY/releases" \
+            -f tag_name="$TAG_NAME" \
+            -f name="Release $TAG_NAME" \
+            -F draft=true \
+            --jq .id) || RELEASE_ID=""
+          if [ -z "$RELEASE_ID" ] || [ "$RELEASE_ID" = "null" ]; then
+            echo "ERROR: Failed to create draft release for $TAG_NAME"
+            exit 1
+          fi
+          echo "Created draft release $RELEASE_ID for $TAG_NAME"
+          echo "release_id=$RELEASE_ID" >> "$GITHUB_OUTPUT"
 
   build-tauri:
     needs: prepare-release
@@ -43,7 +65,7 @@ jobs:
           # Universal binary: Intel (x86_64) + Apple Silicon (aarch64) in one DMG
           - platform: 'macos-latest'
             args: '--target universal-apple-darwin'
-          # 64-bit Windows NSIS installer
+          # 64-bit Windows NSIS installer (explicitly skips the MSI bundle)
           - platform: 'windows-latest'
             args: '--bundles nsis'
 
@@ -82,9 +104,11 @@ jobs:
           RUST_BACKTRACE: 1
         with:
           projectPath: ./
+          # Upload to the draft created by prepare-release. tagName is kept so
+          # tauri-action still fails loudly (instead of silently skipping the
+          # upload) if the release id is ever missing.
+          releaseId: ${{ needs.prepare-release.outputs.release_id }}
           tagName: ${{ github.ref }}
-          releaseName: Release ${{ github.ref_name }}
-          releaseDraft: true
           args: ${{ matrix.args }}
 
       - name: Verify DMG was created
@@ -109,8 +133,7 @@ jobs:
         run: |
           $installer = Get-ChildItem src-tauri/target -Recurse -Filter '*-setup.exe' | Select-Object -First 1
           if (-not $installer) {
-            Write-Error 'NSIS installer not found under src-tauri/target'
-            exit 1
+            throw 'NSIS installer not found under src-tauri/target'
           }
           Write-Host "NSIS installer found: $($installer.FullName)"
           Get-Item $installer.FullName | Format-List FullName, Length, LastWriteTime
