@@ -96,7 +96,7 @@ Commit the updated PNGs after regenerating.
 
 ### Desktop releases are separate from the web app
 
-`npm run release` / `npm run release:patch` etc. bump the version, push `main`, and push a `v*` tag. That triggers [.github/workflows/release.yml](../.github/workflows/release.yml) for the Tauri macOS build and GitHub Release draft. Web deployment is handled separately by Vercel.
+`npm run release` / `npm run release:patch` etc. bump the version, push `main`, and push a `v*` tag. That triggers [.github/workflows/release.yml](../.github/workflows/release.yml), which creates the GitHub Release draft and builds the Tauri macOS and Windows installers. Web deployment is handled separately by Vercel.
 
 ## Troubleshooting
 

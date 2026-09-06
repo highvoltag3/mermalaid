@@ -18,7 +18,7 @@ If you need a **free Mermaid editor** without limits, subscriptions, or account 
 - ✅ **Unlimited Diagrams** - Create as many Mermaid charts as you need
 - ✅ **Professional Features** - Live preview, visual editor, syntax checks, flexible export, and private share links
 - ✅ **Privacy-First** - Your diagrams stay local; no cloud sync required
-- ✅ **Web & Desktop** - Use it in your browser or as a native macOS app
+- ✅ **Web & Desktop** - Use it in your browser or as a native macOS or Windows app
 
 ## 🚀 Quick Start - Create Your First Mermaid Diagram
 
@@ -81,7 +81,7 @@ Create diagrams across the full Mermaid ecosystem:
 ### Cross-Platform Support
 
 - **Web Application** - Works in any modern browser
-- **Native macOS App** - Lightweight desktop application
+- **Native Desktop App** - Lightweight application for macOS and Windows
 - **Vercel Hosting** - Static Vite deployment with preview and production URLs
 
 ## 💻 Technical Excellence
@@ -102,7 +102,7 @@ Mermalaid uses Tauri instead of Electron for a superior experience:
 - ⚡ **Better performance** using system webview instead of bundled Chromium
 - 🔒 **Enhanced security** with Rust backend
 - 💰 **Lower memory usage** - Runs efficiently on any machine
-- 🎯 **Better native integration** - Feels like a real macOS app
+- 🎯 **Better native integration** - Feels like a real native app
 
 ## 📚 Use Cases - When to Use Mermalaid
 
@@ -159,7 +159,7 @@ classDiagram
 
 - Node.js 18+
 - Rust (Tauri will install automatically if not present)
-- macOS (for building macOS apps)
+- macOS (to build the macOS app) or Windows 10/11 with the Microsoft C++ Build Tools (to build the Windows installer)
 
 ### Running in Development
 
@@ -195,7 +195,11 @@ The built app will be in `src-tauri/target/release/bundle/`:
 
 ### Installing the Desktop App
 
-**Important:** The app is currently unsigned (not code-signed). macOS may show a "damaged" warning when you first open it.
+**Important:** The app is currently unsigned (not code-signed), so macOS warns you the first time you open the app and Windows warns you when you run the installer.
+
+#### macOS
+
+macOS may report the app as "damaged" when you first open it.
 
 **Recommended Installation Method:**
 ```bash
@@ -215,6 +219,10 @@ open /Applications/Mermalaid.app
 3. Click **"Open Anyway"** next to the Mermalaid warning
 4. Click **"Open"** in the confirmation dialog
 
+#### Windows
+
+The installer is unsigned, so SmartScreen shows "Windows protected your PC" when you run the `.exe`. Click **More info**, then **Run anyway** to continue with the installation.
+
 ## ⌨️ Keyboard Shortcuts
 
 - `⌘N` (Mac) / `Ctrl+N` (Windows/Linux): New diagram
@@ -228,7 +236,7 @@ Mermalaid is source-available and welcomes contributions! See [CONTRIBUTING.md](
 Areas where contributions are especially welcome:
 - Additional Mermaid diagram types
 - Export formats (PDF, etc.)
-- Platform support (Windows, Linux)
+- Platform support (Linux)
 - Performance improvements
 - Documentation and examples
 
@@ -274,7 +282,7 @@ Because this license includes a non-commercial clause, Mermalaid is source-avail
 | **Privacy** | ✅ Local storage only | ❌ Cloud sync required |
 | **Export Options** | ✅ SVG, PNG, ASCII | ✅/❌ Varies |
 | **Syntax Validation** | ✅ Real-time | ✅/❌ Varies |
-| **Desktop App** | ✅ Native macOS | ❌ Often web-only |
+| **Desktop App** | ✅ Native macOS and Windows | ❌ Often web-only |
 | **Visual Editor** | ✅ Yes (flowcharts) | ❌ Usually code-only |
 
 ---
