@@ -7,28 +7,16 @@ in the user's editor), validate syntax, and render the diagram to an image it ca
 It speaks MCP to the agent over **stdio**, and hosts a **loopback WebSocket** (`127.0.0.1:7337`)
 that the Mermalaid editor connects to. Nothing leaves the machine.
 
-See the full guide: [`../docs/AGENT_INTEGRATION.md`](../docs/AGENT_INTEGRATION.md).
+Full guide (install, pairing, tools, security):
+[docs/AGENT_INTEGRATION.md](https://github.com/highvoltag3/mermalaid/blob/main/docs/AGENT_INTEGRATION.md).
 
 ## Install / register with an agent
-
-**Claude Code**
 
 ```bash
 claude mcp add mermalaid -- npx -y @mermalaid/mcp
 ```
 
-**Claude Desktop / Cursor** (MCP servers config)
-
-```json
-{
-  "mcpServers": {
-    "mermalaid": {
-      "command": "npx",
-      "args": ["-y", "@mermalaid/mcp"]
-    }
-  }
-}
-```
+Claude Desktop / Cursor: `"command": "npx", "args": ["-y", "@mermalaid/mcp"]` (see the guide for the full JSON).
 
 The server prints the pairing code and bridge URL to stderr on startup. The agent can also fetch
 them with the `get_pairing_code` tool.
@@ -38,6 +26,7 @@ them with the `get_pairing_code` tool.
 ```bash
 npm install
 npm run build      # compiles to dist/
+npm run dev        # tsc --watch
 npm test
 npm run typecheck
 ```

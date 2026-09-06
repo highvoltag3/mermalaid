@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { PROTOCOL_VERSION } from './protocol'
 
 // The editor bundles its own copy of the wire protocol (bundler resolution) while the
-// `mermalaid-mcp` package compiles the source-of-truth copy (NodeNext). They must stay
+// `@mermalaid/mcp` package compiles the source-of-truth copy (NodeNext). They must stay
 // byte-identical so both ends speak the same protocol. Vitest runs from the repo root.
 const root = process.cwd()
 const editorProtocol = readFileSync(resolve(root, 'src/agentBridge/protocol.ts'), 'utf8')
