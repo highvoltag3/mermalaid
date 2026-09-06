@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState, type RefObject } from 'react'
-import { renderMermaid as renderBeautifulMermaid } from 'beautiful-mermaid'
 import {
   TransformComponent,
   TransformWrapper,
@@ -8,12 +7,12 @@ import {
   type ReactZoomPanPinchContentRef,
 } from 'react-zoom-pan-pinch'
 import { useTheme } from '../hooks/useTheme'
+import { useToast } from '../hooks/useToast'
 import { replaceMermaidBlock, type MermaidBlock } from '../utils/mermaidCodeBlock'
 import { getMermaidThemeOptions, isAppThemeDark } from '../utils/mermaidThemes'
 import { isEditableDiagram, parseMermaidFlowchart } from '../utils/mermaidParser'
 import { normalizeMermaidForBeautifulMermaid } from '../utils/normalizeMermaidForBeautifulMermaid'
 import {
-  mapMermaidConfigToThemeOptions,
   parseMermaidWithConfig,
   parseMermaidConfigForOfficialRenderer,
   replaceDiagramInBlock,
@@ -22,7 +21,10 @@ import {
   buildMermalaidAboutPreviewHtml,
   isMermaidAboutKeywordOnly,
 } from '../utils/mermalaidInfoText'
-import { renderOfficialMermaidPreview } from '../utils/officialMermaidPreview'
+import {
+  MermaidAboutKeywordFallback,
+  renderMermaidPreviewWithFallback,
+} from '../utils/renderMermaidPreviewWithFallback'
 import { MERMLAID_PREVIEW_DEBOUNCE_MS } from '../constants/mermalaidTiming'
 import VisualEditor from './VisualEditor'
 import './Preview.css'
@@ -204,6 +206,8 @@ export default function Preview({
   const previewRef = useRef<HTMLDivElement>(null)
   const transformRef = useRef<ReactZoomPanPinchContentRef | null>(null)
   const renderIdRef = useRef(0)
+  const { showToast } = useToast()
+  const lastFallbackToastRef = useRef<string | null>(null)
   const [isEditMode, setIsEditMode] = useState(false)
   const [diagramReady, setDiagramReady] = useState(false)
   const [previewFitTick, setPreviewFitTick] = useState(0)
@@ -268,12 +272,14 @@ export default function Preview({
           if (renderIdRef.current === currentId && container) {
             container.innerHTML = html
             setError(null)
+            lastFallbackToastRef.current = null
             setDiagramReady(true)
             setPreviewFitTick((t) => t + 1)
           }
         } catch (err) {
           const errorMsg =
             err instanceof Error ? err.message : 'Could not load Mermalaid info'
+          lastFallbackToastRef.current = null
           setError(errorMsg)
           if (renderIdRef.current === currentId && container) {
             container.innerHTML = `<div class="error-preview">${errorMsg}</div>`
@@ -290,6 +296,7 @@ export default function Preview({
         if (renderIdRef.current === currentId) {
           container.innerHTML = '<div class="empty-preview">Start typing your Mermaid diagram...</div>'
           setError(null)
+          lastFallbackToastRef.current = null
           setDiagramReady(false)
         }
         return
@@ -301,52 +308,37 @@ export default function Preview({
       }
 
       try {
-        let svg: string
-        const normalizedForCompat = normalizeMermaidForBeautifulMermaid(diagramCode)
-        try {
-          svg = await renderOfficialMermaidPreview(
-            diagramCode,
-            isAppThemeDark(mermaidTheme),
-            previewThemeOptions,
-            officialYamlConfig,
-          )
-        } catch (primaryErr) {
-          // Compatibility fallback: keep official Mermaid as the default path,
-          // but retry with legacy flowchart normalization to avoid regressions
-          // on diagrams that previously rendered in Mermalaid.
-          try {
-            if (normalizedForCompat !== diagramCode) {
-              svg = await renderOfficialMermaidPreview(
-                normalizedForCompat,
-                isAppThemeDark(mermaidTheme),
-                previewThemeOptions,
-                officialYamlConfig,
-              )
-            } else {
-              throw primaryErr
-            }
-          } catch {
-            // Last-resort legacy renderer fallback for pre-existing diagrams.
-            if (isMermaidAboutKeywordOnly(normalizedForCompat)) {
-              await applyMermalaidAboutPanel()
-              return
-            }
-            const themeOptions = yamlConfig
-              ? mapMermaidConfigToThemeOptions(yamlConfig)
-              : previewThemeOptions
-            svg = await renderBeautifulMermaid(normalizedForCompat, themeOptions)
-          }
-        }
+        const { svg, primaryError } = await renderMermaidPreviewWithFallback({
+          diagramCode,
+          isDark: isAppThemeDark(mermaidTheme),
+          previewThemeOptions,
+          officialYamlConfig,
+          yamlConfig,
+        })
         const normalizedSvg = normalizePreviewSvgDimensions(svg)
 
         if (renderIdRef.current === currentId && container) {
           container.innerHTML = normalizedSvg
-          setError(null)
+          if (primaryError) {
+            setError(primaryError)
+            if (lastFallbackToastRef.current !== primaryError) {
+              lastFallbackToastRef.current = primaryError
+              showToast(primaryError, 'error')
+            }
+          } else {
+            setError(null)
+            lastFallbackToastRef.current = null
+          }
           setDiagramReady(true)
           setPreviewFitTick((t) => t + 1)
         }
       } catch (err) {
+        if (err instanceof MermaidAboutKeywordFallback) {
+          await applyMermalaidAboutPanel()
+          return
+        }
         const errorMsg = err instanceof Error ? err.message : 'Invalid Mermaid syntax'
+        lastFallbackToastRef.current = null
         setError(errorMsg)
         if (renderIdRef.current === currentId && container) {
           container.innerHTML = `<div class="error-preview">${errorMsg}<div class="error-recovery-hint">Try creating a new diagram (New button) or opening a valid .mmd file.</div></div>`
@@ -359,10 +351,10 @@ export default function Preview({
   }, [
     code,
     setError,
+    showToast,
     isEditMode,
     canEdit,
     diagramCode,
-    codeForBeautifulMermaid,
     yamlConfig,
     mermaidTheme,
     previewThemeOptions,
