@@ -58,27 +58,57 @@ export default function CustomNode({ data, selected }: { data: CustomNodeData; s
   const isDark = isAppThemeDark(mermaidTheme)
   const [editValue, setEditValue] = useState(data.label)
   const [showShapePicker, setShowShapePicker] = useState(false)
+  /** Keep NodeToolbar mounted while the OS/native color dialog is open (selection often drops). */
+  const [colorPickerOpen, setColorPickerOpen] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const showToolbar = (selected || colorPickerOpen) && !data.isEditing
 
   // #region agent log
   useEffect(() => {
     debugAgentLog('A', 'CustomNode.tsx:selected', 'selected/fill/stroke changed', {
       id: data.id,
       selected,
+      colorPickerOpen,
+      showToolbar,
       fill: data.fill,
       stroke: data.stroke,
       isEditing: data.isEditing,
+      runId: 'post-fix',
     })
-  }, [selected, data.id, data.fill, data.stroke, data.isEditing])
+  }, [selected, colorPickerOpen, showToolbar, data.id, data.fill, data.stroke, data.isEditing])
 
   useEffect(() => {
-    if (!(selected && !data.isEditing)) return
-    debugAgentLog('A', 'CustomNode.tsx:toolbar', 'NodeToolbar mounted', { id: data.id })
+    if (!showToolbar) return
+    debugAgentLog('A', 'CustomNode.tsx:toolbar', 'NodeToolbar mounted', {
+      id: data.id,
+      selected,
+      colorPickerOpen,
+      runId: 'post-fix',
+    })
     return () => {
-      debugAgentLog('A', 'CustomNode.tsx:toolbar', 'NodeToolbar UNMOUNT', { id: data.id })
+      debugAgentLog('A', 'CustomNode.tsx:toolbar', 'NodeToolbar UNMOUNT', {
+        id: data.id,
+        runId: 'post-fix',
+      })
     }
-  }, [selected, data.isEditing, data.id])
+  }, [showToolbar, data.id, selected, colorPickerOpen])
   // #endregion
+
+  // Native color dialogs blur the window; when focus returns the picker has closed.
+  useEffect(() => {
+    if (!colorPickerOpen) return
+    const onWindowFocus = () => {
+      // #region agent log
+      debugAgentLog('A', 'CustomNode.tsx:colorPicker', 'window focus → end color pick', {
+        id: data.id,
+        runId: 'post-fix',
+      })
+      // #endregion
+      setColorPickerOpen(false)
+    }
+    window.addEventListener('focus', onWindowFocus)
+    return () => window.removeEventListener('focus', onWindowFocus)
+  }, [colorPickerOpen, data.id])
 
   useEffect(() => {
     if (data.isEditing && inputRef.current) {
@@ -87,6 +117,55 @@ export default function CustomNode({ data, selected }: { data: CustomNodeData; s
       inputRef.current.select()
     }
   }, [data.isEditing, data.label])
+
+  const beginColorPick = useCallback(
+    (which: 'fill' | 'stroke') => (e: React.PointerEvent) => {
+      e.stopPropagation()
+      setColorPickerOpen(true)
+      // #region agent log
+      debugAgentLog('A', `CustomNode.tsx:${which}`, `${which} pointerdown (pin toolbar)`, {
+        id: data.id,
+        selected,
+        runId: 'post-fix',
+      })
+      // #endregion
+    },
+    [data.id, selected],
+  )
+
+  const applyFill = useCallback(
+    (value: string) => {
+      // #region agent log
+      debugAgentLog('D', 'CustomNode.tsx:fill', 'fill onChange', {
+        id: data.id,
+        selected,
+        colorPickerOpen,
+        value,
+        stroke: data.stroke,
+        runId: 'post-fix',
+      })
+      // #endregion
+      data.onChangeColor?.(data.id, { fill: value, stroke: data.stroke })
+    },
+    [data, selected, colorPickerOpen],
+  )
+
+  const applyStroke = useCallback(
+    (value: string) => {
+      // #region agent log
+      debugAgentLog('D', 'CustomNode.tsx:stroke', 'stroke onChange', {
+        id: data.id,
+        selected,
+        colorPickerOpen,
+        value,
+        fill: data.fill,
+        runId: 'post-fix',
+      })
+      // #endregion
+      data.onChangeColor?.(data.id, { fill: data.fill, stroke: value })
+    },
+    [data, selected, colorPickerOpen],
+  )
 
   const commitEdit = useCallback(() => {
     if (editValue.trim() && editValue !== data.label) {
@@ -133,9 +212,13 @@ export default function CustomNode({ data, selected }: { data: CustomNodeData; s
 
   return (
     <>
-      {selected && !data.isEditing && (
-        <NodeToolbar offset={8}>
-          <div className={`node-toolbar ${isDark ? 'dark' : ''}`}>
+      {showToolbar && (
+        <NodeToolbar offset={8} isVisible>
+          <div
+            className={`node-toolbar nodrag nopan ${isDark ? 'dark' : ''}`}
+            onMouseDown={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
             <div className="node-toolbar-shape">
               <button
                 className="toolbar-btn"
@@ -166,22 +249,16 @@ export default function CustomNode({ data, selected }: { data: CustomNodeData; s
               <span className="toolbar-color-label">Fill</span>
               <input
                 type="color"
-                className="toolbar-color-input"
+                className="toolbar-color-input nodrag nopan"
                 value={fillValue}
-                onPointerDown={() => {
-                  // #region agent log
-                  debugAgentLog('A', 'CustomNode.tsx:fill', 'fill pointerdown', {
-                    id: data.id,
-                    selected,
-                    fillValue,
-                  })
-                  // #endregion
-                }}
+                onPointerDown={beginColorPick('fill')}
                 onFocus={() => {
                   // #region agent log
                   debugAgentLog('E', 'CustomNode.tsx:fill', 'fill focus', {
                     id: data.id,
                     selected,
+                    colorPickerOpen,
+                    runId: 'post-fix',
                   })
                   // #endregion
                 }}
@@ -190,45 +267,28 @@ export default function CustomNode({ data, selected }: { data: CustomNodeData; s
                   debugAgentLog('A', 'CustomNode.tsx:fill', 'fill blur', {
                     id: data.id,
                     selected,
+                    colorPickerOpen,
+                    runId: 'post-fix',
                   })
                   // #endregion
                 }}
-                onChange={(e) => {
-                  // #region agent log
-                  debugAgentLog('D', 'CustomNode.tsx:fill', 'fill onChange', {
-                    id: data.id,
-                    selected,
-                    value: e.target.value,
-                    stroke: data.stroke,
-                  })
-                  // #endregion
-                  data.onChangeColor?.(data.id, {
-                    fill: e.target.value,
-                    stroke: data.stroke,
-                  })
-                }}
+                onChange={(e) => applyFill(e.target.value)}
               />
             </label>
             <label className="toolbar-color" title="Border color">
               <span className="toolbar-color-label">Border</span>
               <input
                 type="color"
-                className="toolbar-color-input"
+                className="toolbar-color-input nodrag nopan"
                 value={strokeValue}
-                onPointerDown={() => {
-                  // #region agent log
-                  debugAgentLog('A', 'CustomNode.tsx:stroke', 'stroke pointerdown', {
-                    id: data.id,
-                    selected,
-                    strokeValue,
-                  })
-                  // #endregion
-                }}
+                onPointerDown={beginColorPick('stroke')}
                 onFocus={() => {
                   // #region agent log
                   debugAgentLog('E', 'CustomNode.tsx:stroke', 'stroke focus', {
                     id: data.id,
                     selected,
+                    colorPickerOpen,
+                    runId: 'post-fix',
                   })
                   // #endregion
                 }}
@@ -237,23 +297,12 @@ export default function CustomNode({ data, selected }: { data: CustomNodeData; s
                   debugAgentLog('A', 'CustomNode.tsx:stroke', 'stroke blur', {
                     id: data.id,
                     selected,
+                    colorPickerOpen,
+                    runId: 'post-fix',
                   })
                   // #endregion
                 }}
-                onChange={(e) => {
-                  // #region agent log
-                  debugAgentLog('D', 'CustomNode.tsx:stroke', 'stroke onChange', {
-                    id: data.id,
-                    selected,
-                    value: e.target.value,
-                    fill: data.fill,
-                  })
-                  // #endregion
-                  data.onChangeColor?.(data.id, {
-                    fill: data.fill,
-                    stroke: e.target.value,
-                  })
-                }}
+                onChange={(e) => applyStroke(e.target.value)}
               />
             </label>
             {(data.fill || data.stroke) && (
