@@ -7,7 +7,12 @@ export interface MermaidNode {
   id: string
   label: string
   shape: NodeShapeType
-  style?: string
+  /** Node fill from a `style` directive (e.g. `#ffcc00`). */
+  fill?: string
+  /** Node stroke/border from a `style` directive. */
+  stroke?: string
+  /** Remaining `style` props besides fill/stroke (re-emitted on generate). */
+  styleExtra?: string
   class?: string
 }
 
@@ -91,11 +96,94 @@ function extractNodesFromLine(
 // Edge arrow pattern: captures source ID, skips optional node syntax, matches arrow, optional label, target ID
 const ARROW_PATTERN = new RegExp(`(${MERMAID_ID_PATTERN})\\s*(?:\\{\\{[^}]+\\}\\}|\\[\\[[^\\]]+\\]\\]|\\(\\(\\([^)]+\\)\\)\\)|\\(\\([^)]+\\)\\)|\\[\\([^\\]]*\\)\\]|\\(\\[[^\\]]*\\]\\)|\\[\\/[^\\]]+\\\\]|\\[\\\\[^\\]]+\\/]|\\[\\/[^\\]]+\\/]|\\{[^}]+\\}|\\[[^\\]]+\\]|\\([^)]+\\))?\\s*([-=.]+>|==>|-->|---?|-.->)\\s*(?:\\|([^|]+)\\|)?\\s*(${MERMAID_ID_PATTERN})`)
 
+const STYLE_LINE_PATTERN = new RegExp(
+  `^style\\s+(${MERMAID_ID_PATTERN})\\s+(.+)$`,
+  'i',
+)
+
+/** Normalize a Mermaid color token to `#rrggbb` when possible. */
+export function normalizeMermaidColor(value: string): string | undefined {
+  const trimmed = value.trim()
+  if (!trimmed) return undefined
+  const hex3 = trimmed.match(/^#([0-9a-f]{3})$/i)
+  if (hex3) {
+    const [r, g, b] = hex3[1]
+    return `#${r}${r}${g}${g}${b}${b}`.toLowerCase()
+  }
+  const hex6 = trimmed.match(/^#([0-9a-f]{6})$/i)
+  if (hex6) return `#${hex6[1]}`.toLowerCase()
+  // Named colors / rgb() — keep as-is for Mermaid round-trip
+  return trimmed
+}
+
+/**
+ * Apply a Mermaid `style NodeId fill:…,stroke:…` line onto the node map.
+ * Returns true when the line was a style directive.
+ */
+export function applyStyleDirective(
+  line: string,
+  nodeMap: Map<string, MermaidNode>,
+  nodes: MermaidNode[],
+): boolean {
+  const match = line.match(STYLE_LINE_PATTERN)
+  if (!match) return false
+
+  const id = match[1]
+  const body = match[2].trim()
+  if (!nodeMap.has(id)) {
+    const node: MermaidNode = { id, label: id, shape: 'rect' }
+    nodes.push(node)
+    nodeMap.set(id, node)
+  }
+
+  const node = nodeMap.get(id)!
+  const extras: string[] = []
+  for (const part of body.split(',')) {
+    const idx = part.indexOf(':')
+    if (idx === -1) {
+      const leftover = part.trim()
+      if (leftover) extras.push(leftover)
+      continue
+    }
+    const key = part.slice(0, idx).trim().toLowerCase()
+    const value = part.slice(idx + 1).trim()
+    switch (key) {
+      case 'fill': {
+        const fill = normalizeMermaidColor(value)
+        if (fill) node.fill = fill
+        break
+      }
+      case 'stroke': {
+        const stroke = normalizeMermaidColor(value)
+        if (stroke) node.stroke = stroke
+        break
+      }
+      default:
+        extras.push(`${key}:${value}`)
+        break
+    }
+  }
+  if (extras.length > 0) {
+    node.styleExtra = extras.join(',')
+  }
+  return true
+}
+
+/** Build a Mermaid `style` directive body from node color fields. */
+export function formatNodeStyleBody(node: Pick<MermaidNode, 'fill' | 'stroke' | 'styleExtra'>): string | null {
+  const parts: string[] = []
+  if (node.fill) parts.push(`fill:${node.fill}`)
+  if (node.stroke) parts.push(`stroke:${node.stroke}`)
+  if (node.styleExtra) parts.push(node.styleExtra)
+  return parts.length > 0 ? parts.join(',') : null
+}
+
 /**
  * Parses Mermaid flowchart/graph code into structured data.
  * Uses a two-pass approach per line:
  * 1. Extract all node definitions (including inline with edges)
  * 2. Extract edge connections
+ * 3. Apply `style` directives for fill/stroke
  */
 export function parseMermaidFlowchart(code: string): ParsedMermaidDiagram | null {
   const trimmed = code.trim()
@@ -132,6 +220,8 @@ export function parseMermaidFlowchart(code: string): ParsedMermaidDiagram | null
     }
 
     if (line === 'end') continue
+
+    if (applyStyleDirective(line, nodeMap, nodes)) continue
 
     // Pass 1: Extract all node definitions from the line
     extractNodesFromLine(line, nodeMap, nodes)

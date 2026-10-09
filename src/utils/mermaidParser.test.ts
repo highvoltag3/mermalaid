@@ -45,4 +45,20 @@ describe('parseMermaidFlowchart', () => {
     const bt = parseMermaidFlowchart('graph DT\nA-->B')
     expect(bt?.direction).toBe('BT')
   })
+
+  it('parses style fill and stroke onto nodes', () => {
+    const code = `flowchart TD
+    A[Start] --> B[End]
+    style A fill:#f9f,stroke:#333,stroke-width:2px
+    style B fill:#ffcc00`
+    const parsed = parseMermaidFlowchart(code)
+    expect(parsed).not.toBeNull()
+    const a = parsed!.nodes.find((n) => n.id === 'A')
+    const b = parsed!.nodes.find((n) => n.id === 'B')
+    expect(a?.fill).toBe('#ff99ff')
+    expect(a?.stroke).toBe('#333333')
+    expect(a?.styleExtra).toBe('stroke-width:2px')
+    expect(b?.fill).toBe('#ffcc00')
+    expect(b?.stroke).toBeUndefined()
+  })
 })

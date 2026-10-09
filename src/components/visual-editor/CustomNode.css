@@ -259,6 +259,48 @@
   transition: background 0.15s, color 0.15s;
 }
 
+.toolbar-color {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #555;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.node-toolbar.dark .toolbar-color {
+  color: #bbb;
+}
+
+.toolbar-color:hover {
+  background: #f0f0f0;
+}
+
+.node-toolbar.dark .toolbar-color:hover {
+  background: #3d3d3d;
+}
+
+.toolbar-color-label {
+  user-select: none;
+}
+
+.toolbar-color-input {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.node-toolbar.dark .toolbar-color-input {
+  border-color: #555;
+}
+
 .node-toolbar.dark .toolbar-btn {
   color: #bbb;
 }

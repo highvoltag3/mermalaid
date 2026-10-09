@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { Handle, Position, NodeToolbar } from '@xyflow/react'
-import type { MermaidNode } from '../../utils/mermaidParser'
+import { normalizeMermaidColor, type MermaidNode } from '../../utils/mermaidParser'
 import { useTheme } from '../../hooks/useTheme'
 import { isAppThemeDark } from '../../utils/mermaidThemes'
 import './CustomNode.css'
@@ -9,6 +9,9 @@ export interface CustomNodeData {
   label: string
   shape: MermaidNode['shape']
   id: string
+  fill?: string
+  stroke?: string
+  styleExtra?: string
   isEditing?: boolean
   onLabelChange?: (id: string, label: string) => void
   onStartEditing?: (id: string) => void
@@ -16,6 +19,7 @@ export interface CustomNodeData {
   onDeleteNode?: (id: string) => void
   onDuplicateNode?: (id: string) => void
   onChangeShape?: (id: string, shape: MermaidNode['shape']) => void
+  onChangeColor?: (id: string, colors: { fill?: string; stroke?: string }) => void
   [key: string]: unknown
 }
 
@@ -40,6 +44,13 @@ const HANDLE_POSITIONS = [
   { position: Position.Bottom, id: 'bottom' },
   { position: Position.Left, id: 'left' },
 ] as const
+
+/** `<input type="color">` requires #rrggbb. */
+function toColorInputValue(color: string | undefined, fallback: string): string {
+  const normalized = color ? normalizeMermaidColor(color) : undefined
+  if (normalized && /^#[0-9a-f]{6}$/i.test(normalized)) return normalized
+  return fallback
+}
 
 export default function CustomNode({ data, selected }: { data: CustomNodeData; selected: boolean }) {
   const { mermaidTheme } = useTheme()
@@ -85,6 +96,19 @@ export default function CustomNode({ data, selected }: { data: CustomNodeData; s
   }
 
   const handleColor = isDark ? '#4a9eff' : '#1976d2'
+  const defaultFill = isDark ? '#2d2d2d' : '#ffffff'
+  const defaultStroke = isDark ? '#555555' : '#dddddd'
+  const fillValue = toColorInputValue(data.fill, defaultFill)
+  const strokeValue = toColorInputValue(data.stroke, defaultStroke)
+
+  const clipPathShapes = new Set([
+    'diamond',
+    'rhombus',
+    'hexagon',
+    'parallelogram',
+    'trapezoid',
+    'trapezoidAlt',
+  ])
 
   return (
     <>
@@ -117,6 +141,43 @@ export default function CustomNode({ data, selected }: { data: CustomNodeData; s
                 </div>
               )}
             </div>
+            <label className="toolbar-color" title="Fill color">
+              <span className="toolbar-color-label">Fill</span>
+              <input
+                type="color"
+                className="toolbar-color-input"
+                value={fillValue}
+                onChange={(e) => {
+                  data.onChangeColor?.(data.id, {
+                    fill: e.target.value,
+                    stroke: data.stroke,
+                  })
+                }}
+              />
+            </label>
+            <label className="toolbar-color" title="Border color">
+              <span className="toolbar-color-label">Border</span>
+              <input
+                type="color"
+                className="toolbar-color-input"
+                value={strokeValue}
+                onChange={(e) => {
+                  data.onChangeColor?.(data.id, {
+                    fill: data.fill,
+                    stroke: e.target.value,
+                  })
+                }}
+              />
+            </label>
+            {(data.fill || data.stroke) && (
+              <button
+                className="toolbar-btn"
+                onClick={() => data.onChangeColor?.(data.id, {})}
+                title="Clear custom colors"
+              >
+                Clear
+              </button>
+            )}
             <button
               className="toolbar-btn"
               onClick={() => data.onDuplicateNode?.(data.id)}
@@ -136,7 +197,14 @@ export default function CustomNode({ data, selected }: { data: CustomNodeData; s
       )}
 
       <div
-        className={`visual-node ${getShapeClass()} ${isDark ? 'dark' : ''} ${selected ? 'selected' : ''}`}
+        className={`visual-node ${getShapeClass()} ${isDark ? 'dark' : ''} ${selected ? 'selected' : ''} ${data.fill || data.stroke ? 'has-custom-color' : ''}`}
+        style={{
+          ...(data.fill ? { backgroundColor: data.fill } : {}),
+          ...(data.stroke && !clipPathShapes.has(data.shape) ? { borderColor: data.stroke } : {}),
+          ...(data.stroke && clipPathShapes.has(data.shape)
+            ? { filter: `drop-shadow(0 0 0 ${data.stroke}) drop-shadow(0 0 2px ${data.stroke})` }
+            : {}),
+        }}
         onDoubleClick={(e) => {
           e.stopPropagation()
           data.onStartEditing?.(data.id)

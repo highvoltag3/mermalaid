@@ -66,7 +66,14 @@ function VisualEditorInner({ parsedDiagram, onCodeChange }: VisualEditorProps) {
       id: node.id,
       type: 'custom' as const,
       position: { x: 0, y: 0 },
-      data: { label: node.label, shape: node.shape, id: node.id },
+      data: {
+        label: node.label,
+        shape: node.shape,
+        id: node.id,
+        fill: node.fill,
+        stroke: node.stroke,
+        styleExtra: node.styleExtra,
+      },
     }))
     const rawEdges = parsedDiagram.edges.map((edge) => ({
       id: `${edge.source}-${edge.target}`,
@@ -119,6 +126,23 @@ function VisualEditorInner({ parsedDiagram, onCodeChange }: VisualEditorProps) {
             nds.map((n) => (n.id === id ? { ...n, data: { ...n.data, shape } } : n))
           )
         },
+        onChangeColor: (id: string, colors: { fill?: string; stroke?: string }) => {
+          pushState({ nodes, edges })
+          setNodes((nds) =>
+            nds.map((n) =>
+              n.id === id
+                ? {
+                    ...n,
+                    data: {
+                      ...n.data,
+                      fill: colors.fill,
+                      stroke: colors.stroke,
+                    },
+                  }
+                : n,
+            ),
+          )
+        },
       },
     }))
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -136,7 +160,14 @@ function VisualEditorInner({ parsedDiagram, onCodeChange }: VisualEditorProps) {
       [...parsedNodeIds].some((id) => !nodeIds.has(id)) ||
       nodes.some((n) => {
         const parsed = parsedDiagram.nodes.find((p) => p.id === n.id)
-        return !parsed || parsed.label !== (n.data.label || n.id) || parsed.shape !== n.data.shape
+        return (
+          !parsed ||
+          parsed.label !== (n.data.label || n.id) ||
+          parsed.shape !== n.data.shape ||
+          (parsed.fill || undefined) !== (n.data.fill || undefined) ||
+          (parsed.stroke || undefined) !== (n.data.stroke || undefined) ||
+          (parsed.styleExtra || undefined) !== (n.data.styleExtra || undefined)
+        )
       })
 
     const edgesChanged =
@@ -156,7 +187,14 @@ function VisualEditorInner({ parsedDiagram, onCodeChange }: VisualEditorProps) {
           x: (index % 3) * 200 + 50,
           y: Math.floor(index / 3) * 150 + 50,
         },
-        data: { label: node.label, shape: node.shape, id: node.id },
+        data: {
+          label: node.label,
+          shape: node.shape,
+          id: node.id,
+          fill: node.fill,
+          stroke: node.stroke,
+          styleExtra: node.styleExtra,
+        },
       }
     })
 
@@ -306,7 +344,14 @@ function VisualEditorInner({ parsedDiagram, onCodeChange }: VisualEditorProps) {
         id,
         type: 'custom',
         position: { x: sourceNode.position.x + 30, y: sourceNode.position.y + 30 },
-        data: { label: sourceNode.data.label, shape: sourceNode.data.shape, id },
+        data: {
+          label: sourceNode.data.label,
+          shape: sourceNode.data.shape,
+          id,
+          fill: sourceNode.data.fill,
+          stroke: sourceNode.data.stroke,
+          styleExtra: sourceNode.data.styleExtra,
+        },
       }
       setNodes((nds) => [...nds, newNode])
     },
