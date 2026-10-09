@@ -93,6 +93,18 @@ describe('App (web)', () => {
     })
   })
 
+  it('shows Untitled for a new document and updates the tab title', async () => {
+    const { container } = render(
+      <MemoryRouter initialEntries={['/editor']}>
+        <App />
+      </MemoryRouter>,
+    )
+    await waitFor(() => {
+      expect(container.querySelector('.toolbar-document-name')).toHaveTextContent('Untitled')
+      expect(document.title).toBe('Untitled - Mermalaid')
+    })
+  })
+
   it('switches between preview and editor in smartphone mode', async () => {
     setViewportWidth(390)
     const user = userEvent.setup()

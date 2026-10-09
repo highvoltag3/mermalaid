@@ -22,6 +22,10 @@ import { useExternalFileWatch } from './hooks/useExternalFileWatch'
 import type { LatestReleaseInfo } from './utils/githubRelease'
 import { isDiagramImportFileName } from './utils/diagramImportFiles'
 import {
+  formatEditorDocumentTitle,
+  getDocumentDisplayName,
+} from './utils/documentTitle'
+import {
   clearUrlFragment,
   decodePrivateShareHash,
   getPrivateShareErrorMessage,
@@ -30,6 +34,7 @@ import {
 import { decodePublicDiagram } from './utils/publicShareLink'
 import { extractMermaidCode, extractAllMermaidBlocks } from './utils/mermaidCodeBlock'
 import { getAppThemeCssVars, isAppThemeDark } from './utils/mermaidThemes'
+import { recentFileLabel } from './utils/recentFiles'
 import { initNativeAppMenu, setNativeMenuHandlerSource } from './nativeAppMenu'
 import './App.css'
 
@@ -166,14 +171,42 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
   const documentPathRef = useRef<string | null>(null)
   // Mirror the document path into state so the external-file watcher can react to it.
   const [documentPath, setDocumentPathState] = useState<string | null>(null)
+  /** Display name when there is no filesystem path (web open / drag-drop). */
+  const [documentName, setDocumentName] = useState<string | null>(null)
   const setDocumentPath = useCallback((path: string | null) => {
     documentPathRef.current = path
     setDocumentPathState(path)
+    setDocumentName(path ? recentFileLabel(path) : null)
   }, [])
+  const setOpenedDocumentName = useCallback((name: string) => {
+    documentPathRef.current = null
+    setDocumentPathState(null)
+    setDocumentName(name)
+  }, [])
+  const documentDisplayName = getDocumentDisplayName(documentPath, documentName)
   const appContentRef = useRef<HTMLDivElement>(null)
   const toolbarRef = useRef<ToolbarRef>(null)
   const agentBridge = useAgentBridge({ code, setCode, error })
   const { markSaved: markDocumentSaved } = useExternalFileWatch({ documentPath, code, setCode })
+
+  /** Keep the browser tab (and Tauri window) title in sync with the open file. */
+  useEffect(() => {
+    const title = formatEditorDocumentTitle(documentDisplayName)
+    document.title = title
+    if (!isTauri()) return
+    let cancelled = false
+    void import('@tauri-apps/api/window')
+      .then(({ getCurrentWindow }) => {
+        if (cancelled) return
+        return getCurrentWindow().setTitle(title)
+      })
+      .catch((err) => {
+        console.error('Failed to set window title:', err)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [documentDisplayName])
 
   // Compute mermaid blocks from the code
   const mermaidBlocks = extractAllMermaidBlocks(code)
@@ -257,7 +290,7 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
         const source = await decodePublicDiagram(c)
         if (cancelled) return
         setCode(source)
-        documentPathRef.current = null
+        setDocumentPath(null)
         // Strip the param so it doesn't linger or re-trigger.
         window.history.replaceState(null, '', location.pathname)
         showToast('Opened diagram from shared link')
@@ -376,6 +409,7 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
     reader.onload = (event) => {
       const content = event.target?.result as string
       setCode(content)
+      setOpenedDocumentName(file.name)
     }
     reader.readAsText(file)
   }
@@ -413,6 +447,8 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
         mermaidBlocks={mermaidBlocks}
         documentPathRef={documentPathRef}
         setDocumentPath={setDocumentPath}
+        setOpenedDocumentName={setOpenedDocumentName}
+        documentDisplayName={documentDisplayName}
         onDocumentSaved={markDocumentSaved}
         isMobile={isSmartphoneLayout}
       />
