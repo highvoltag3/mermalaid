@@ -1,5 +1,7 @@
 import { renderMermaid as renderBeautifulMermaid } from 'beautiful-mermaid'
 import { isMermaidAboutKeywordOnly } from './mermalaidInfoText'
+import { ensureReadableLineColor } from './colorContrast'
+import { boostMermaidEdgeStrokes } from './mermaidEdgeVisibility'
 import {
   mapMermaidConfigToThemeOptions,
   type BeautifulMermaidThemeOptions,
@@ -7,6 +9,18 @@ import {
 } from './mermaidYamlConfig'
 import { normalizeMermaidForBeautifulMermaid } from './normalizeMermaidForBeautifulMermaid'
 import { renderOfficialMermaidPreview } from './officialMermaidPreview'
+
+function withReadableLine(
+  themeOptions: BeautifulMermaidThemeOptions,
+): BeautifulMermaidThemeOptions {
+  const bg = themeOptions.bg
+  const line = themeOptions.line ?? themeOptions.border ?? themeOptions.fg
+  if (!bg || !line) return themeOptions
+  return {
+    ...themeOptions,
+    line: ensureReadableLineColor(line, bg, themeOptions.fg ?? '#333333'),
+  }
+}
 
 export type MermaidPreviewRenderResult = {
   svg: string
@@ -75,12 +89,14 @@ export async function renderMermaidPreviewWithFallback(options: {
       throw new MermaidAboutKeywordFallback()
     }
 
-    const themeOptions = yamlConfig
-      ? mapMermaidConfigToThemeOptions(yamlConfig)
-      : previewThemeOptions
+    const themeOptions = withReadableLine(
+      yamlConfig
+        ? mapMermaidConfigToThemeOptions(yamlConfig)
+        : previewThemeOptions,
+    )
     try {
       const svg = await renderBeautifulMermaid(normalizedForCompat, themeOptions)
-      return { svg, primaryError }
+      return { svg: boostMermaidEdgeStrokes(svg), primaryError }
     } catch {
       // Prefer the original official Mermaid error when every path fails.
       throw primaryErr instanceof Error ? primaryErr : new Error(primaryError)
