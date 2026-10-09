@@ -3,7 +3,6 @@ import { Handle, Position, NodeToolbar } from '@xyflow/react'
 import { normalizeMermaidColor, type MermaidNode } from '../../utils/mermaidParser'
 import { useTheme } from '../../hooks/useTheme'
 import { isAppThemeDark } from '../../utils/mermaidThemes'
-import { debugAgentLog } from '../../debugAgentLog'
 import './CustomNode.css'
 
 export interface CustomNodeData {
@@ -63,52 +62,13 @@ export default function CustomNode({ data, selected }: { data: CustomNodeData; s
   const inputRef = useRef<HTMLInputElement>(null)
   const showToolbar = (selected || colorPickerOpen) && !data.isEditing
 
-  // #region agent log
-  useEffect(() => {
-    debugAgentLog('A', 'CustomNode.tsx:selected', 'selected/fill/stroke changed', {
-      id: data.id,
-      selected,
-      colorPickerOpen,
-      showToolbar,
-      fill: data.fill,
-      stroke: data.stroke,
-      isEditing: data.isEditing,
-      runId: 'post-fix',
-    })
-  }, [selected, colorPickerOpen, showToolbar, data.id, data.fill, data.stroke, data.isEditing])
-
-  useEffect(() => {
-    if (!showToolbar) return
-    debugAgentLog('A', 'CustomNode.tsx:toolbar', 'NodeToolbar mounted', {
-      id: data.id,
-      selected,
-      colorPickerOpen,
-      runId: 'post-fix',
-    })
-    return () => {
-      debugAgentLog('A', 'CustomNode.tsx:toolbar', 'NodeToolbar UNMOUNT', {
-        id: data.id,
-        runId: 'post-fix',
-      })
-    }
-  }, [showToolbar, data.id, selected, colorPickerOpen])
-  // #endregion
-
   // Native color dialogs blur the window; when focus returns the picker has closed.
   useEffect(() => {
     if (!colorPickerOpen) return
-    const onWindowFocus = () => {
-      // #region agent log
-      debugAgentLog('A', 'CustomNode.tsx:colorPicker', 'window focus → end color pick', {
-        id: data.id,
-        runId: 'post-fix',
-      })
-      // #endregion
-      setColorPickerOpen(false)
-    }
+    const onWindowFocus = () => setColorPickerOpen(false)
     window.addEventListener('focus', onWindowFocus)
     return () => window.removeEventListener('focus', onWindowFocus)
-  }, [colorPickerOpen, data.id])
+  }, [colorPickerOpen])
 
   useEffect(() => {
     if (data.isEditing && inputRef.current) {
@@ -118,53 +78,23 @@ export default function CustomNode({ data, selected }: { data: CustomNodeData; s
     }
   }, [data.isEditing, data.label])
 
-  const beginColorPick = useCallback(
-    (which: 'fill' | 'stroke') => (e: React.PointerEvent) => {
-      e.stopPropagation()
-      setColorPickerOpen(true)
-      // #region agent log
-      debugAgentLog('A', `CustomNode.tsx:${which}`, `${which} pointerdown (pin toolbar)`, {
-        id: data.id,
-        selected,
-        runId: 'post-fix',
-      })
-      // #endregion
-    },
-    [data.id, selected],
-  )
+  const beginColorPick = useCallback((e: React.PointerEvent) => {
+    e.stopPropagation()
+    setColorPickerOpen(true)
+  }, [])
 
   const applyFill = useCallback(
     (value: string) => {
-      // #region agent log
-      debugAgentLog('D', 'CustomNode.tsx:fill', 'fill onChange', {
-        id: data.id,
-        selected,
-        colorPickerOpen,
-        value,
-        stroke: data.stroke,
-        runId: 'post-fix',
-      })
-      // #endregion
       data.onChangeColor?.(data.id, { fill: value, stroke: data.stroke })
     },
-    [data, selected, colorPickerOpen],
+    [data],
   )
 
   const applyStroke = useCallback(
     (value: string) => {
-      // #region agent log
-      debugAgentLog('D', 'CustomNode.tsx:stroke', 'stroke onChange', {
-        id: data.id,
-        selected,
-        colorPickerOpen,
-        value,
-        fill: data.fill,
-        runId: 'post-fix',
-      })
-      // #endregion
       data.onChangeColor?.(data.id, { fill: data.fill, stroke: value })
     },
-    [data, selected, colorPickerOpen],
+    [data],
   )
 
   const commitEdit = useCallback(() => {
@@ -251,27 +181,7 @@ export default function CustomNode({ data, selected }: { data: CustomNodeData; s
                 type="color"
                 className="toolbar-color-input nodrag nopan"
                 value={fillValue}
-                onPointerDown={beginColorPick('fill')}
-                onFocus={() => {
-                  // #region agent log
-                  debugAgentLog('E', 'CustomNode.tsx:fill', 'fill focus', {
-                    id: data.id,
-                    selected,
-                    colorPickerOpen,
-                    runId: 'post-fix',
-                  })
-                  // #endregion
-                }}
-                onBlur={() => {
-                  // #region agent log
-                  debugAgentLog('A', 'CustomNode.tsx:fill', 'fill blur', {
-                    id: data.id,
-                    selected,
-                    colorPickerOpen,
-                    runId: 'post-fix',
-                  })
-                  // #endregion
-                }}
+                onPointerDown={beginColorPick}
                 onChange={(e) => applyFill(e.target.value)}
               />
             </label>
@@ -281,27 +191,7 @@ export default function CustomNode({ data, selected }: { data: CustomNodeData; s
                 type="color"
                 className="toolbar-color-input nodrag nopan"
                 value={strokeValue}
-                onPointerDown={beginColorPick('stroke')}
-                onFocus={() => {
-                  // #region agent log
-                  debugAgentLog('E', 'CustomNode.tsx:stroke', 'stroke focus', {
-                    id: data.id,
-                    selected,
-                    colorPickerOpen,
-                    runId: 'post-fix',
-                  })
-                  // #endregion
-                }}
-                onBlur={() => {
-                  // #region agent log
-                  debugAgentLog('A', 'CustomNode.tsx:stroke', 'stroke blur', {
-                    id: data.id,
-                    selected,
-                    colorPickerOpen,
-                    runId: 'post-fix',
-                  })
-                  // #endregion
-                }}
+                onPointerDown={beginColorPick}
                 onChange={(e) => applyStroke(e.target.value)}
               />
             </label>
