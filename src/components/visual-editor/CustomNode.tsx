@@ -45,6 +45,17 @@ const HANDLE_POSITIONS = [
   { position: Position.Left, id: 'left' },
 ] as const
 
+/** Quick-pick fills for analysts (draw.io-style); custom via native picker. */
+const FILL_PRESETS = [
+  '#ffcc00',
+  '#ff9999',
+  '#99ccff',
+  '#99e699',
+  '#e6b3ff',
+  '#ffd9b3',
+  '#ffffff',
+] as const
+
 /** `<input type="color">` requires #rrggbb. */
 function toColorInputValue(color: string | undefined, fallback: string): string {
   const normalized = color ? normalizeMermaidColor(color) : undefined
@@ -175,23 +186,41 @@ export default function CustomNode({ data, selected }: { data: CustomNodeData; s
                 </div>
               )}
             </div>
-            <label className="toolbar-color" title="Fill color">
+            <div className="toolbar-color-group" title="Fill color">
               <span className="toolbar-color-label">Fill</span>
+              <div className="toolbar-color-presets">
+                {FILL_PRESETS.map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    className={`toolbar-color-swatch ${fillValue === preset ? 'active' : ''}`}
+                    style={{ backgroundColor: preset }}
+                    title={preset}
+                    aria-label={`Fill ${preset}`}
+                    onClick={() => applyFill(preset)}
+                  />
+                ))}
+              </div>
               <input
                 type="color"
                 className="toolbar-color-input nodrag nopan"
                 value={fillValue}
+                title="Custom fill"
+                aria-label="Custom fill color"
                 onPointerDown={beginColorPick}
+                onInput={(e) => applyFill((e.target as HTMLInputElement).value)}
                 onChange={(e) => applyFill(e.target.value)}
               />
-            </label>
+            </div>
             <label className="toolbar-color" title="Border color">
               <span className="toolbar-color-label">Border</span>
               <input
                 type="color"
                 className="toolbar-color-input nodrag nopan"
                 value={strokeValue}
+                aria-label="Border color"
                 onPointerDown={beginColorPick}
+                onInput={(e) => applyStroke((e.target as HTMLInputElement).value)}
                 onChange={(e) => applyStroke(e.target.value)}
               />
             </label>
