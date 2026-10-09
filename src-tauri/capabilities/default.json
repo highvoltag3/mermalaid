@@ -16,6 +16,7 @@
     "core:window:allow-unminimize",
     "core:window:allow-show",
     "core:window:allow-set-focus",
+    "core:window:allow-set-title",
     "core:window:allow-set-simple-fullscreen",
     "core:window:allow-center",
     "core:window:allow-hide",

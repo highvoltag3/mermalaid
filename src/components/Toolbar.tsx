@@ -135,6 +135,10 @@ interface ToolbarProps {
   documentPathRef: MutableRefObject<string | null>
   /** Updates both the path ref and the mirrored state that drives the external-file watcher. */
   setDocumentPath: (path: string | null) => void
+  /** Web open / drag-drop: remember the filename without a filesystem path. */
+  setOpenedDocumentName: (name: string) => void
+  /** Basename (or Untitled) shown in the toolbar chrome. */
+  documentDisplayName: string
   /** Records content Mermalaid wrote to disk so its own save isn't seen as an external change. */
   onDocumentSaved?: (content: string) => void
   isMobile?: boolean
@@ -183,6 +187,8 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
   mermaidBlocks,
   documentPathRef,
   setDocumentPath,
+  setOpenedDocumentName,
+  documentDisplayName,
   onDocumentSaved,
   isMobile = false,
   showMobileActions: showMobileActionsProp,
@@ -309,6 +315,7 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
         const content = event.target?.result as string
         if (content) {
           setCode(content)
+          setOpenedDocumentName(file.name)
           showToast(`Loaded ${file.name}`)
         } else {
           showToast('File appears to be empty.', 'error')
@@ -353,7 +360,11 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
           setDocumentPath(result.path)
           addRecentFile(result.path)
           await rebuildNativeAppMenu()
+        } else if (result.fileName) {
+          setOpenedDocumentName(result.fileName)
         }
+      } else if (result.outcome === 'downloaded' && result.fileName) {
+        setOpenedDocumentName(result.fileName)
       }
       const toastMsg = toastMessageForSaveResult(result, 'Saved')
       if (toastMsg) showToast(toastMsg)
@@ -793,7 +804,12 @@ ${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</di
               loading="eager"
               decoding="async"
             />
-            <div className="toolbar-mobile-title">Mermalaid</div>
+            <div className="toolbar-mobile-title-stack">
+              <div className="toolbar-mobile-title">Mermalaid</div>
+              <div className="toolbar-document-name" title={documentDisplayName}>
+                {documentDisplayName}
+              </div>
+            </div>
           </div>
           {error && <span className="toolbar-mobile-error">Syntax error</span>}
         </div>
@@ -988,6 +1004,9 @@ ${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</di
             <button type="button" onClick={handleSave} className="toolbar-btn" title="Save (⌘S)">
               Save
             </button>
+            <span className="toolbar-document-name" title={documentDisplayName}>
+              {documentDisplayName}
+            </span>
           </div>
 
           <div className="toolbar-section">

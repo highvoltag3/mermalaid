@@ -18,6 +18,16 @@
   margin-left: auto;
 }
 
+.toolbar-document-name {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--app-muted);
+  user-select: none;
+}
+
 .toolbar-section:not(:last-child)::after {
   content: '';
   width: 1px;
@@ -145,13 +155,21 @@
 
   .toolbar-mobile-title-stack {
     min-width: 0;
+    margin-left: 60px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
   }
 
   .toolbar-mobile-title {
-    margin-left: 60px;
     font-size: 16px;
     font-weight: 700;
     color: var(--app-fg);
+  }
+
+  .toolbar-mobile-title-stack .toolbar-document-name {
+    max-width: min(50vw, 220px);
+    font-size: 12px;
   }
 
   .toolbar-mobile-error {
