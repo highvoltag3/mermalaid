@@ -1,5 +1,7 @@
 import mermaid from 'mermaid'
 import type { BeautifulMermaidThemeOptions, MermaidYamlConfig } from './mermaidYamlConfig'
+import { ensureReadableLineColor } from './colorContrast'
+import { boostMermaidEdgeStrokes } from './mermaidEdgeVisibility'
 
 let renderCounter = 0
 
@@ -36,7 +38,11 @@ function buildThemeVariablesFromBeautifulTheme(
   if (!themeOptions) return {}
   const bg = themeOptions.bg
   const fg = themeOptions.fg
-  const line = themeOptions.line ?? themeOptions.border ?? fg
+  const rawLine = themeOptions.line ?? themeOptions.border ?? fg
+  const line =
+    rawLine && bg
+      ? ensureReadableLineColor(rawLine, bg, fg ?? '#333333')
+      : rawLine
   const surface = themeOptions.surface ?? bg
   const accent = themeOptions.accent ?? line
   const border = themeOptions.border ?? line
@@ -112,7 +118,7 @@ export async function renderOfficialMermaidPreview(
     mermaid.initialize(buildPreviewConfig(isDarkTheme, themeOptions, yamlConfig))
     const renderId = `mermalaid-preview-${renderCounter}`
     const { svg } = await mermaid.render(renderId, diagramCode)
-    return svg
+    return boostMermaidEdgeStrokes(svg)
   })
   renderQueue = run.catch(() => {
     /* keep the queue alive even when a render throws */

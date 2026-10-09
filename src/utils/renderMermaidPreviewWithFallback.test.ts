@@ -60,15 +60,18 @@ describe('renderMermaidPreviewWithFallback', () => {
     renderOfficialMermaidPreview.mockRejectedValue(
       new Error('Namespace and class share the same name'),
     )
-    renderBeautifulMermaid.mockResolvedValue('<svg>fallback</svg>')
+    renderBeautifulMermaid.mockResolvedValue(
+      '<svg xmlns="http://www.w3.org/2000/svg"><g class="edgePath"><path stroke-width="1" d="M0 0"/></g></svg>',
+    )
 
     const result = await renderMermaidPreviewWithFallback({
       ...baseOptions,
       diagramCode: 'classDiagram\nnamespace Foo {\n  class Foo\n}',
     })
 
-    expect(result.svg).toBe('<svg>fallback</svg>')
+    expect(result.svg).toContain('stroke-width="2"')
     expect(result.primaryError).toBe('Namespace and class share the same name')
+    expect(renderBeautifulMermaid).toHaveBeenCalled()
   })
 
   it('clears primaryError when compat-normalized official render succeeds', async () => {

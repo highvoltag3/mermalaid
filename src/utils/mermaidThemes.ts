@@ -3,33 +3,12 @@
  * @see https://github.com/lukilabs/beautiful-mermaid?tab=readme-ov-file#theming
  */
 import { THEMES as BEAUTIFUL_MERMAID_THEMES } from 'beautiful-mermaid'
+import { luminanceFromHex, normalizeHexColor } from './colorContrast'
 
 /** Fallback if package themes are missing or empty */
 const FALLBACK_THEMES = {
   'github-light': { bg: '#ffffff', fg: '#1f2328', line: '#d1d9e0', accent: '#0969da', muted: '#59636e' },
 } as const
-
-/** Expand #rgb → #rrggbb for comparison */
-function normalizeHexColor(hex: string): string | null {
-  const m = hex.trim().match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i)
-  if (!m) return null
-  const h = m[1]
-  if (h.length === 3) {
-    return `#${h[0]}${h[0]}${h[1]}${h[1]}${h[2]}${h[2]}`.toLowerCase()
-  }
-  return `#${h}`.toLowerCase()
-}
-
-/** sRGB relative luminance (0–1); used to pick a contrasting UI accent */
-function luminanceFromHex(hex: string): number | null {
-  const norm = normalizeHexColor(hex)
-  if (!norm) return null
-  const r = parseInt(norm.slice(1, 3), 16) / 255
-  const g = parseInt(norm.slice(3, 5), 16) / 255
-  const b = parseInt(norm.slice(5, 7), 16) / 255
-  const lin = (c: number) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)
-  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
-}
 
 /**
  * Accent for app chrome (--app-accent). Diagram rendering still uses raw theme from getMermaidThemeOptions.
