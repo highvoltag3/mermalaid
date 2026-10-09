@@ -3,6 +3,7 @@ import { Handle, Position, NodeToolbar } from '@xyflow/react'
 import { normalizeMermaidColor, type MermaidNode } from '../../utils/mermaidParser'
 import { useTheme } from '../../hooks/useTheme'
 import { isAppThemeDark } from '../../utils/mermaidThemes'
+import { debugAgentLog } from '../../debugAgentLog'
 import './CustomNode.css'
 
 export interface CustomNodeData {
@@ -58,6 +59,26 @@ export default function CustomNode({ data, selected }: { data: CustomNodeData; s
   const [editValue, setEditValue] = useState(data.label)
   const [showShapePicker, setShowShapePicker] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  // #region agent log
+  useEffect(() => {
+    debugAgentLog('A', 'CustomNode.tsx:selected', 'selected/fill/stroke changed', {
+      id: data.id,
+      selected,
+      fill: data.fill,
+      stroke: data.stroke,
+      isEditing: data.isEditing,
+    })
+  }, [selected, data.id, data.fill, data.stroke, data.isEditing])
+
+  useEffect(() => {
+    if (!(selected && !data.isEditing)) return
+    debugAgentLog('A', 'CustomNode.tsx:toolbar', 'NodeToolbar mounted', { id: data.id })
+    return () => {
+      debugAgentLog('A', 'CustomNode.tsx:toolbar', 'NodeToolbar UNMOUNT', { id: data.id })
+    }
+  }, [selected, data.isEditing, data.id])
+  // #endregion
 
   useEffect(() => {
     if (data.isEditing && inputRef.current) {
@@ -147,7 +168,40 @@ export default function CustomNode({ data, selected }: { data: CustomNodeData; s
                 type="color"
                 className="toolbar-color-input"
                 value={fillValue}
+                onPointerDown={() => {
+                  // #region agent log
+                  debugAgentLog('A', 'CustomNode.tsx:fill', 'fill pointerdown', {
+                    id: data.id,
+                    selected,
+                    fillValue,
+                  })
+                  // #endregion
+                }}
+                onFocus={() => {
+                  // #region agent log
+                  debugAgentLog('E', 'CustomNode.tsx:fill', 'fill focus', {
+                    id: data.id,
+                    selected,
+                  })
+                  // #endregion
+                }}
+                onBlur={() => {
+                  // #region agent log
+                  debugAgentLog('A', 'CustomNode.tsx:fill', 'fill blur', {
+                    id: data.id,
+                    selected,
+                  })
+                  // #endregion
+                }}
                 onChange={(e) => {
+                  // #region agent log
+                  debugAgentLog('D', 'CustomNode.tsx:fill', 'fill onChange', {
+                    id: data.id,
+                    selected,
+                    value: e.target.value,
+                    stroke: data.stroke,
+                  })
+                  // #endregion
                   data.onChangeColor?.(data.id, {
                     fill: e.target.value,
                     stroke: data.stroke,
@@ -161,7 +215,40 @@ export default function CustomNode({ data, selected }: { data: CustomNodeData; s
                 type="color"
                 className="toolbar-color-input"
                 value={strokeValue}
+                onPointerDown={() => {
+                  // #region agent log
+                  debugAgentLog('A', 'CustomNode.tsx:stroke', 'stroke pointerdown', {
+                    id: data.id,
+                    selected,
+                    strokeValue,
+                  })
+                  // #endregion
+                }}
+                onFocus={() => {
+                  // #region agent log
+                  debugAgentLog('E', 'CustomNode.tsx:stroke', 'stroke focus', {
+                    id: data.id,
+                    selected,
+                  })
+                  // #endregion
+                }}
+                onBlur={() => {
+                  // #region agent log
+                  debugAgentLog('A', 'CustomNode.tsx:stroke', 'stroke blur', {
+                    id: data.id,
+                    selected,
+                  })
+                  // #endregion
+                }}
                 onChange={(e) => {
+                  // #region agent log
+                  debugAgentLog('D', 'CustomNode.tsx:stroke', 'stroke onChange', {
+                    id: data.id,
+                    selected,
+                    value: e.target.value,
+                    fill: data.fill,
+                  })
+                  // #endregion
                   data.onChangeColor?.(data.id, {
                     fill: data.fill,
                     stroke: e.target.value,

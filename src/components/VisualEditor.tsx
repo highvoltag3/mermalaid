@@ -27,6 +27,7 @@ import CustomNode from './visual-editor/CustomNode'
 import AddNodeToolbar from './visual-editor/AddNodeToolbar'
 import ContextMenu, { ContextMenuState } from './visual-editor/ContextMenu'
 import EdgeLabelEditor from './visual-editor/EdgeLabelEditor'
+import { debugAgentLog } from '../debugAgentLog'
 import './VisualEditor.css'
 
 interface VisualEditorProps {
@@ -127,6 +128,14 @@ function VisualEditorInner({ parsedDiagram, onCodeChange }: VisualEditorProps) {
           )
         },
         onChangeColor: (id: string, colors: { fill?: string; stroke?: string }) => {
+          // #region agent log
+          debugAgentLog('B', 'VisualEditor.tsx:onChangeColor', 'onChangeColor called', {
+            id,
+            colors,
+            prevFill: nodes.find((n) => n.id === id)?.data?.fill,
+            prevStroke: nodes.find((n) => n.id === id)?.data?.stroke,
+          })
+          // #endregion
           pushState({ nodes, edges })
           setNodes((nds) =>
             nds.map((n) =>
@@ -175,6 +184,24 @@ function VisualEditorInner({ parsedDiagram, onCodeChange }: VisualEditorProps) {
       [...parsedEdgeIds].some((id) => !edgeIds.has(id))
 
     if (!nodesChanged && !edgesChanged) return
+
+    // #region agent log
+    debugAgentLog('B', 'VisualEditor.tsx:syncFromCode', 'sync-from-code applying', {
+      nodesChanged,
+      edgesChanged,
+      preserve: preserveNodePositionsOnNextSyncRef.current,
+      parsedColors: parsedDiagram.nodes.map((n) => ({
+        id: n.id,
+        fill: n.fill,
+        stroke: n.stroke,
+      })),
+      currentColors: nodes.map((n) => ({
+        id: n.id,
+        fill: n.data.fill,
+        stroke: n.data.stroke,
+      })),
+    })
+    // #endregion
 
     isUpdatingFromCodeRef.current = true
 
@@ -233,7 +260,14 @@ function VisualEditorInner({ parsedDiagram, onCodeChange }: VisualEditorProps) {
 
   // Generate code when nodes/edges change from user actions
   useEffect(() => {
-    if (isUpdatingFromCodeRef.current) return
+    if (isUpdatingFromCodeRef.current) {
+      // #region agent log
+      debugAgentLog('C', 'VisualEditor.tsx:genCode', 'skip gen (updating from code)', {
+        isUpdatingFromCode: true,
+      })
+      // #endregion
+      return
+    }
 
     const code = generateMermaidCode(
       nodes,
@@ -241,6 +275,17 @@ function VisualEditorInner({ parsedDiagram, onCodeChange }: VisualEditorProps) {
       parsedDiagram.direction,
       parsedDiagram.type === 'unsupported' ? 'flowchart' : parsedDiagram.type
     )
+    // #region agent log
+    debugAgentLog('C', 'VisualEditor.tsx:genCode', 'generateMermaidCode', {
+      nodeColors: nodes.map((n) => ({
+        id: n.id,
+        fill: n.data.fill,
+        stroke: n.data.stroke,
+      })),
+      hasStyleLine: /style\s+\w+/.test(code),
+      styleSnippet: code.split('\n').filter((l) => l.includes('style')).join(' | '),
+    })
+    // #endregion
     onCodeChange(code)
   }, [nodes, edges, parsedDiagram.direction, parsedDiagram.type, onCodeChange])
 
