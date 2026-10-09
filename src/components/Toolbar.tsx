@@ -39,6 +39,7 @@ import AgentBridgePanel from './AgentBridgePanel'
 import { useAgentBridgeContext } from '../hooks/useAgentBridgeContext'
 import type { BridgeStatus } from '../agentBridge/bridgeClient'
 import { rebuildNativeAppMenu } from '../nativeAppMenu'
+import { UNTITLED_DOCUMENT_NAME } from '../utils/documentTitle'
 import { addRecentFile, recentFileLabel, removeRecentFile } from '../utils/recentFiles'
 import { copyPlainTextWhenReady, formatClipboardFailureMessage } from '../utils/copyToClipboard'
 import { saveBlob, saveFileKind, toastMessageForSaveResult, type SaveFileAcceptType, type SaveFileFilter } from '../utils/saveFile'
@@ -347,9 +348,14 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
 
   const handleSaveAs = async () => {
     try {
+      // Prefer the open document basename for dialogs/downloads; keep Untitled → diagram.mmd.
+      const suggestedName =
+        documentDisplayName && documentDisplayName !== UNTITLED_DOCUMENT_NAME
+          ? documentDisplayName
+          : 'diagram.mmd'
       const result = await saveBlob(new Blob([code], { type: 'text/plain' }), {
-        suggestedName: 'diagram.mmd',
-        defaultPath: documentPathRef.current ?? 'diagram.mmd',
+        suggestedName,
+        defaultPath: documentPathRef.current ?? suggestedName,
         filters: OPEN_FILTERS,
         acceptTypes: MERMAID_ACCEPT_TYPES,
       })
@@ -361,11 +367,12 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
           addRecentFile(result.path)
           await rebuildNativeAppMenu()
         } else if (result.fileName) {
+          // File System Access / Tauri save chose a real name — adopt it.
           setOpenedDocumentName(result.fileName)
         }
-      } else if (result.outcome === 'downloaded' && result.fileName) {
-        setOpenedDocumentName(result.fileName)
       }
+      // `downloaded` is a browser fallback with no file association; do not
+      // overwrite the open document name with the suggested download filename.
       const toastMsg = toastMessageForSaveResult(result, 'Saved')
       if (toastMsg) showToast(toastMsg)
     } catch (err) {
