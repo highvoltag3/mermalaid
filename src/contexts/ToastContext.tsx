@@ -1,7 +1,7 @@
 import { createContext, useState, useCallback, useRef, useEffect, ReactNode } from 'react'
 import Toast from '../components/Toast'
 
-export type ToastType = 'success' | 'error'
+export type ToastType = 'success' | 'error' | 'warning'
 
 interface ToastState {
   message: string
@@ -17,6 +17,7 @@ export const ToastContext = createContext<ToastContextType | undefined>(undefine
 
 const AUTO_DISMISS_MS = 3500
 const AUTO_DISMISS_ERROR_MS = 5000
+const AUTO_DISMISS_WARNING_MS = 4500
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toast, setToast] = useState<ToastState | null>(null)
@@ -32,7 +33,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const showToast = useCallback((message: string, type: ToastType = 'success') => {
     clearToastTimer()
     setToast({ message, type })
-    const ms = type === 'error' ? AUTO_DISMISS_ERROR_MS : AUTO_DISMISS_MS
+    const ms =
+      type === 'error' ? AUTO_DISMISS_ERROR_MS
+      : type === 'warning' ? AUTO_DISMISS_WARNING_MS
+      : AUTO_DISMISS_MS
     timeoutRef.current = setTimeout(() => {
       setToast(null)
       timeoutRef.current = null

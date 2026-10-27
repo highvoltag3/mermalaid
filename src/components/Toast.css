@@ -38,6 +38,11 @@
   color: var(--toast-error-fg, #fff);
 }
 
+.toast-warning {
+  background-color: var(--toast-warning-bg, #d97706);
+  color: var(--toast-warning-fg, #fff);
+}
+
 .toast-icon {
   flex-shrink: 0;
   width: 1.25rem;

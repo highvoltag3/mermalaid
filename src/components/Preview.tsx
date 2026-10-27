@@ -308,7 +308,7 @@ export default function Preview({
       }
 
       try {
-        const { svg, primaryError } = await renderMermaidPreviewWithFallback({
+        const { svg, primaryError, isRenderTimeError } = await renderMermaidPreviewWithFallback({
           diagramCode,
           isDark: isAppThemeDark(mermaidTheme),
           previewThemeOptions,
@@ -320,10 +320,14 @@ export default function Preview({
         if (renderIdRef.current === currentId && container) {
           container.innerHTML = normalizedSvg
           if (primaryError) {
-            setError(primaryError)
+            setError(isRenderTimeError ? null : primaryError)
             if (lastFallbackToastRef.current !== primaryError) {
               lastFallbackToastRef.current = primaryError
-              showToast(primaryError, 'error')
+              if (isRenderTimeError) {
+                showToast(`${primaryError} (rendered with workaround)`, 'warning')
+              } else {
+                showToast(primaryError, 'error')
+              }
             }
           } else {
             setError(null)

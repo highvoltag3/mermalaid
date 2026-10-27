@@ -38,6 +38,7 @@ import { extractMermaidCode, extractAllMermaidBlocks } from './utils/mermaidCode
 import { getAppThemeCssVars, isAppThemeDark } from './utils/mermaidThemes'
 import { recentFileLabel } from './utils/recentFiles'
 import { initNativeAppMenu, setNativeMenuHandlerSource } from './nativeAppMenu'
+import { DEFAULT_DIAGRAM } from './utils/sampleDiagrams'
 import './App.css'
 
 const SMARTPHONE_BREAKPOINT_PX = 768
@@ -163,7 +164,7 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
   const isSmartphoneLayout = useIsSmartphoneLayout()
   useVisualViewportCssVars(isSmartphoneLayout)
   const isKeyboardOpen = useIsKeyboardOpen(isSmartphoneLayout)
-  const [code, setCode] = useState('graph TD\n    A[Start] --> B{Decision}\n    B -->|Yes| C[Action 1]\n    B -->|No| D[Action 2]\n    C --> E[End]\n    D --> E')
+  const [code, setCode] = useState(DEFAULT_DIAGRAM)
   const [error, setError] = useState<string | null>(null)
   const [isEditorCollapsed, setIsEditorCollapsed] = useState(false)
   const [editorWidth, setEditorWidth] = useEditorWidth()
