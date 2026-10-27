@@ -50,14 +50,20 @@ function writeSkippedVersion(version: string): void {
   try {
     localStorage.setItem(SKIP_VERSION_STORAGE_KEY, version)
   } catch {
-    // ignore
+    // storage unavailable
   }
 }
 
-function isUpdaterConfigured(): boolean {
-  // The updater is considered configured if the pubkey is not the placeholder
-  // This check happens at runtime via a flag set during the check
-  return true
+interface TauriUpdateResult {
+  version: string
+  body: string | null
+  date: string | null
+  downloadAndInstall: (
+    onProgress?: (event: {
+      event: string
+      data: { contentLength?: number; chunkLength?: number }
+    }) => void
+  ) => Promise<void>
 }
 
 export function useUpdater(): UpdaterState {
@@ -66,7 +72,7 @@ export function useUpdater(): UpdaterState {
   const [progress, setProgress] = useState<UpdateProgress | null>(null)
   const [error, setError] = useState<string | null>(null)
   const checkedOnStartup = useRef(false)
-  const updateRef = useRef<unknown>(null)
+  const updateRef = useRef<TauriUpdateResult | null>(null)
 
   const checkForUpdates = useCallback(async (options?: { silent?: boolean }) => {
     if (!isTauri()) {
@@ -82,7 +88,7 @@ export function useUpdater(): UpdaterState {
 
     try {
       const { check } = await import('@tauri-apps/plugin-updater')
-      const result = await check()
+      const result = await check() as TauriUpdateResult | null
 
       if (!result) {
         setStatus('up-to-date')
@@ -138,7 +144,8 @@ export function useUpdater(): UpdaterState {
   }, [])
 
   const downloadAndInstall = useCallback(async () => {
-    if (!isTauri() || !updateRef.current) {
+    const updateResult = updateRef.current
+    if (!isTauri() || !updateResult) {
       return
     }
 
@@ -147,10 +154,6 @@ export function useUpdater(): UpdaterState {
     setError(null)
 
     try {
-      const updateResult = updateRef.current as {
-        downloadAndInstall: (onProgress?: (event: { event: string; data: { contentLength?: number; chunkLength?: number } }) => void) => Promise<void>
-      }
-      
       let totalDownloaded = 0
       
       await updateResult.downloadAndInstall((event) => {
@@ -200,7 +203,6 @@ export function useUpdater(): UpdaterState {
   // Startup check (silent, once per launch, with delay)
   useEffect(() => {
     if (checkedOnStartup.current || !isTauri()) return
-    if (!isUpdaterConfigured()) return
 
     checkedOnStartup.current = true
 
