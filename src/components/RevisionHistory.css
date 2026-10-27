@@ -1,0 +1,464 @@
+.revision-history-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: revision-fade-in 0.15s ease-out;
+}
+
+@keyframes revision-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.revision-history-panel {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  width: min(90vw, 900px);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  animation: revision-slide-up 0.2s ease-out;
+}
+
+@keyframes revision-slide-up {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.revision-history-dark {
+  background: #1e1e1e;
+  color: #e0e0e0;
+}
+
+.revision-history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e0e0e0;
+  flex-shrink: 0;
+}
+
+.revision-history-dark .revision-history-header {
+  border-bottom-color: #333;
+}
+
+.revision-history-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.revision-history-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.revision-history-close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: background-color 0.15s;
+}
+
+.revision-history-close-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.revision-history-dark .revision-history-close-btn {
+  color: #999;
+}
+
+.revision-history-dark .revision-history-close-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.revision-history-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.revision-history-list-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-right: 1px solid #e0e0e0;
+}
+
+.revision-history-dark .revision-history-list-container {
+  border-right-color: #333;
+}
+
+.revision-history-diff-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.revision-history-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e0e0e0;
+  flex-shrink: 0;
+}
+
+.revision-history-dark .revision-history-list-header {
+  border-bottom-color: #333;
+}
+
+.revision-history-count {
+  font-size: 13px;
+  color: #666;
+}
+
+.revision-history-dark .revision-history-count {
+  color: #999;
+}
+
+.revision-history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.revision-history-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: background-color 0.1s;
+}
+
+.revision-history-item:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.revision-history-item.selected {
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.revision-history-dark .revision-history-item {
+  border-bottom-color: #2a2a2a;
+}
+
+.revision-history-dark .revision-history-item:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.revision-history-dark .revision-history-item.selected {
+  background: rgba(59, 130, 246, 0.15);
+}
+
+.revision-history-item-main {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.revision-history-item-name {
+  font-weight: 500;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.revision-history-item-time {
+  font-size: 12px;
+  color: #888;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.revision-history-dark .revision-history-item-time {
+  color: #777;
+}
+
+.revision-history-item-preview {
+  font-size: 12px;
+  color: #666;
+  font-family: ui-monospace, Menlo, Monaco, Consolas, monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.revision-history-dark .revision-history-item-preview {
+  color: #888;
+}
+
+.revision-history-item-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.revision-history-btn {
+  padding: 6px 12px;
+  font-size: 13px;
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.revision-history-btn:hover {
+  background: #f5f5f5;
+  border-color: #bbb;
+}
+
+.revision-history-dark .revision-history-btn {
+  background: #2a2a2a;
+  border-color: #444;
+  color: #e0e0e0;
+}
+
+.revision-history-dark .revision-history-btn:hover {
+  background: #333;
+  border-color: #555;
+}
+
+.revision-history-btn-primary {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: #fff;
+}
+
+.revision-history-btn-primary:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.revision-history-dark .revision-history-btn-primary {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: #fff;
+}
+
+.revision-history-dark .revision-history-btn-primary:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.revision-history-btn-text {
+  background: transparent;
+  border: none;
+  color: #3b82f6;
+  padding: 4px 8px;
+}
+
+.revision-history-btn-text:hover {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.revision-history-dark .revision-history-btn-text {
+  color: #60a5fa;
+}
+
+.revision-history-btn-danger {
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.revision-history-btn-danger:hover {
+  background: #fef2f2;
+  border-color: #f87171;
+}
+
+.revision-history-dark .revision-history-btn-danger {
+  color: #f87171;
+  border-color: #7f1d1d;
+}
+
+.revision-history-dark .revision-history-btn-danger:hover {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.revision-history-empty {
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.revision-history-empty p {
+  margin: 0 0 8px;
+  color: #666;
+}
+
+.revision-history-empty-hint {
+  font-size: 13px;
+  color: #999;
+}
+
+.revision-history-dark .revision-history-empty p {
+  color: #999;
+}
+
+.revision-history-dark .revision-history-empty-hint {
+  color: #666;
+}
+
+.revision-history-name-input {
+  font-size: 14px;
+  font-weight: 500;
+  padding: 4px 8px;
+  border: 1px solid #3b82f6;
+  border-radius: 4px;
+  outline: none;
+  width: 100%;
+  max-width: 200px;
+}
+
+.revision-history-dark .revision-history-name-input {
+  background: #2a2a2a;
+  border-color: #3b82f6;
+  color: #e0e0e0;
+}
+
+/* Diff view styles */
+.revision-history-diff-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e0e0e0;
+  background: #f9f9f9;
+  font-size: 13px;
+  color: #666;
+  flex-shrink: 0;
+}
+
+.revision-history-dark .revision-history-diff-header {
+  background: #252525;
+  border-bottom-color: #333;
+  color: #999;
+}
+
+.revision-history-diff {
+  flex: 1;
+  overflow: auto;
+  font-family: ui-monospace, Menlo, Monaco, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.revision-history-diff-empty {
+  padding: 40px;
+  text-align: center;
+  color: #888;
+}
+
+.revision-history-diff-line {
+  display: flex;
+  white-space: pre;
+  min-height: 21px;
+}
+
+.revision-history-diff-line-added {
+  background: rgba(34, 197, 94, 0.15);
+}
+
+.revision-history-diff-line-removed {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.revision-history-dark .revision-history-diff-line-added {
+  background: rgba(34, 197, 94, 0.2);
+}
+
+.revision-history-dark .revision-history-diff-line-removed {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.revision-history-diff-gutter {
+  width: 40px;
+  text-align: right;
+  padding-right: 8px;
+  color: #999;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.revision-history-diff-marker {
+  width: 20px;
+  text-align: center;
+  color: #888;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.revision-history-diff-line-added .revision-history-diff-marker {
+  color: #22c55e;
+}
+
+.revision-history-diff-line-removed .revision-history-diff-marker {
+  color: #ef4444;
+}
+
+.revision-history-diff-content {
+  flex: 1;
+  padding-right: 16px;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .revision-history-panel {
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+    border-radius: 0;
+  }
+
+  .revision-history-body {
+    flex-direction: column;
+  }
+
+  .revision-history-list-container {
+    border-right: none;
+    border-bottom: 1px solid #e0e0e0;
+    max-height: 50%;
+  }
+
+  .revision-history-dark .revision-history-list-container {
+    border-bottom-color: #333;
+  }
+}
