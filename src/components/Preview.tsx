@@ -319,14 +319,15 @@ export default function Preview({
 
         if (renderIdRef.current === currentId && container) {
           container.innerHTML = normalizedSvg
+          // Fallback succeeded: clear error state so the editor doesn't show
+          // "Syntax Error" indicator or AI Fix nag. Show a warning toast instead.
+          setError(null)
           if (primaryError) {
-            setError(primaryError)
             if (lastFallbackToastRef.current !== primaryError) {
               lastFallbackToastRef.current = primaryError
-              showToast(primaryError, 'error')
+              showToast(`${primaryError} (rendered with workaround)`, 'warning')
             }
           } else {
-            setError(null)
             lastFallbackToastRef.current = null
           }
           setDiagramReady(true)
