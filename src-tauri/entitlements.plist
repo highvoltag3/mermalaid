@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Hardened runtime entitlements for notarization -->
+
+    <!-- Required for WebKit / JavaScript JIT compilation -->
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+
+    <!-- Required for unsigned executable memory (WebView rendering) -->
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+
+    <!-- Network client access for any external resources -->
+    <key>com.apple.security.network.client</key>
+    <true/>
+
+    <!-- File access through native dialogs (open/save) -->
+    <key>com.apple.security.files.user-selected.read-write</key>
+    <true/>
+</dict>
+</plist>

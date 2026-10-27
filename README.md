@@ -31,7 +31,6 @@ Visit [Mermalaid](https://mermalaid.com) to start creating Mermaid diagrams inst
 1. Download the latest release from [GitHub Releases](https://github.com/highvoltag3/mermalaid/releases)
 2. Install the `.dmg` file on macOS or the x64 `.exe` setup file on Windows
 3. Start creating unlimited free Mermaid diagrams
-4. 🏴‍☠️ IMPORTANT: Follow this step: [Installing the Desktop App](#installing-the-desktop-app).
 
 
 ## ✨ Features - Professional Editor, Zero Cost
@@ -195,33 +194,17 @@ The built app will be in `src-tauri/target/release/bundle/`:
 
 ### Installing the Desktop App
 
-**Important:** The app is currently unsigned (not code-signed), so macOS warns you the first time you open the app and Windows warns you when you run the installer.
-
 #### macOS
 
-macOS may report the app as "damaged" when you first open it.
+1. Download the `.dmg` file from [GitHub Releases](https://github.com/highvoltag3/mermalaid/releases)
+2. Open the DMG and drag **Mermalaid** to your **Applications** folder
+3. Double-click to open the app
 
-**Recommended Installation Method:**
-```bash
-# 1. Copy the app from the DMG to Applications
-cp -R /Volumes/Mermalaid_*/Mermalaid.app /Applications/
-
-# 2. Remove quarantine attribute
-xattr -cr /Applications/Mermalaid.app
-
-# 3. Open the app
-open /Applications/Mermalaid.app
-```
-
-**Alternative: System Settings**
-1. Open **System Settings** → **Privacy & Security**
-2. Scroll down to see the blocked app message
-3. Click **"Open Anyway"** next to the Mermalaid warning
-4. Click **"Open"** in the confirmation dialog
+The macOS app is signed and notarized, so it opens without Gatekeeper warnings.
 
 #### Windows
 
-The installer is unsigned, so SmartScreen shows "Windows protected your PC" when you run the `.exe`. Click **More info**, then **Run anyway** to continue with the installation.
+The Windows installer is unsigned, so SmartScreen shows "Windows protected your PC" when you run the `.exe`. Click **More info**, then **Run anyway** to continue with the installation.
 
 ## ⌨️ Keyboard Shortcuts
 
@@ -246,6 +229,7 @@ Areas where contributions are especially welcome:
 - [Project Structure](PROJECT_STRUCTURE.md) - Codebase organization and file structure
 - [Deployment Guide](docs/DEPLOYMENT.md) - Deploy the Mermalaid web version on Vercel
 - [AI Agent Integration](docs/AGENT_INTEGRATION.md) - Let Claude, Cursor & other MCP agents edit diagrams live
+- [macOS Signing Guide](docs/MACOS_SIGNING.md) - Configure code signing and notarization for releases (maintainers)
 
 ## 🐛 Troubleshooting
 
