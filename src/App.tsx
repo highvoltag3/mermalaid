@@ -19,6 +19,8 @@ import UpdateAvailableBanner from './components/UpdateAvailableBanner'
 import { useAgentBridge } from './hooks/useAgentBridge'
 import { AgentBridgeProvider } from './contexts/AgentBridgeContext'
 import { useExternalFileWatch } from './hooks/useExternalFileWatch'
+import { useRevisionHistory } from './hooks/useRevisionHistory'
+import RevisionHistory from './components/RevisionHistory'
 import type { LatestReleaseInfo } from './utils/githubRelease'
 import { isDiagramImportFileName } from './utils/diagramImportFiles'
 import {
@@ -188,6 +190,8 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
   const toolbarRef = useRef<ToolbarRef>(null)
   const agentBridge = useAgentBridge({ code, setCode, error })
   const { markSaved: markDocumentSaved } = useExternalFileWatch({ documentPath, code, setCode })
+  const [showRevisionHistory, setShowRevisionHistory] = useState(false)
+  const revisionHistory = useRevisionHistory({ code, onRestore: setCode })
 
   /** Keep the browser tab (and Tauri window) title in sync with the open file. */
   useEffect(() => {
@@ -451,6 +455,7 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
         documentDisplayName={documentDisplayName}
         onDocumentSaved={markDocumentSaved}
         isMobile={isSmartphoneLayout}
+        onHistoryOpen={() => setShowRevisionHistory(true)}
       />
       <div className="app-content" ref={appContentRef}>
         {showEditorPanel && (
@@ -519,6 +524,17 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
           </div>
         </div>
       )}
+      <RevisionHistory
+        isOpen={showRevisionHistory}
+        onClose={() => setShowRevisionHistory(false)}
+        revisions={revisionHistory.revisions}
+        currentCode={code}
+        onRestore={revisionHistory.restore}
+        onRename={revisionHistory.rename}
+        onDelete={revisionHistory.remove}
+        onClear={revisionHistory.clear}
+        onCreateCheckpoint={revisionHistory.createCheckpoint}
+      />
     </div>
     </AgentBridgeProvider>
   )

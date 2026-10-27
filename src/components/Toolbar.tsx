@@ -146,6 +146,8 @@ interface ToolbarProps {
   /** Smartphone bottom bar uses the same sheet; this toggles it. */
   showMobileActions?: boolean
   setShowMobileActions?: (open: boolean) => void
+  /** Callback to open the revision history panel */
+  onHistoryOpen?: () => void
 }
 
 export interface ToolbarRef {
@@ -194,6 +196,7 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
   isMobile = false,
   showMobileActions: showMobileActionsProp,
   setShowMobileActions: setShowMobileActionsProp,
+  onHistoryOpen,
 }, ref) => {
   const { mermaidTheme, setMermaidTheme } = useTheme()
   const { showToast } = useToast()
@@ -861,6 +864,9 @@ ${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</di
                 <button type="button" onClick={() => { handleNew(); setShowMobileActions(false) }} className="toolbar-btn">
                   New
                 </button>
+                <button type="button" onClick={() => { onHistoryOpen?.(); setShowMobileActions(false) }} className="toolbar-btn">
+                  History
+                </button>
                 <button
                   type="button"
                   disabled={isCopyingPrivateLink}
@@ -1010,6 +1016,9 @@ ${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</di
             </button>
             <button type="button" onClick={handleSave} className="toolbar-btn" title="Save (⌘S)">
               Save
+            </button>
+            <button type="button" onClick={onHistoryOpen} className="toolbar-btn" title="Revision History">
+              History
             </button>
             <span className="toolbar-document-name" title={documentDisplayName}>
               {documentDisplayName}
