@@ -6,6 +6,7 @@ import { ThemeProvider } from './contexts/ThemeContext'
 import { ToastProvider } from './contexts/ToastContext'
 import { useTheme } from './hooks/useTheme'
 import { useUpdateCheck } from './hooks/useUpdateCheck'
+import { useUpdater } from './hooks/useUpdater'
 import { useMountEffect } from './hooks/useMountEffect'
 import { useToast } from './hooks/useToast'
 import { useEditorWidth, clampEditorWidth, viewportWidth } from './hooks/useEditorWidth'
@@ -16,6 +17,7 @@ import Toolbar, { type ToolbarRef } from './components/Toolbar'
 import LandingPage from './components/LandingPage'
 import SlackLandingPage from './components/SlackLandingPage'
 import UpdateAvailableBanner from './components/UpdateAvailableBanner'
+import TauriUpdateBanner from './components/TauriUpdateBanner'
 import { useAgentBridge } from './hooks/useAgentBridge'
 import { AgentBridgeProvider } from './contexts/AgentBridgeContext'
 import { useExternalFileWatch } from './hooks/useExternalFileWatch'
@@ -141,6 +143,7 @@ function useIsKeyboardOpen(isSmartphoneLayout: boolean) {
 interface ReleaseBannerRouteProps {
   pendingRelease: LatestReleaseInfo | null
   onDismissPendingRelease: () => void
+  tauriUpdater: ReturnType<typeof useUpdater>
 }
 
 function PrivateShareHashRedirect() {
@@ -157,7 +160,7 @@ function PrivateShareHashRedirect() {
   return null
 }
 
-function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRouteProps) {
+function EditorView({ pendingRelease, onDismissPendingRelease, tauriUpdater }: ReleaseBannerRouteProps) {
   const { mermaidTheme } = useTheme()
   const { showToast } = useToast()
   const location = useLocation()
@@ -398,6 +401,7 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
       onDuplicate: () => void toolbarRef.current?.handleDuplicate(),
       onEngineVersion: () => toolbarRef.current?.handleEngineVersionInfo(),
       onShowLicense: () => toolbarRef.current?.handleShowLicenseInfo(),
+      onCheckForUpdates: () => void tauriUpdater.checkForUpdates(),
       onOpenRecent: (path) => void toolbarRef.current?.openPath(path),
     }))
     void initNativeAppMenu()
@@ -436,12 +440,16 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
       onDrop={handleDrop}
       onDragOver={handleDragOver}
     >
-      {pendingRelease && (
-        <UpdateAvailableBanner
-          update={pendingRelease}
-          onDismiss={onDismissPendingRelease}
-          variant="editor"
-        />
+      {isTauri() ? (
+        <TauriUpdateBanner updater={tauriUpdater} variant="editor" />
+      ) : (
+        pendingRelease && (
+          <UpdateAvailableBanner
+            update={pendingRelease}
+            onDismiss={onDismissPendingRelease}
+            variant="editor"
+          />
+        )
       )}
       <Toolbar
         ref={toolbarRef}
@@ -543,6 +551,7 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
 
 function App() {
   const { update: pendingRelease, dismiss: dismissPendingRelease } = useUpdateCheck()
+  const tauriUpdater = useUpdater()
 
   useMountEffect(() => {
     if (!isTauri()) return
@@ -573,6 +582,7 @@ function App() {
               <EditorView
                 pendingRelease={pendingRelease}
                 onDismissPendingRelease={dismissPendingRelease}
+                tauriUpdater={tauriUpdater}
               />
             }
           />

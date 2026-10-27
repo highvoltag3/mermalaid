@@ -32,6 +32,8 @@ Visit [Mermalaid](https://mermalaid.com) to start creating Mermaid diagrams inst
 2. Install the `.dmg` file on macOS or the x64 `.exe` setup file on Windows
 3. Start creating unlimited free Mermaid diagrams
 
+The desktop app includes **automatic updates**: when a new version is available, you'll see a banner to update with one click.
+
 
 ## ✨ Features - Professional Editor, Zero Cost
 
@@ -230,6 +232,7 @@ Areas where contributions are especially welcome:
 - [Deployment Guide](docs/DEPLOYMENT.md) - Deploy the Mermalaid web version on Vercel
 - [AI Agent Integration](docs/AGENT_INTEGRATION.md) - Let Claude, Cursor & other MCP agents edit diagrams live
 - [macOS Signing Guide](docs/MACOS_SIGNING.md) - Configure code signing and notarization for releases (maintainers)
+- [Auto-Updates Guide](docs/AUTO_UPDATES.md) - Configure in-app auto-updates for the desktop app (maintainers)
 
 ## 🐛 Troubleshooting
 

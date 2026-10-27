@@ -3,6 +3,17 @@
   "productName": "Mermalaid",
   "version": "1.9.0",
   "identifier": "com.mermalaid.desktop",
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDhEQzc4NDk1NDJFRDExQUIKUldTckVlMUNsWVRIalNMeVVGdExHc2dRVUpYK2xSWS9vRXJUZHVkamY2VVZtWEVkZDFVNHMzaGgK",
+      "endpoints": [
+        "https://github.com/highvoltag3/mermalaid/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  },
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:5173",
@@ -29,6 +40,7 @@
   "bundle": {
     "active": true,
     "category": "DeveloperTool",
+    "createUpdaterArtifacts": true,
     "fileAssociations": [
       {
         "ext": [

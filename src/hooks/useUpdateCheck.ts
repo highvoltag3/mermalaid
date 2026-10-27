@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { isTauri } from '@tauri-apps/api/core'
 import { getAppVersion } from '../utils/env'
 import {
   fetchLatestRelease,
@@ -48,6 +49,9 @@ export function useUpdateCheck(): UpdateCheckState {
   }, [])
 
   useEffect(() => {
+    // Desktop uses the native Tauri updater; skip GitHub API check
+    if (isTauri()) return
+
     const currentVersion = getAppVersion()
     const dismissed = readDismissedTag()
     const ac = new AbortController()

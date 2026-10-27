@@ -1,0 +1,48 @@
+.update-banner--status .update-banner-title {
+  font-weight: 500;
+}
+
+.update-banner--error {
+  --update-banner-bg: color-mix(in oklab, var(--color-canvas-default, #f6f8fa) 90%, #cf222e 10%);
+  --update-banner-border: color-mix(in oklab, var(--color-border-default, #d0d7de) 65%, #cf222e 35%);
+}
+
+.app-theme-dark .update-banner--error,
+.update-banner--error.update-banner--dark {
+  --update-banner-bg: color-mix(in oklab, var(--color-canvas-default, #0d1117) 88%, #f85149 12%);
+  --update-banner-border: color-mix(in oklab, var(--color-border-default, #30363d) 60%, #f85149 40%);
+}
+
+.update-banner-progress-container {
+  flex: 1;
+  min-width: 100px;
+  max-width: 200px;
+  height: 6px;
+  background: color-mix(in oklab, var(--update-banner-fg) 15%, transparent);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.update-banner-progress-bar {
+  height: 100%;
+  background: var(--update-banner-btn-bg);
+  border-radius: 3px;
+  transition: width 0.15s ease-out;
+}
+
+.update-banner-notes {
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .update-banner-progress-container {
+    max-width: 120px;
+  }
+  
+  .update-banner-notes {
+    display: none;
+  }
+}

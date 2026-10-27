@@ -27,3 +27,5 @@ tauri-plugin-dialog = "2.6"
 tauri-plugin-fs = { version = "2.4", features = ["watch"] }
 tauri-plugin-opener = "2.5"
 tauri-plugin-clipboard-manager = "2.3"
+tauri-plugin-updater = "2.7"
+tauri-plugin-process = "2.3"

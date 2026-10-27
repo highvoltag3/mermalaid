@@ -41,6 +41,8 @@
     "@tauri-apps/plugin-dialog": "^2.6.0",
     "@tauri-apps/plugin-fs": "^2.4.5",
     "@tauri-apps/plugin-opener": "^2.5.3",
+    "@tauri-apps/plugin-process": "^2.4.0",
+    "@tauri-apps/plugin-updater": "^2.14.0",
     "@vercel/analytics": "^2.0.1",
     "@vercel/firewall": "^1.2.1",
     "@vercel/functions": "^2.2.13",
