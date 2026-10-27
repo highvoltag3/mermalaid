@@ -98,10 +98,91 @@ jobs:
           which hdiutil && echo "✓ hdiutil found" || echo "✗ hdiutil not found"
           xcode-select -p && echo "✓ Xcode Command Line Tools found" || echo "✗ Xcode Command Line Tools not found"
 
+      # macOS code signing: import Developer ID certificate into a temporary keychain
+      - name: Import Apple Developer certificate
+        id: apple-cert
+        if: runner.os == 'macOS'
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          if [ -z "$APPLE_CERTIFICATE" ] || [ -z "$APPLE_CERTIFICATE_PASSWORD" ]; then
+            echo "::warning::macOS signing secrets not configured. The app will be unsigned."
+            echo "::warning::Set APPLE_CERTIFICATE and APPLE_CERTIFICATE_PASSWORD in repo secrets to enable signing."
+            echo "signing_enabled=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "Setting up code signing keychain..."
+
+          # Create a temporary keychain
+          KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          # Import certificate
+          CERT_PATH="$RUNNER_TEMP/certificate.p12"
+          echo "$APPLE_CERTIFICATE" | base64 --decode > "$CERT_PATH"
+
+          security import "$CERT_PATH" \
+            -P "$APPLE_CERTIFICATE_PASSWORD" \
+            -A \
+            -t cert \
+            -f pkcs12 \
+            -k "$KEYCHAIN_PATH"
+
+          # Allow codesign to access the keychain without prompting
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          # Add keychain to search list
+          security list-keychain -d user -s "$KEYCHAIN_PATH" login.keychain
+
+          # Verify certificate import
+          echo "Verifying certificate import..."
+          security find-identity -v -p codesigning "$KEYCHAIN_PATH"
+
+          # Clean up certificate file
+          rm -f "$CERT_PATH"
+
+          echo "✅ Code signing certificate imported successfully"
+          echo "signing_enabled=true" >> "$GITHUB_OUTPUT"
+          echo "keychain_path=$KEYCHAIN_PATH" >> "$GITHUB_OUTPUT"
+          echo "keychain_password=$KEYCHAIN_PASSWORD" >> "$GITHUB_OUTPUT"
+
+      # Check notarization secrets
+      - name: Check notarization configuration
+        id: notarization
+        if: runner.os == 'macOS' && steps.apple-cert.outputs.signing_enabled == 'true'
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          if [ -z "$APPLE_ID" ] || [ -z "$APPLE_PASSWORD" ] || [ -z "$APPLE_TEAM_ID" ]; then
+            echo "::warning::Notarization secrets not configured. The app will be signed but not notarized."
+            echo "::warning::Set APPLE_ID, APPLE_PASSWORD (app-specific), and APPLE_TEAM_ID to enable notarization."
+            echo "notarization_enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "✅ Notarization credentials configured"
+            echo "notarization_enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RUST_BACKTRACE: 1
+          # macOS signing (only set if certificate was imported)
+          APPLE_CERTIFICATE: ${{ runner.os == 'macOS' && steps.apple-cert.outputs.signing_enabled == 'true' && secrets.APPLE_CERTIFICATE || '' }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ runner.os == 'macOS' && steps.apple-cert.outputs.signing_enabled == 'true' && secrets.APPLE_CERTIFICATE_PASSWORD || '' }}
+          APPLE_SIGNING_IDENTITY: ${{ runner.os == 'macOS' && steps.apple-cert.outputs.signing_enabled == 'true' && secrets.APPLE_SIGNING_IDENTITY || '' }}
+          KEYCHAIN_PASSWORD: ${{ runner.os == 'macOS' && steps.apple-cert.outputs.signing_enabled == 'true' && steps.apple-cert.outputs.keychain_password || '' }}
+          # macOS notarization (only set if notarization is configured)
+          APPLE_ID: ${{ runner.os == 'macOS' && steps.notarization.outputs.notarization_enabled == 'true' && secrets.APPLE_ID || '' }}
+          APPLE_PASSWORD: ${{ runner.os == 'macOS' && steps.notarization.outputs.notarization_enabled == 'true' && secrets.APPLE_PASSWORD || '' }}
+          APPLE_TEAM_ID: ${{ runner.os == 'macOS' && steps.notarization.outputs.notarization_enabled == 'true' && secrets.APPLE_TEAM_ID || '' }}
         with:
           projectPath: ./
           # Upload to the draft created by prepare-release. tagName is kept so
@@ -125,6 +206,48 @@ jobs:
           else
             echo "✅ DMG file found: $DMG_PATH"
             ls -lh "$DMG_PATH"
+          fi
+
+      - name: Verify code signing and notarization
+        if: runner.os == 'macOS'
+        run: |
+          APP_PATH=$(find src-tauri/target -name "*.app" -type d 2>/dev/null | head -n 1)
+          DMG_PATH=$(find src-tauri/target -name "*.dmg" 2>/dev/null | head -n 1)
+
+          echo "=== Code Signing Status ==="
+          if [ -n "$APP_PATH" ]; then
+            echo "Checking signature on: $APP_PATH"
+            if codesign -dv --verbose=2 "$APP_PATH" 2>&1; then
+              echo "✅ App is signed"
+
+              # Check if signature is valid
+              if codesign --verify --deep --strict "$APP_PATH" 2>&1; then
+                echo "✅ Signature verification passed"
+              else
+                echo "⚠️ Signature verification had issues"
+              fi
+            else
+              echo "⚠️ App is not signed (expected if signing secrets are not configured)"
+            fi
+          fi
+
+          echo ""
+          echo "=== Notarization Status ==="
+          if [ -n "$DMG_PATH" ]; then
+            echo "Checking notarization staple on: $DMG_PATH"
+            if xcrun stapler validate "$DMG_PATH" 2>&1; then
+              echo "✅ DMG has notarization ticket stapled"
+            else
+              echo "⚠️ DMG is not notarized (expected if notarization secrets are not configured)"
+            fi
+          fi
+
+      - name: Cleanup signing keychain
+        if: runner.os == 'macOS' && steps.apple-cert.outputs.signing_enabled == 'true' && always()
+        run: |
+          KEYCHAIN_PATH="${{ steps.apple-cert.outputs.keychain_path }}"
+          if [ -n "$KEYCHAIN_PATH" ] && [ -f "$KEYCHAIN_PATH" ]; then
+            security delete-keychain "$KEYCHAIN_PATH" || true
           fi
 
       - name: Verify NSIS installer was created
