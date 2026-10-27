@@ -5,19 +5,60 @@
  * NOTE: The namespace/class collision error ("Setting X as parent of X would create a cycle")
  * occurs at render time, not parse time. Mermaid.parse() succeeds for such diagrams because
  * the syntax is valid; the semantic error surfaces only during diagram construction.
- * Our hasNamespaceClassCollision() check catches these statically before render.
  */
 import { describe, expect, it } from 'vitest'
 import mermaid from 'mermaid'
-import {
-  ALL_SAMPLE_DIAGRAMS,
-  BROKEN_CLASSDIAGRAM_DEMO,
-  DEFAULT_DIAGRAM,
-  NEW_DIAGRAM,
-  VALID_CLASSDIAGRAM_SAMPLE,
-  hasNamespaceClassCollision,
-  isBrokenClassDiagramDemo,
-} from './sampleDiagrams'
+import { DEFAULT_DIAGRAM, NEW_DIAGRAM } from './sampleDiagrams'
+
+/**
+ * Known broken classDiagram pattern that causes "Setting X as parent of X would
+ * create a cycle" error. Used for test coverage only.
+ */
+const BROKEN_CLASSDIAGRAM_DEMO = `classDiagram
+namespace Demo {
+  class Demo
+}`
+
+/** A valid classDiagram example for testing. */
+const VALID_CLASSDIAGRAM_SAMPLE = `classDiagram
+    class Animal {
+        +String name
+        +int age
+        +eat()
+    }
+    class Dog {
+        +bark()
+    }
+    Animal <|-- Dog`
+
+/** All samples that must render without error. */
+const ALL_SAMPLE_DIAGRAMS: { name: string; code: string }[] = [
+  { name: 'default-diagram', code: DEFAULT_DIAGRAM },
+  { name: 'new-diagram', code: NEW_DIAGRAM },
+  { name: 'classDiagram-sample', code: VALID_CLASSDIAGRAM_SAMPLE },
+]
+
+/** Checks if code matches the known broken classDiagram pattern. */
+function isBrokenClassDiagramDemo(code: string): boolean {
+  const normalized = code.trim().replace(/\s+/g, ' ')
+  const brokenNormalized = BROKEN_CLASSDIAGRAM_DEMO.trim().replace(/\s+/g, ' ')
+  return normalized === brokenNormalized
+}
+
+/** Checks if code contains a namespace/class collision pattern. */
+function hasNamespaceClassCollision(code: string): boolean {
+  if (!code.toLowerCase().includes('classdiagram')) return false
+
+  const namespaceMatch = code.match(/namespace\s+(\w+)\s*\{/i)
+  if (!namespaceMatch) return false
+
+  const namespaceName = namespaceMatch[1]
+  const classInsideNamespace = new RegExp(
+    `namespace\\s+${namespaceName}\\s*\\{[^}]*\\bclass\\s+${namespaceName}\\b`,
+    'i',
+  )
+  return classInsideNamespace.test(code)
+}
 
 describe('sampleDiagrams', () => {
   describe('ALL_SAMPLE_DIAGRAMS', () => {
@@ -72,13 +113,11 @@ describe('sampleDiagrams', () => {
     })
 
     it('parses as valid syntax (error occurs at render time)', async () => {
-      // The parent cycle error happens during diagram construction, not parsing.
-      // This test documents that mermaid.parse() alone doesn't catch this issue.
       const result = await mermaid.parse(BROKEN_CLASSDIAGRAM_DEMO)
       expect(result).toMatchObject({ diagramType: 'class' })
     })
 
-    it('has namespace/class collision (caught by our static check)', () => {
+    it('has namespace/class collision (caught by static check)', () => {
       expect(hasNamespaceClassCollision(BROKEN_CLASSDIAGRAM_DEMO)).toBe(true)
     })
   })

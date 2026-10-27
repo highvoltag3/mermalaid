@@ -320,20 +320,12 @@ export default function Preview({
         if (renderIdRef.current === currentId && container) {
           container.innerHTML = normalizedSvg
           if (primaryError) {
-            if (isRenderTimeError) {
-              // Render-time error (syntax valid, render failed): suppress error state,
-              // show warning toast. This handles cases like namespace/class cycle.
-              setError(null)
-              if (lastFallbackToastRef.current !== primaryError) {
-                lastFallbackToastRef.current = primaryError
+            setError(isRenderTimeError ? null : primaryError)
+            if (lastFallbackToastRef.current !== primaryError) {
+              lastFallbackToastRef.current = primaryError
+              if (isRenderTimeError) {
                 showToast(`${primaryError} (rendered with workaround)`, 'warning')
-              }
-            } else {
-              // Genuine syntax error: keep error state even though fallback rendered.
-              // beautiful-mermaid is lenient and can render invalid syntax.
-              setError(primaryError)
-              if (lastFallbackToastRef.current !== primaryError) {
-                lastFallbackToastRef.current = primaryError
+              } else {
                 showToast(primaryError, 'error')
               }
             }
