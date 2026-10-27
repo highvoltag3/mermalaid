@@ -5,15 +5,21 @@ import {
 } from './renderMermaidPreviewWithFallback'
 
 const {
+  mermaidParse,
   renderOfficialMermaidPreview,
   renderBeautifulMermaid,
   normalizeMermaidForBeautifulMermaid,
   isMermaidAboutKeywordOnly,
 } = vi.hoisted(() => ({
+  mermaidParse: vi.fn(),
   renderOfficialMermaidPreview: vi.fn(),
   renderBeautifulMermaid: vi.fn(),
   normalizeMermaidForBeautifulMermaid: vi.fn((code: string) => code),
   isMermaidAboutKeywordOnly: vi.fn(() => false),
+}))
+
+vi.mock('mermaid', () => ({
+  default: { parse: mermaidParse },
 }))
 
 vi.mock('./officialMermaidPreview', () => ({
@@ -45,6 +51,7 @@ describe('renderMermaidPreviewWithFallback', () => {
     vi.clearAllMocks()
     normalizeMermaidForBeautifulMermaid.mockImplementation((code: string) => code)
     isMermaidAboutKeywordOnly.mockReturnValue(false)
+    mermaidParse.mockResolvedValue({ diagramType: 'flowchart' })
   })
 
   it('returns svg with no primaryError when official render succeeds', async () => {
@@ -52,26 +59,47 @@ describe('renderMermaidPreviewWithFallback', () => {
 
     const result = await renderMermaidPreviewWithFallback(baseOptions)
 
-    expect(result).toEqual({ svg: '<svg>ok</svg>', primaryError: null })
+    expect(result).toEqual({ svg: '<svg>ok</svg>', primaryError: null, isRenderTimeError: false })
     expect(renderBeautifulMermaid).not.toHaveBeenCalled()
   })
 
-  it('keeps primaryError when official fails and beautiful-mermaid fallback succeeds', async () => {
+  it('sets isRenderTimeError=true when parse succeeds but render fails (namespace/class cycle)', async () => {
     renderOfficialMermaidPreview.mockRejectedValue(
-      new Error('Namespace and class share the same name'),
+      new Error('Setting Demo as parent of Demo would create a cycle'),
     )
     renderBeautifulMermaid.mockResolvedValue(
       '<svg xmlns="http://www.w3.org/2000/svg"><g class="edgePath"><path stroke-width="1" d="M0 0"/></g></svg>',
     )
+    // Parse succeeds (syntax is valid)
+    mermaidParse.mockResolvedValue({ diagramType: 'class' })
 
     const result = await renderMermaidPreviewWithFallback({
       ...baseOptions,
-      diagramCode: 'classDiagram\nnamespace Foo {\n  class Foo\n}',
+      diagramCode: 'classDiagram\nnamespace Demo {\n  class Demo\n}',
     })
 
     expect(result.svg).toContain('stroke-width="2"')
-    expect(result.primaryError).toBe('Namespace and class share the same name')
+    expect(result.primaryError).toBe('Setting Demo as parent of Demo would create a cycle')
+    expect(result.isRenderTimeError).toBe(true)
     expect(renderBeautifulMermaid).toHaveBeenCalled()
+  })
+
+  it('sets isRenderTimeError=false when parse fails (genuine syntax error)', async () => {
+    renderOfficialMermaidPreview.mockRejectedValue(
+      new Error('Lexical error on line 3'),
+    )
+    renderBeautifulMermaid.mockResolvedValue('<svg>lenient render</svg>')
+    // Parse fails (syntax is invalid)
+    mermaidParse.mockRejectedValue(new Error('Lexical error on line 3'))
+
+    const result = await renderMermaidPreviewWithFallback({
+      ...baseOptions,
+      diagramCode: 'classDiagram\nclass Demo}}',
+    })
+
+    expect(result.svg).toBe('<svg>lenient render</svg>')
+    expect(result.primaryError).toBe('Lexical error on line 3')
+    expect(result.isRenderTimeError).toBe(false)
   })
 
   it('clears primaryError when compat-normalized official render succeeds', async () => {
@@ -92,6 +120,7 @@ describe('renderMermaidPreviewWithFallback', () => {
     expect(result).toEqual({
       svg: '<svg>compat</svg>',
       primaryError: null,
+      isRenderTimeError: false,
     })
     expect(renderBeautifulMermaid).not.toHaveBeenCalled()
   })

@@ -308,7 +308,7 @@ export default function Preview({
       }
 
       try {
-        const { svg, primaryError } = await renderMermaidPreviewWithFallback({
+        const { svg, primaryError, isRenderTimeError } = await renderMermaidPreviewWithFallback({
           diagramCode,
           isDark: isAppThemeDark(mermaidTheme),
           previewThemeOptions,
@@ -319,15 +319,26 @@ export default function Preview({
 
         if (renderIdRef.current === currentId && container) {
           container.innerHTML = normalizedSvg
-          // Fallback succeeded: clear error state so the editor doesn't show
-          // "Syntax Error" indicator or AI Fix nag. Show a warning toast instead.
-          setError(null)
           if (primaryError) {
-            if (lastFallbackToastRef.current !== primaryError) {
-              lastFallbackToastRef.current = primaryError
-              showToast(`${primaryError} (rendered with workaround)`, 'warning')
+            if (isRenderTimeError) {
+              // Render-time error (syntax valid, render failed): suppress error state,
+              // show warning toast. This handles cases like namespace/class cycle.
+              setError(null)
+              if (lastFallbackToastRef.current !== primaryError) {
+                lastFallbackToastRef.current = primaryError
+                showToast(`${primaryError} (rendered with workaround)`, 'warning')
+              }
+            } else {
+              // Genuine syntax error: keep error state even though fallback rendered.
+              // beautiful-mermaid is lenient and can render invalid syntax.
+              setError(primaryError)
+              if (lastFallbackToastRef.current !== primaryError) {
+                lastFallbackToastRef.current = primaryError
+                showToast(primaryError, 'error')
+              }
             }
           } else {
+            setError(null)
             lastFallbackToastRef.current = null
           }
           setDiagramReady(true)

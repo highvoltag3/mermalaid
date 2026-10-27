@@ -1,3 +1,4 @@
+import mermaid from 'mermaid'
 import { renderMermaid as renderBeautifulMermaid } from 'beautiful-mermaid'
 import { isMermaidAboutKeywordOnly } from './mermalaidInfoText'
 import { ensureReadableLineColor } from './colorContrast'
@@ -26,6 +27,12 @@ export type MermaidPreviewRenderResult = {
   svg: string
   /** Set when the primary official render failed and a fallback produced the SVG. */
   primaryError: string | null
+  /**
+   * True when primaryError is a render-time issue (syntax is valid but render failed,
+   * e.g. namespace/class cycle). The caller can suppress the error indicator in this case.
+   * False when primaryError is a genuine syntax/parse error that should be shown.
+   */
+  isRenderTimeError: boolean
 }
 
 /** Thrown when the fallback path should show the built-in about panel instead of an SVG. */
@@ -64,7 +71,7 @@ export async function renderMermaidPreviewWithFallback(options: {
       previewThemeOptions,
       officialYamlConfig,
     )
-    return { svg, primaryError: null }
+    return { svg, primaryError: null, isRenderTimeError: false }
   } catch (primaryErr) {
     const primaryError =
       primaryErr instanceof Error ? primaryErr.message : 'Invalid Mermaid syntax'
@@ -79,7 +86,7 @@ export async function renderMermaidPreviewWithFallback(options: {
         )
         // Compat rewrite still uses official Mermaid. Do not treat it as a
         // silent fallback that should keep the original error banner.
-        return { svg, primaryError: null }
+        return { svg, primaryError: null, isRenderTimeError: false }
       } catch {
         // Continue to about-panel / beautiful-mermaid fallbacks.
       }
@@ -89,6 +96,20 @@ export async function renderMermaidPreviewWithFallback(options: {
       throw new MermaidAboutKeywordFallback()
     }
 
+    // Check if syntax is valid (parse succeeds) but render failed.
+    // If parse succeeds, it's a render-time error (e.g. namespace/class cycle)
+    // that can be recovered by fallback without showing SYNTAX ERROR.
+    // If parse fails, it's a genuine syntax error that should be shown.
+    let isRenderTimeError = false
+    try {
+      await mermaid.parse(diagramCode)
+      // Parse succeeded: this is a render-time error, not a syntax error
+      isRenderTimeError = true
+    } catch {
+      // Parse failed: genuine syntax error
+      isRenderTimeError = false
+    }
+
     const themeOptions = withReadableLine(
       yamlConfig
         ? mapMermaidConfigToThemeOptions(yamlConfig)
@@ -96,7 +117,7 @@ export async function renderMermaidPreviewWithFallback(options: {
     )
     try {
       const svg = await renderBeautifulMermaid(normalizedForCompat, themeOptions)
-      return { svg: boostMermaidEdgeStrokes(svg), primaryError }
+      return { svg: boostMermaidEdgeStrokes(svg), primaryError, isRenderTimeError }
     } catch {
       // Prefer the original official Mermaid error when every path fails.
       throw primaryErr instanceof Error ? primaryErr : new Error(primaryError)
