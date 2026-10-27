@@ -12,14 +12,20 @@ Mermalaid desktop supports automatic in-app updates through the Tauri updater pl
 
 The updater only runs in the desktop app. The web version shows a simpler banner linking to the GitHub releases page.
 
-## Setup (Maintainer Guide)
+## Current Configuration
 
-### 1. Generate a Signing Keypair
+The updater is fully configured:
+- **Public key**: Committed in `src-tauri/tauri.conf.json`
+- **Private key**: Stored in GitHub secrets (`TAURI_SIGNING_PRIVATE_KEY`)
+- **Endpoint**: `https://github.com/highvoltag3/mermalaid/releases/latest/download/latest.json`
 
-The updater requires a keypair to sign updates and verify authenticity.
+## Setup (for new maintainers or key rotation)
+
+If you need to regenerate the signing keypair:
+
+### 1. Generate a New Keypair
 
 ```bash
-# Generate keypair (saves private key to file, prints public key)
 npm run tauri signer generate -- -w ~/.tauri/mermalaid.key
 ```
 
@@ -27,28 +33,13 @@ This creates:
 - `~/.tauri/mermalaid.key` (private key, keep secret)
 - `~/.tauri/mermalaid.key.pub` (public key)
 
-The public key is printed to stdout and also saved to the `.pub` file.
+### 2. Update the Public Key
 
-### 2. Configure the Public Key
+Replace the `pubkey` value in `src-tauri/tauri.conf.json` with the new base64 public key.
 
-Open `src-tauri/tauri.conf.json` and replace the placeholder:
+### 3. Update GitHub Secrets
 
-```json
-{
-  "plugins": {
-    "updater": {
-      "pubkey": "REPLACE_WITH_YOUR_PUBLIC_KEY",
-      ...
-    }
-  }
-}
-```
-
-Paste the public key (starts with `dW50...` or similar base64) in place of `REPLACE_WITH_YOUR_PUBLIC_KEY`.
-
-### 3. Add GitHub Secrets
-
-Add these secrets to your GitHub repository (Settings > Secrets and variables > Actions):
+Update these secrets in the repository (Settings > Secrets and variables > Actions):
 
 | Secret | Value |
 |--------|-------|
@@ -146,10 +137,6 @@ For universal macOS builds, both `darwin-aarch64` and `darwin-x86_64` point to t
 4. Click "Update & Restart" and verify the app updates
 
 ## Troubleshooting
-
-### "Auto-updates are not configured for this build"
-
-The public key in `tauri.conf.json` is still the placeholder. Replace `REPLACE_WITH_YOUR_PUBLIC_KEY` with your actual public key.
 
 ### No update banner appears
 
