@@ -170,6 +170,23 @@ jobs:
             echo "notarization_enabled=true" >> "$GITHUB_OUTPUT"
           fi
 
+      # Check if Tauri updater signing keys are configured
+      - name: Check updater signing configuration
+        id: updater-signing
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        shell: bash
+        run: |
+          if [ -z "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            echo "::warning::TAURI_SIGNING_PRIVATE_KEY not configured. Updater artifacts will be skipped."
+            echo "::warning::Generate a keypair with: npm run tauri signer generate -- -w ~/.tauri/mermalaid.key"
+            echo "::warning::Add the private key to TAURI_SIGNING_PRIVATE_KEY secret and paste the public key in tauri.conf.json."
+            echo "updater_enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "✅ Updater signing key configured"
+            echo "updater_enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -183,6 +200,9 @@ jobs:
           APPLE_ID: ${{ runner.os == 'macOS' && steps.notarization.outputs.notarization_enabled == 'true' && secrets.APPLE_ID || '' }}
           APPLE_PASSWORD: ${{ runner.os == 'macOS' && steps.notarization.outputs.notarization_enabled == 'true' && secrets.APPLE_PASSWORD || '' }}
           APPLE_TEAM_ID: ${{ runner.os == 'macOS' && steps.notarization.outputs.notarization_enabled == 'true' && secrets.APPLE_TEAM_ID || '' }}
+          # Tauri updater signing (only set if configured)
+          TAURI_SIGNING_PRIVATE_KEY: ${{ steps.updater-signing.outputs.updater_enabled == 'true' && secrets.TAURI_SIGNING_PRIVATE_KEY || '' }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ steps.updater-signing.outputs.updater_enabled == 'true' && secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD || '' }}
         with:
           projectPath: ./
           # Upload to the draft created by prepare-release. tagName is kept so
@@ -191,6 +211,8 @@ jobs:
           releaseId: ${{ needs.prepare-release.outputs.release_id }}
           tagName: ${{ github.ref }}
           args: ${{ matrix.args }}
+          # Generate updater JSON and .sig files when signing key is available
+          includeUpdaterJson: ${{ steps.updater-signing.outputs.updater_enabled == 'true' }}
 
       - name: Verify DMG was created
         if: runner.os == 'macOS'
@@ -260,3 +282,33 @@ jobs:
           }
           Write-Host "NSIS installer found: $($installer.FullName)"
           Get-Item $installer.FullName | Format-List FullName, Length, LastWriteTime
+
+      # Verify updater artifacts when signing is enabled
+      - name: Verify updater artifacts
+        if: steps.updater-signing.outputs.updater_enabled == 'true'
+        shell: bash
+        run: |
+          echo "=== Updater Artifacts ==="
+          
+          # Check for .sig files
+          SIG_FILES=$(find src-tauri/target -name "*.sig" 2>/dev/null || true)
+          if [ -n "$SIG_FILES" ]; then
+            echo "✅ Signature files found:"
+            echo "$SIG_FILES" | while read f; do
+              ls -lh "$f" 2>/dev/null || true
+            done
+          else
+            echo "⚠️ No .sig files found (updater artifacts may not have been generated)"
+          fi
+          
+          # Check for latest.json
+          LATEST_JSON=$(find src-tauri/target -name "latest.json" 2>/dev/null | head -n 1)
+          if [ -n "$LATEST_JSON" ]; then
+            echo ""
+            echo "✅ latest.json found: $LATEST_JSON"
+            echo "Contents:"
+            cat "$LATEST_JSON"
+          else
+            echo "⚠️ latest.json not found in target directory"
+            echo "Note: tauri-action uploads latest.json directly to the release"
+          fi

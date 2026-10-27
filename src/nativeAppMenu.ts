@@ -19,6 +19,7 @@ export type NativeMenuHandlers = {
   onDuplicate: () => void
   onEngineVersion: () => void
   onShowLicense: () => void
+  onCheckForUpdates: () => void
   onOpenRecent: (path: string) => void
 }
 
@@ -32,6 +33,7 @@ let getHandlers: () => NativeMenuHandlers = () => ({
   onDuplicate: () => {},
   onEngineVersion: () => {},
   onShowLicense: () => {},
+  onCheckForUpdates: () => {},
   onOpenRecent: () => {},
 })
 
@@ -137,6 +139,12 @@ async function buildAndSetAppMenu(): Promise<void> {
         item: {
           About: aboutMetadata,
         },
+      }),
+      await PredefinedMenuItem.new({ item: 'Separator' }),
+      await MenuItem.new({
+        id: 'app_check_for_updates',
+        text: 'Check for Updates…',
+        action: () => getHandlers().onCheckForUpdates(),
       }),
       await PredefinedMenuItem.new({ item: 'Separator' }),
       await PredefinedMenuItem.new({ item: 'Hide' }),
