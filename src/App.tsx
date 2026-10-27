@@ -38,6 +38,10 @@ import { extractMermaidCode, extractAllMermaidBlocks } from './utils/mermaidCode
 import { getAppThemeCssVars, isAppThemeDark } from './utils/mermaidThemes'
 import { recentFileLabel } from './utils/recentFiles'
 import { initNativeAppMenu, setNativeMenuHandlerSource } from './nativeAppMenu'
+import {
+  DEFAULT_DIAGRAM,
+  isBrokenClassDiagramDemo,
+} from './utils/sampleDiagrams'
 import './App.css'
 
 const SMARTPHONE_BREAKPOINT_PX = 768
@@ -163,7 +167,7 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
   const isSmartphoneLayout = useIsSmartphoneLayout()
   useVisualViewportCssVars(isSmartphoneLayout)
   const isKeyboardOpen = useIsKeyboardOpen(isSmartphoneLayout)
-  const [code, setCode] = useState('graph TD\n    A[Start] --> B{Decision}\n    B -->|Yes| C[Action 1]\n    B -->|No| D[Action 2]\n    C --> E[End]\n    D --> E')
+  const [code, setCode] = useState(DEFAULT_DIAGRAM)
   const [error, setError] = useState<string | null>(null)
   const [isEditorCollapsed, setIsEditorCollapsed] = useState(false)
   const [editorWidth, setEditorWidth] = useEditorWidth()
@@ -250,7 +254,14 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
     if (isTauri()) return
     if (isPrivateShareHash(window.location.hash)) return
     const saved = localStorage.getItem('mermalaid-draft')
-    if (saved) setCode(saved)
+    if (saved) {
+      // Migrate away from broken classDiagram demo that causes parent cycle error
+      if (isBrokenClassDiagramDemo(saved)) {
+        localStorage.removeItem('mermalaid-draft')
+        return
+      }
+      setCode(saved)
+    }
   })
 
   /** Web: react to private `#v1…` on load and when the hash changes while staying on /editor. */
@@ -273,7 +284,7 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
         showToast(getPrivateShareErrorMessage(e), 'error')
         clearUrlFragment()
         const saved = localStorage.getItem('mermalaid-draft')
-        if (saved) setCode(saved)
+        if (saved && !isBrokenClassDiagramDemo(saved)) setCode(saved)
       }
     })()
 
@@ -346,7 +357,14 @@ function EditorView({ pendingRelease, onDismissPendingRelease }: ReleaseBannerRo
       const opened = await openQueuedPaths()
       if (opened) return
       const saved = localStorage.getItem('mermalaid-draft')
-      if (saved) setCode(saved)
+      if (saved) {
+        // Migrate away from broken classDiagram demo that causes parent cycle error
+        if (isBrokenClassDiagramDemo(saved)) {
+          localStorage.removeItem('mermalaid-draft')
+          return
+        }
+        setCode(saved)
+      }
     }
 
     void restoreDraftIfNoOsFile()

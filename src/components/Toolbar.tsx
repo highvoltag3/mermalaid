@@ -36,6 +36,7 @@ import {
 } from '../utils/mermalaidInfoText'
 import Settings from './Settings'
 import AgentBridgePanel from './AgentBridgePanel'
+import { NEW_DIAGRAM } from '../utils/sampleDiagrams'
 import { useAgentBridgeContext } from '../hooks/useAgentBridgeContext'
 import type { BridgeStatus } from '../agentBridge/bridgeClient'
 import { rebuildNativeAppMenu } from '../nativeAppMenu'
@@ -243,7 +244,7 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
 
   const handleNew = () => {
     if (confirm('Create a new diagram? Unsaved changes will be lost.')) {
-      setCode('graph TD\n    A[Start] --> B[End]')
+      setCode(NEW_DIAGRAM)
       setDocumentPath(null)
     }
   }
