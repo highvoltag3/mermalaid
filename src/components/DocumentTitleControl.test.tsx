@@ -1,0 +1,121 @@
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { type ReactElement } from 'react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { ThemeProvider } from '../contexts/ThemeContext'
+import DocumentTitleControl from './DocumentTitleControl'
+
+function renderControl(ui: ReactElement) {
+  return render(<ThemeProvider>{ui}</ThemeProvider>)
+}
+
+describe('DocumentTitleControl', () => {
+  afterEach(() => {
+    cleanup()
+  })
+
+  it('shows the document stem with Edited/Saved and renames on Enter', async () => {
+    const user = userEvent.setup()
+    const onRename = vi.fn(async () => true)
+
+    renderControl(
+      <DocumentTitleControl
+        documentDisplayName="flow.mmd"
+        documentPath={null}
+        isEdited
+        onRename={onRename}
+        placement="overlay"
+      />,
+    )
+
+    expect(screen.getByRole('button', { name: 'Rename flow' })).toHaveTextContent(
+      'flow \u2014 Edited',
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Rename flow' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Rename document' })
+    const input = await screen.findByLabelText('Name:')
+    expect(input).toHaveValue('flow')
+    expect(dialog).toHaveTextContent('Status:')
+    expect(dialog).toHaveTextContent('Edited - not saved yet')
+    expect(dialog).toHaveTextContent('Where:')
+    expect(dialog).toHaveTextContent('Not saved to disk yet')
+
+    await user.clear(input)
+    await user.type(input, 'checkout-flow{Enter}')
+
+    await waitFor(() => {
+      expect(onRename).toHaveBeenCalledWith('checkout-flow')
+    })
+  })
+
+  it('cancels with Escape without renaming', async () => {
+    const user = userEvent.setup()
+    const onRename = vi.fn(async () => true)
+
+    renderControl(
+      <DocumentTitleControl
+        documentDisplayName="saved-flow.mmd"
+        documentPath="/Users/me/Documents/saved-flow.mmd"
+        isEdited={false}
+        onRename={onRename}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Rename saved-flow' }))
+    expect(await screen.findByText('~/Documents')).toBeInTheDocument()
+    await user.keyboard('{Escape}')
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: 'Rename document' })).not.toBeInTheDocument()
+    })
+    expect(onRename).not.toHaveBeenCalled()
+  })
+
+  it('portals the popover to document.body above app chrome', async () => {
+    const user = userEvent.setup()
+    const { container } = renderControl(
+      <div className="app">
+        <DocumentTitleControl
+          documentDisplayName="flow.mmd"
+          documentPath={null}
+          isEdited
+          onRename={async () => true}
+        />
+        <div className="editor-fake" style={{ position: 'relative', zIndex: 50 }}>
+          underlay
+        </div>
+      </div>,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Rename flow' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Rename document' })
+    expect(dialog.parentElement).toBe(document.body)
+    expect(container.querySelector('.app')?.contains(dialog)).toBe(false)
+    expect(getComputedStyle(dialog).position).toBe('fixed')
+  })
+
+  it('keeps the popover open when rename returns false', async () => {
+    const user = userEvent.setup()
+    const onRename = vi.fn(async () => false)
+
+    renderControl(
+      <DocumentTitleControl
+        documentDisplayName="flow.mmd"
+        documentPath={null}
+        isEdited
+        onRename={onRename}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Rename flow' }))
+    const input = await screen.findByLabelText('Name:')
+    await user.clear(input)
+    await user.type(input, 'bad/name{Enter}')
+
+    await waitFor(() => {
+      expect(onRename).toHaveBeenCalled()
+    })
+    expect(screen.getByRole('dialog', { name: 'Rename document' })).toBeInTheDocument()
+  })
+})

@@ -28,7 +28,8 @@ test.describe('Editor toolbar (web)', () => {
   test('Save downloads diagram.mmd', async ({ page }) => {
     const [download] = await Promise.all([
       page.waitForEvent('download'),
-      page.getByRole('button', { name: 'Save' }).click(),
+      // exact: true — the document title "… — Saved" also matches name: 'Save'
+      page.getByRole('button', { name: 'Save', exact: true }).click(),
     ])
     expect(download.suggestedFilename()).toBe('diagram.mmd')
     await expect(page.getByText('Saved diagram.mmd')).toBeVisible()
