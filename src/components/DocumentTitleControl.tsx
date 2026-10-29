@@ -58,8 +58,10 @@ export default function DocumentTitleControl({
   const titleId = useId()
   const nameFieldId = useId()
 
+  const stem = getDocumentTitleStem(documentDisplayName)
   const label = formatDocumentTitleControlLabel(documentDisplayName, isEdited)
   const whereLabel = getDocumentDirectoryLabel(documentPath)
+  const triggerAriaLabel = `Rename ${stem}`
 
   const close = useCallback(() => {
     setOpen(false)
@@ -253,6 +255,7 @@ export default function DocumentTitleControl({
         ref={triggerRef}
         type="button"
         className="document-title-trigger"
+        aria-label={triggerAriaLabel}
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-controls={open ? titleId : undefined}

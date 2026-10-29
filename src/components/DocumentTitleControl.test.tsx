@@ -28,11 +28,11 @@ describe('DocumentTitleControl', () => {
       />,
     )
 
-    expect(screen.getByRole('button', { name: /flow/i })).toHaveTextContent(
+    expect(screen.getByRole('button', { name: 'Rename flow' })).toHaveTextContent(
       'flow \u2014 Edited',
     )
 
-    await user.click(screen.getByRole('button', { name: /flow/i }))
+    await user.click(screen.getByRole('button', { name: 'Rename flow' }))
     const dialog = await screen.findByRole('dialog', { name: 'Rename document' })
     const input = await screen.findByLabelText('Name:')
     expect(input).toHaveValue('flow')
@@ -62,7 +62,7 @@ describe('DocumentTitleControl', () => {
       />,
     )
 
-    await user.click(screen.getByRole('button', { name: /saved-flow/i }))
+    await user.click(screen.getByRole('button', { name: 'Rename saved-flow' }))
     expect(await screen.findByText('~/Documents')).toBeInTheDocument()
     await user.keyboard('{Escape}')
 
@@ -88,7 +88,7 @@ describe('DocumentTitleControl', () => {
       </div>,
     )
 
-    await user.click(screen.getByRole('button', { name: /flow/i }))
+    await user.click(screen.getByRole('button', { name: 'Rename flow' }))
     const dialog = await screen.findByRole('dialog', { name: 'Rename document' })
     expect(dialog.parentElement).toBe(document.body)
     expect(container.querySelector('.app')?.contains(dialog)).toBe(false)
@@ -108,7 +108,7 @@ describe('DocumentTitleControl', () => {
       />,
     )
 
-    await user.click(screen.getByRole('button', { name: /flow/i }))
+    await user.click(screen.getByRole('button', { name: 'Rename flow' }))
     const input = await screen.findByLabelText('Name:')
     await user.clear(input)
     await user.type(input, 'bad/name{Enter}')
