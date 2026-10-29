@@ -33,6 +33,26 @@ type PopoverCoords = {
   width: number
 }
 
+const THEME_VAR_NAMES = [
+  '--app-bg',
+  '--app-fg',
+  '--app-border',
+  '--app-accent',
+  '--app-muted',
+  '--app-surface',
+] as const
+
+function readThemeVars(from: Element | null): CSSProperties {
+  if (!from || typeof window === 'undefined') return {}
+  const styles = window.getComputedStyle(from)
+  const vars: Record<string, string> = {}
+  for (const name of THEME_VAR_NAMES) {
+    const value = styles.getPropertyValue(name).trim()
+    if (value) vars[name] = value
+  }
+  return vars as CSSProperties
+}
+
 export default function DocumentTitleControl({
   documentDisplayName,
   documentPath,
@@ -44,6 +64,7 @@ export default function DocumentTitleControl({
   const [draftName, setDraftName] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [coords, setCoords] = useState<PopoverCoords | null>(null)
+  const [themeVars, setThemeVars] = useState<CSSProperties>({})
   const triggerRef = useRef<HTMLButtonElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const popoverRef = useRef<HTMLDivElement>(null)
@@ -68,16 +89,18 @@ export default function DocumentTitleControl({
     const trigger = triggerRef.current
     if (!trigger) return
     const rect = trigger.getBoundingClientRect()
-    const width = Math.min(320, Math.max(260, window.innerWidth - 24))
+    const width = Math.min(340, Math.max(280, window.innerWidth - 24))
     const left = Math.min(
       Math.max(12, rect.left + rect.width / 2 - width / 2),
       window.innerWidth - width - 12,
     )
     setCoords({
-      top: rect.bottom + 6,
+      top: rect.bottom + 8,
       left,
       width,
     })
+    const app = document.querySelector('.app')
+    setThemeVars(readThemeVars(app ?? trigger))
   }, [])
 
   useLayoutEffect(() => {
@@ -159,33 +182,30 @@ export default function DocumentTitleControl({
 
   const popoverStyle: CSSProperties | undefined = coords
     ? {
+        ...themeVars,
         top: coords.top,
         left: coords.left,
         width: coords.width,
       }
     : undefined
 
-  // Mount under `.app` so theme CSS variables still apply, while escaping the
-  // short titlebar stacking context that let the editor paint through.
-  const portalTarget =
-    typeof document === 'undefined'
-      ? null
-      : (document.querySelector('.app') as HTMLElement | null) ?? document.body
-
   const popover =
-    open && coords && portalTarget
+    open && coords && typeof document !== 'undefined'
       ? createPortal(
           <div
             ref={popoverRef}
             id={titleId}
             className="document-title-popover"
             role="dialog"
+            aria-modal="true"
             aria-label="Rename document"
             style={popoverStyle}
           >
             <form className="document-title-popover-form" onSubmit={(e) => void submit(e)}>
-              <label className="document-title-popover-row" htmlFor={nameFieldId}>
-                <span className="document-title-popover-key">Name:</span>
+              <div className="document-title-popover-row">
+                <label className="document-title-popover-key" htmlFor={nameFieldId}>
+                  Name:
+                </label>
                 <input
                   ref={inputRef}
                   id={nameFieldId}
@@ -197,7 +217,7 @@ export default function DocumentTitleControl({
                   spellCheck={false}
                   disabled={isSubmitting}
                 />
-              </label>
+              </div>
 
               <div className="document-title-popover-row document-title-popover-meta">
                 <span className="document-title-popover-key">Status:</span>
@@ -224,7 +244,7 @@ export default function DocumentTitleControl({
               </p>
             </form>
           </div>,
-          portalTarget,
+          document.body,
         )
       : null
 

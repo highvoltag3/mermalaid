@@ -13,7 +13,7 @@ describe('DocumentTitleControl', () => {
     const onRename = vi.fn(async () => true)
 
     render(
-      <div className="app">
+      <div className="app" style={{ ['--app-bg' as string]: '#111', ['--app-fg' as string]: '#eee' }}>
         <DocumentTitleControl
           documentDisplayName="flow.mmd"
           documentPath={null}
@@ -36,7 +36,6 @@ describe('DocumentTitleControl', () => {
     expect(dialog).toHaveTextContent('Edited - not saved yet')
     expect(dialog).toHaveTextContent('Where:')
     expect(dialog).toHaveTextContent('Not saved to disk yet')
-    expect(dialog.querySelector('.document-title-popover-key')).toBeTruthy()
 
     await user.clear(input)
     await user.type(input, 'checkout-flow{Enter}')
@@ -71,7 +70,7 @@ describe('DocumentTitleControl', () => {
     expect(onRename).not.toHaveBeenCalled()
   })
 
-  it('portals the popover under .app above sibling chrome', async () => {
+  it('portals the popover to document.body above app chrome', async () => {
     const user = userEvent.setup()
     const { container } = render(
       <div className="app">
@@ -89,10 +88,8 @@ describe('DocumentTitleControl', () => {
 
     await user.click(screen.getByRole('button', { name: /flow/i }))
     const dialog = await screen.findByRole('dialog', { name: 'Rename document' })
-    const app = container.querySelector('.app')
-    expect(app?.contains(dialog)).toBe(true)
-    expect(dialog.compareDocumentPosition(container.querySelector('.editor-fake')!)).toBe(
-      Node.DOCUMENT_POSITION_PRECEDING,
-    )
+    expect(dialog.parentElement).toBe(document.body)
+    expect(container.querySelector('.app')?.contains(dialog)).toBe(false)
+    expect(getComputedStyle(dialog).position).toBe('fixed')
   })
 })

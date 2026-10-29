@@ -64,45 +64,63 @@
   transform: translateY(-1px);
 }
 
-/* Portaled to document.body so toolbar/editor cannot paint over it. */
+/*
+ * Portaled to document.body with theme vars inlined.
+ * Solid opaque layer + own stacking context so editor chrome cannot show through.
+ */
 .document-title-popover {
   position: fixed;
-  z-index: 10000;
+  z-index: 2147483000;
   box-sizing: border-box;
-  padding: 12px;
-  border: 1px solid var(--app-border);
+  padding: 14px 16px;
+  border: 1px solid var(--app-border, #ccc);
   border-radius: 10px;
-  /* Opaque fill in every theme (surface can equal a translucent-looking stack). */
-  background-color: var(--app-bg);
-  background-image: linear-gradient(
-    var(--app-surface),
-    var(--app-surface)
-  );
-  color: var(--app-fg);
+  color: var(--app-fg, #222);
+  background-color: var(--app-bg, #fff);
   box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--app-border) 80%, transparent),
-    0 12px 32px color-mix(in srgb, #000 35%, transparent);
+    0 0 0 1px color-mix(in srgb, var(--app-border, #ccc) 70%, transparent),
+    0 14px 36px rgba(0, 0, 0, 0.45);
   isolation: isolate;
+  transform: translateZ(0);
+  -webkit-font-smoothing: antialiased;
   -webkit-app-region: no-drag;
   app-region: no-drag;
 }
 
+.document-title-popover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-color: var(--app-bg, #fff);
+  background-image: linear-gradient(
+    var(--app-surface, var(--app-bg, #fff)),
+    var(--app-surface, var(--app-bg, #fff))
+  );
+  z-index: -1;
+  pointer-events: none;
+}
+
 .document-title-popover-form {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
+  background: transparent;
 }
 
 .document-title-popover-row {
   display: grid;
-  grid-template-columns: max-content minmax(0, 1fr);
-  column-gap: 10px;
+  grid-template-columns: 3.75rem minmax(0, 1fr);
+  column-gap: 12px;
   align-items: center;
   font-size: 12px;
 }
 
 .document-title-popover-key {
-  color: var(--app-muted);
+  margin: 0;
+  color: var(--app-muted, #666);
   font-weight: 600;
   white-space: nowrap;
 }
@@ -111,16 +129,16 @@
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
-  padding: 6px 8px;
-  border: 1px solid var(--app-border);
+  padding: 7px 9px;
+  border: 1px solid var(--app-border, #ccc);
   border-radius: 6px;
-  background-color: var(--app-bg);
-  color: var(--app-fg);
+  background-color: var(--app-bg, #fff);
+  color: var(--app-fg, #222);
   font-size: 13px;
 }
 
 .document-title-popover-input:focus {
-  outline: 2px solid var(--app-accent);
+  outline: 2px solid var(--app-accent, #0969da);
   outline-offset: 1px;
 }
 
@@ -130,7 +148,7 @@
   align-items: center;
   gap: 6px;
   min-width: 0;
-  color: var(--app-fg);
+  color: var(--app-fg, #222);
 }
 
 .document-title-popover-status-text,
@@ -145,7 +163,7 @@
   height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
-  background-color: var(--app-muted);
+  background-color: var(--app-muted, #666);
 }
 
 .document-title-status-dot.is-edited {
@@ -153,12 +171,12 @@
 }
 
 .document-title-status-dot.is-saved {
-  background-color: color-mix(in srgb, var(--app-muted) 70%, var(--app-fg));
+  background-color: color-mix(in srgb, var(--app-muted, #666) 70%, var(--app-fg, #222));
 }
 
 .document-title-popover-hint {
-  margin: 2px 0 0;
-  color: var(--app-muted);
+  margin: 0;
+  color: var(--app-muted, #666);
   font-size: 11px;
   line-height: 1.35;
 }
@@ -180,7 +198,6 @@
 .app-titlebar--overlay {
   -webkit-app-region: drag;
   app-region: drag;
-  /* Leave room for macOS traffic lights when titleBarStyle is Overlay. */
   padding-left: 78px;
   padding-right: 16px;
 }
