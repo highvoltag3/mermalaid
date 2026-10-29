@@ -4,7 +4,6 @@
   align-items: center;
   justify-content: center;
   max-width: min(42vw, 320px);
-  z-index: 5;
 }
 
 .document-title-control--overlay {
@@ -43,8 +42,8 @@
 }
 
 .document-title-trigger:hover {
-  background-color: color-mix(in srgb, var(--app-fg) 8%, transparent);
-  border-color: color-mix(in srgb, var(--app-border) 80%, transparent);
+  background-color: color-mix(in srgb, var(--app-fg) 8%, var(--app-surface));
+  border-color: var(--app-border);
 }
 
 .document-title-trigger:focus-visible {
@@ -65,26 +64,27 @@
   transform: translateY(-1px);
 }
 
+/* Portaled to document.body so toolbar/editor cannot paint over it. */
 .document-title-popover {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(92vw, 280px);
+  position: fixed;
+  z-index: 10000;
+  box-sizing: border-box;
   padding: 12px;
   border: 1px solid var(--app-border);
   border-radius: 10px;
-  background-color: var(--app-surface);
+  /* Opaque fill in every theme (surface can equal a translucent-looking stack). */
+  background-color: var(--app-bg);
+  background-image: linear-gradient(
+    var(--app-surface),
+    var(--app-surface)
+  );
   color: var(--app-fg);
-  box-shadow: 0 10px 28px color-mix(in srgb, #000 28%, transparent);
-  z-index: 1400;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--app-border) 80%, transparent),
+    0 12px 32px color-mix(in srgb, #000 35%, transparent);
+  isolation: isolate;
   -webkit-app-region: no-drag;
   app-region: no-drag;
-}
-
-.document-title-control--mobile .document-title-popover {
-  left: 0;
-  transform: none;
 }
 
 .document-title-popover-form {
@@ -95,8 +95,8 @@
 
 .document-title-popover-row {
   display: grid;
-  grid-template-columns: 52px minmax(0, 1fr);
-  gap: 8px;
+  grid-template-columns: max-content minmax(0, 1fr);
+  column-gap: 10px;
   align-items: center;
   font-size: 12px;
 }
@@ -104,11 +104,13 @@
 .document-title-popover-key {
   color: var(--app-muted);
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .document-title-popover-input {
   width: 100%;
   min-width: 0;
+  box-sizing: border-box;
   padding: 6px 8px;
   border: 1px solid var(--app-border);
   border-radius: 6px;
@@ -128,10 +130,14 @@
   align-items: center;
   gap: 6px;
   min-width: 0;
+  color: var(--app-fg);
+}
+
+.document-title-popover-status-text,
+.document-title-popover-where {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--app-fg);
 }
 
 .document-title-status-dot {
@@ -159,11 +165,13 @@
 
 .app-titlebar {
   position: relative;
+  z-index: 20;
   display: flex;
   align-items: center;
   justify-content: center;
   height: 38px;
   flex-shrink: 0;
+  overflow: visible;
   border-bottom: 1px solid var(--app-border);
   background-color: var(--app-surface);
   user-select: none;
@@ -175,8 +183,4 @@
   /* Leave room for macOS traffic lights when titleBarStyle is Overlay. */
   padding-left: 78px;
   padding-right: 16px;
-}
-
-.app-titlebar .document-title-control {
-  z-index: 2;
 }

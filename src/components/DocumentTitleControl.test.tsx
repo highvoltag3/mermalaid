@@ -13,13 +13,15 @@ describe('DocumentTitleControl', () => {
     const onRename = vi.fn(async () => true)
 
     render(
-      <DocumentTitleControl
-        documentDisplayName="flow.mmd"
-        documentPath={null}
-        isEdited
-        onRename={onRename}
-        placement="overlay"
-      />,
+      <div className="app">
+        <DocumentTitleControl
+          documentDisplayName="flow.mmd"
+          documentPath={null}
+          isEdited
+          onRename={onRename}
+          placement="overlay"
+        />
+      </div>,
     )
 
     expect(screen.getByRole('button', { name: /flow/i })).toHaveTextContent(
@@ -27,10 +29,14 @@ describe('DocumentTitleControl', () => {
     )
 
     await user.click(screen.getByRole('button', { name: /flow/i }))
+    const dialog = await screen.findByRole('dialog', { name: 'Rename document' })
     const input = await screen.findByLabelText('Name:')
     expect(input).toHaveValue('flow')
-    expect(screen.getByText(/Edited - not saved yet/)).toBeInTheDocument()
-    expect(screen.getByText(/Not saved to disk yet/)).toBeInTheDocument()
+    expect(dialog).toHaveTextContent('Status:')
+    expect(dialog).toHaveTextContent('Edited - not saved yet')
+    expect(dialog).toHaveTextContent('Where:')
+    expect(dialog).toHaveTextContent('Not saved to disk yet')
+    expect(dialog.querySelector('.document-title-popover-key')).toBeTruthy()
 
     await user.clear(input)
     await user.type(input, 'checkout-flow{Enter}')
@@ -45,12 +51,14 @@ describe('DocumentTitleControl', () => {
     const onRename = vi.fn(async () => true)
 
     render(
-      <DocumentTitleControl
-        documentDisplayName="saved-flow.mmd"
-        documentPath="/Users/me/Documents/saved-flow.mmd"
-        isEdited={false}
-        onRename={onRename}
-      />,
+      <div className="app">
+        <DocumentTitleControl
+          documentDisplayName="saved-flow.mmd"
+          documentPath="/Users/me/Documents/saved-flow.mmd"
+          isEdited={false}
+          onRename={onRename}
+        />
+      </div>,
     )
 
     await user.click(screen.getByRole('button', { name: /saved-flow/i }))
@@ -61,5 +69,30 @@ describe('DocumentTitleControl', () => {
       expect(screen.queryByRole('dialog', { name: 'Rename document' })).not.toBeInTheDocument()
     })
     expect(onRename).not.toHaveBeenCalled()
+  })
+
+  it('portals the popover under .app above sibling chrome', async () => {
+    const user = userEvent.setup()
+    const { container } = render(
+      <div className="app">
+        <DocumentTitleControl
+          documentDisplayName="flow.mmd"
+          documentPath={null}
+          isEdited
+          onRename={async () => true}
+        />
+        <div className="editor-fake" style={{ position: 'relative', zIndex: 50 }}>
+          underlay
+        </div>
+      </div>,
+    )
+
+    await user.click(screen.getByRole('button', { name: /flow/i }))
+    const dialog = await screen.findByRole('dialog', { name: 'Rename document' })
+    const app = container.querySelector('.app')
+    expect(app?.contains(dialog)).toBe(true)
+    expect(dialog.compareDocumentPosition(container.querySelector('.editor-fake')!)).toBe(
+      Node.DOCUMENT_POSITION_PRECEDING,
+    )
   })
 })
