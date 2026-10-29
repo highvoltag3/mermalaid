@@ -186,6 +186,13 @@ export default function DocumentTitleControl({
         top: coords.top,
         left: coords.left,
         width: coords.width,
+        // Inline opaque fill so theme vars / cascade cannot leave the panel transparent.
+        backgroundColor:
+          (themeVars as Record<string, string>)['--app-bg'] ||
+          (themeVars as Record<string, string>)['--app-surface'] ||
+          '#ffffff',
+        backgroundImage: 'none',
+        opacity: 1,
       }
     : undefined
 

@@ -76,7 +76,10 @@
   border: 1px solid var(--app-border, #ccc);
   border-radius: 10px;
   color: var(--app-fg, #222);
-  background-color: var(--app-bg, #fff);
+  /* Solid fill only. Avoid ::before with z-index:-1, it can paint under page chrome. */
+  background: var(--app-bg, #ffffff);
+  background-color: var(--app-bg, #ffffff);
+  opacity: 1;
   box-shadow:
     0 0 0 1px color-mix(in srgb, var(--app-border, #ccc) 70%, transparent),
     0 14px 36px rgba(0, 0, 0, 0.45);
@@ -87,27 +90,10 @@
   app-region: no-drag;
 }
 
-.document-title-popover::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background-color: var(--app-bg, #fff);
-  background-image: linear-gradient(
-    var(--app-surface, var(--app-bg, #fff)),
-    var(--app-surface, var(--app-bg, #fff))
-  );
-  z-index: -1;
-  pointer-events: none;
-}
-
 .document-title-popover-form {
-  position: relative;
-  z-index: 1;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  background: transparent;
 }
 
 .document-title-popover-row {
