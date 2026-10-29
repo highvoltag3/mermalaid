@@ -9,6 +9,7 @@ import {
   getDocumentDirectoryLabel,
   getDocumentDisplayName,
   getDocumentTitleStem,
+  isInvalidDocumentBasename,
   suggestedExportFileName,
   suggestedSourceFileName,
 } from './documentTitle'
@@ -137,5 +138,17 @@ describe('suggestedExportFileName', () => {
     expect(suggestedExportFileName(UNTITLED_DOCUMENT_NAME, 'svg', 'diagram.svg')).toBe(
       'diagram.svg',
     )
+  })
+})
+
+describe('isInvalidDocumentBasename', () => {
+  it('rejects empty, dots, separators, reserved characters, and extension-only names', () => {
+    expect(isInvalidDocumentBasename('')).toBe(true)
+    expect(isInvalidDocumentBasename('..')).toBe(true)
+    expect(isInvalidDocumentBasename('a/b.mmd')).toBe(true)
+    expect(isInvalidDocumentBasename('a\\b.mmd')).toBe(true)
+    expect(isInvalidDocumentBasename('bad:name.mmd')).toBe(true)
+    expect(isInvalidDocumentBasename('.mmd')).toBe(true)
+    expect(isInvalidDocumentBasename('ok-name.mmd')).toBe(false)
   })
 })

@@ -1,7 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { type ReactElement } from 'react'
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { ThemeProvider } from '../contexts/ThemeContext'
 import DocumentTitleControl from './DocumentTitleControl'
+
+function renderControl(ui: ReactElement) {
+  return render(<ThemeProvider>{ui}</ThemeProvider>)
+}
 
 describe('DocumentTitleControl', () => {
   afterEach(() => {
@@ -12,16 +18,14 @@ describe('DocumentTitleControl', () => {
     const user = userEvent.setup()
     const onRename = vi.fn(async () => true)
 
-    render(
-      <div className="app" style={{ ['--app-bg' as string]: '#111', ['--app-fg' as string]: '#eee' }}>
-        <DocumentTitleControl
-          documentDisplayName="flow.mmd"
-          documentPath={null}
-          isEdited
-          onRename={onRename}
-          placement="overlay"
-        />
-      </div>,
+    renderControl(
+      <DocumentTitleControl
+        documentDisplayName="flow.mmd"
+        documentPath={null}
+        isEdited
+        onRename={onRename}
+        placement="overlay"
+      />,
     )
 
     expect(screen.getByRole('button', { name: /flow/i })).toHaveTextContent(
@@ -49,15 +53,13 @@ describe('DocumentTitleControl', () => {
     const user = userEvent.setup()
     const onRename = vi.fn(async () => true)
 
-    render(
-      <div className="app">
-        <DocumentTitleControl
-          documentDisplayName="saved-flow.mmd"
-          documentPath="/Users/me/Documents/saved-flow.mmd"
-          isEdited={false}
-          onRename={onRename}
-        />
-      </div>,
+    renderControl(
+      <DocumentTitleControl
+        documentDisplayName="saved-flow.mmd"
+        documentPath="/Users/me/Documents/saved-flow.mmd"
+        isEdited={false}
+        onRename={onRename}
+      />,
     )
 
     await user.click(screen.getByRole('button', { name: /saved-flow/i }))
@@ -72,7 +74,7 @@ describe('DocumentTitleControl', () => {
 
   it('portals the popover to document.body above app chrome', async () => {
     const user = userEvent.setup()
-    const { container } = render(
+    const { container } = renderControl(
       <div className="app">
         <DocumentTitleControl
           documentDisplayName="flow.mmd"
@@ -91,5 +93,29 @@ describe('DocumentTitleControl', () => {
     expect(dialog.parentElement).toBe(document.body)
     expect(container.querySelector('.app')?.contains(dialog)).toBe(false)
     expect(getComputedStyle(dialog).position).toBe('fixed')
+  })
+
+  it('keeps the popover open when rename returns false', async () => {
+    const user = userEvent.setup()
+    const onRename = vi.fn(async () => false)
+
+    renderControl(
+      <DocumentTitleControl
+        documentDisplayName="flow.mmd"
+        documentPath={null}
+        isEdited
+        onRename={onRename}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: /flow/i }))
+    const input = await screen.findByLabelText('Name:')
+    await user.clear(input)
+    await user.type(input, 'bad/name{Enter}')
+
+    await waitFor(() => {
+      expect(onRename).toHaveBeenCalled()
+    })
+    expect(screen.getByRole('dialog', { name: 'Rename document' })).toBeInTheDocument()
   })
 })

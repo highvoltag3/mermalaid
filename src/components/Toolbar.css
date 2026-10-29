@@ -28,6 +28,27 @@
   user-select: none;
 }
 
+.app-titlebar {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 38px;
+  flex-shrink: 0;
+  overflow: visible;
+  border-bottom: 1px solid var(--app-border);
+  background-color: var(--app-surface);
+  user-select: none;
+}
+
+.app-titlebar--overlay {
+  -webkit-app-region: drag;
+  app-region: drag;
+  padding-left: 78px;
+  padding-right: 16px;
+}
+
 .toolbar-section:not(:last-child)::after {
   content: '';
   width: 1px;

@@ -2,7 +2,7 @@ import { recentFileLabel } from './recentFiles'
 
 export const UNTITLED_DOCUMENT_NAME = 'Untitled'
 
-const DIAGRAM_EXTENSIONS = ['.mmd', '.markdown', '.md', '.txt'] as const
+export const DIAGRAM_EXTENSIONS = ['.mmd', '.markdown', '.md', '.txt'] as const
 
 /** Basename for chrome / titles; `null`/empty → Untitled. */
 export function getDocumentDisplayName(
@@ -81,11 +81,14 @@ export function applyDocumentRename(
   return `${trimmed}${extension}`
 }
 
+/** Index of the final path separator, or -1 when the path is a bare filename. */
+function lastPathSeparatorIndex(path: string): number {
+  return Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'))
+}
+
 /** Replace the final path segment, preserving the original separator style. */
 export function buildRenamedPath(currentPath: string, nextFileName: string): string {
-  const lastSlash = currentPath.lastIndexOf('/')
-  const lastBackslash = currentPath.lastIndexOf('\\')
-  const lastSep = Math.max(lastSlash, lastBackslash)
+  const lastSep = lastPathSeparatorIndex(currentPath)
   if (lastSep < 0) return nextFileName
   return currentPath.slice(0, lastSep + 1) + nextFileName
 }
@@ -95,12 +98,9 @@ export function getDocumentDirectoryLabel(
   documentPath: string | null | undefined,
 ): string | null {
   if (!documentPath) return null
-  const lastSlash = documentPath.lastIndexOf('/')
-  const lastBackslash = documentPath.lastIndexOf('\\')
-  const lastSep = Math.max(lastSlash, lastBackslash)
+  const lastSep = lastPathSeparatorIndex(documentPath)
   if (lastSep < 0) return null
-  const dir = documentPath.slice(0, lastSep)
-  return abbreviateHomePath(dir)
+  return abbreviateHomePath(documentPath.slice(0, lastSep))
 }
 
 /** Turn `/Users/me/Documents` into `~/Documents` when possible. */
@@ -111,7 +111,6 @@ export function abbreviateHomePath(path: string): string {
     const rest = homeMatch[1] || ''
     return rest ? `~${rest}` : '~'
   }
-  // Windows-style home via USERPROFILE is not knowable here; return as-is.
   return path
 }
 
@@ -135,14 +134,25 @@ export function suggestedExportFileName(
     return untitledFallback
   }
   const stem = getDocumentTitleStem(displayName)
-  if (!stem || stem === UNTITLED_DOCUMENT_NAME) return untitledFallback
+  if (stem === UNTITLED_DOCUMENT_NAME) return untitledFallback
   return `${stem}${ext}`
 }
 
 /** True when running in a macOS (or iOS) user agent — used for overlay title chrome. */
 export function isMacOsClient(): boolean {
-  if (typeof navigator === 'undefined') return false
   const platform = navigator.platform || ''
   const ua = navigator.userAgent || ''
   return /Mac|iPhone|iPod|iPad/i.test(platform) || /Mac OS X/i.test(ua)
+}
+
+/** Reject basenames that cannot be used as a single path segment. */
+export function isInvalidDocumentBasename(name: string): boolean {
+  const trimmed = name.trim()
+  if (!trimmed) return true
+  if (trimmed === '.' || trimmed === '..') return true
+  if (/[\\/]/.test(trimmed)) return true
+  // Windows-reserved characters (also unsafe on some network volumes).
+  if (/[<>:"|?*\u0000-\u001f]/.test(trimmed)) return true
+  if (!splitDocumentName(trimmed).stem.trim()) return true
+  return false
 }

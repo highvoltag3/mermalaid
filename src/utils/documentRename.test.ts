@@ -46,4 +46,52 @@ describe('planDocumentRename', () => {
       }),
     ).toEqual({ kind: 'noop', nextName: 'old.mmd' })
   })
+
+  it('rejects path separators and reserved characters', () => {
+    expect(
+      planDocumentRename({
+        rawInput: 'a/b',
+        documentPath: null,
+        documentName: null,
+      }),
+    ).toEqual({ kind: 'invalid', nextName: 'a/b.mmd' })
+
+    expect(
+      planDocumentRename({
+        rawInput: 'bad:name',
+        documentPath: '/tmp/old.mmd',
+        documentName: 'old.mmd',
+      }),
+    ).toEqual({ kind: 'invalid', nextName: 'bad:name.mmd' })
+  })
+
+  it('keeps Untitled as Untitled when the stem is unchanged', () => {
+    expect(
+      planDocumentRename({
+        rawInput: 'Untitled',
+        documentPath: null,
+        documentName: null,
+      }),
+    ).toEqual({ kind: 'noop', nextName: 'Untitled' })
+  })
+
+  it('rejects extension-only basenames', () => {
+    expect(
+      planDocumentRename({
+        rawInput: '.mmd',
+        documentPath: null,
+        documentName: 'flow.mmd',
+      }),
+    ).toEqual({ kind: 'invalid', nextName: '.mmd' })
+  })
+
+  it('allows extension-only changes for the same stem', () => {
+    expect(
+      planDocumentRename({
+        rawInput: 'flow.txt',
+        documentPath: null,
+        documentName: 'flow.mmd',
+      }),
+    ).toEqual({ kind: 'display-only', nextName: 'flow.txt' })
+  })
 })

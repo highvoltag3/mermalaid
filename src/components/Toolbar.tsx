@@ -109,39 +109,18 @@ const MERMAID_ACCEPT_TYPES: SaveFileAcceptType[] = [
   },
 ]
 
-function svgExportOptions(documentDisplayName: string) {
+function exportOptions(
+  documentDisplayName: string,
+  extension: string,
+  filterName: string,
+  mimeType: string,
+  untitledFallback: string,
+) {
   return saveFileKind(
-    suggestedExportFileName(documentDisplayName, 'svg', 'diagram.svg'),
-    'SVG',
-    'svg',
-    'image/svg+xml',
-  )
-}
-
-function pngExportOptions(documentDisplayName: string) {
-  return saveFileKind(
-    suggestedExportFileName(documentDisplayName, 'png', 'diagram.png'),
-    'PNG',
-    'png',
-    'image/png',
-  )
-}
-
-function asciiExportOptions(documentDisplayName: string) {
-  return saveFileKind(
-    suggestedExportFileName(documentDisplayName, 'txt', 'diagram.txt'),
-    'Text',
-    'txt',
-    'text/plain',
-  )
-}
-
-function htmlExportOptions(documentDisplayName: string) {
-  return saveFileKind(
-    suggestedExportFileName(documentDisplayName, 'html', 'diagrams.html'),
-    'HTML',
-    'html',
-    'text/html',
+    suggestedExportFileName(documentDisplayName, extension, untitledFallback),
+    filterName,
+    extension,
+    mimeType,
   )
 }
 
@@ -348,17 +327,24 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
     switch (plan.kind) {
       case 'noop':
         return true
+      case 'invalid':
+        showToast('That name is not a valid file name.', 'error')
+        return false
       case 'display-only':
         setOpenedDocumentName(plan.nextName)
         showToast(`Named ${plan.nextName}`)
         return true
       case 'disk': {
         if (!isTauri()) {
+          // Web never has a real FS path; treat as display-only if this ever fires.
           setOpenedDocumentName(plan.nextName)
+          showToast(`Named ${plan.nextName}`)
           return true
         }
+        const caseOnlyChange =
+          plan.oldPath.toLowerCase() === plan.newPath.toLowerCase()
         try {
-          if (await exists(plan.newPath)) {
+          if (!caseOnlyChange && (await exists(plan.newPath))) {
             const replace = await ask(
               `"${plan.nextName}" already exists. Replace it?`,
               { title: 'Rename', kind: 'warning' },
@@ -366,17 +352,21 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
             if (!replace) return false
           }
           await rename(plan.oldPath, plan.newPath)
-          removeRecentFile(plan.oldPath)
-          setDocumentPath(plan.newPath)
-          addRecentFile(plan.newPath)
-          await rebuildNativeAppMenu()
-          showToast(`Renamed to ${plan.nextName}`)
-          return true
         } catch (err) {
           console.error('Rename error:', err)
           showToast('Could not rename that file.', 'error')
           return false
         }
+        removeRecentFile(plan.oldPath)
+        setDocumentPath(plan.newPath)
+        addRecentFile(plan.newPath)
+        showToast(`Renamed to ${plan.nextName}`)
+        try {
+          await rebuildNativeAppMenu()
+        } catch (err) {
+          console.error('Failed to rebuild menu after rename:', err)
+        }
+        return true
       }
       default: {
         const _exhaustive: never = plan
@@ -573,7 +563,7 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
     try {
       const result = await saveBlob(
         new Blob([svgElement.outerHTML], { type: 'image/svg+xml' }),
-        svgExportOptions(documentDisplayName),
+        exportOptions(documentDisplayName, 'svg', 'SVG', 'image/svg+xml', 'diagram.svg'),
       )
       const toastMsg = toastMessageForSaveResult(result, 'Exported')
       if (toastMsg) showToast(toastMsg)
@@ -609,7 +599,10 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
         return
       }
 
-      const result = await saveBlob(blob, pngExportOptions(documentDisplayName))
+      const result = await saveBlob(
+        blob,
+        exportOptions(documentDisplayName, 'png', 'PNG', 'image/png', 'diagram.png'),
+      )
       const toastMsg = toastMessageForSaveResult(result, 'Exported')
       if (toastMsg) showToast(toastMsg)
     } catch (err) {
@@ -628,7 +621,7 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
       try {
         const result = await saveBlob(
           new Blob([text], { type: 'text/plain' }),
-          asciiExportOptions(documentDisplayName),
+          exportOptions(documentDisplayName, 'txt', 'Text', 'text/plain', 'diagram.txt'),
         )
         const toastMsg = toastMessageForSaveResult(result, 'Exported')
         if (toastMsg) showToast(toastMsg)
@@ -843,7 +836,10 @@ ${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</di
 
     const blob = new Blob([html], { type: 'text/html' })
     try {
-      const result = await saveBlob(blob, htmlExportOptions(documentDisplayName))
+      const result = await saveBlob(
+        blob,
+        exportOptions(documentDisplayName, 'html', 'HTML', 'text/html', 'diagrams.html'),
+      )
       const toastMsg = toastMessageForSaveResult(result, `Exported ${svgs.length} diagrams as`)
       if (toastMsg) showToast(toastMsg)
     } catch (err) {

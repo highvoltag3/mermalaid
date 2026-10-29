@@ -10,6 +10,8 @@ import {
   type KeyboardEvent,
 } from 'react'
 import { createPortal } from 'react-dom'
+import { useTheme } from '../hooks/useTheme'
+import { getAppThemeCssVars } from '../utils/mermaidThemes'
 import {
   formatDocumentTitleControlLabel,
   getDocumentDirectoryLabel,
@@ -21,10 +23,10 @@ export type DocumentTitleControlProps = {
   documentDisplayName: string
   documentPath: string | null
   isEdited: boolean
-  /** Apply a rename. Return false/void to keep the popover open on failure. */
-  onRename: (nextRawName: string) => boolean | void | Promise<boolean | void>
-  /** Visual placement: overlay title bar, centered in toolbar, or mobile brand stack. */
-  placement?: 'overlay' | 'toolbar' | 'mobile'
+  /** Return false to keep the popover open after a failed rename. */
+  onRename: (nextRawName: string) => boolean | Promise<boolean>
+  /** `overlay` for the desktop title strip, `mobile` for the brand stack. */
+  placement?: 'overlay' | 'mobile'
 }
 
 type PopoverCoords = {
@@ -33,24 +35,8 @@ type PopoverCoords = {
   width: number
 }
 
-const THEME_VAR_NAMES = [
-  '--app-bg',
-  '--app-fg',
-  '--app-border',
-  '--app-accent',
-  '--app-muted',
-  '--app-surface',
-] as const
-
-function readThemeVars(from: Element | null): CSSProperties {
-  if (!from || typeof window === 'undefined') return {}
-  const styles = window.getComputedStyle(from)
-  const vars: Record<string, string> = {}
-  for (const name of THEME_VAR_NAMES) {
-    const value = styles.getPropertyValue(name).trim()
-    if (value) vars[name] = value
-  }
-  return vars as CSSProperties
+function sameCoords(a: PopoverCoords | null, b: PopoverCoords): boolean {
+  return !!a && a.top === b.top && a.left === b.left && a.width === b.width
 }
 
 export default function DocumentTitleControl({
@@ -58,13 +44,14 @@ export default function DocumentTitleControl({
   documentPath,
   isEdited,
   onRename,
-  placement = 'toolbar',
+  placement = 'overlay',
 }: DocumentTitleControlProps) {
+  const { mermaidTheme } = useTheme()
+  const themeVars = getAppThemeCssVars(mermaidTheme)
   const [open, setOpen] = useState(false)
   const [draftName, setDraftName] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [coords, setCoords] = useState<PopoverCoords | null>(null)
-  const [themeVars, setThemeVars] = useState<CSSProperties>({})
   const triggerRef = useRef<HTMLButtonElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const popoverRef = useRef<HTMLDivElement>(null)
@@ -90,17 +77,15 @@ export default function DocumentTitleControl({
     if (!trigger) return
     const rect = trigger.getBoundingClientRect()
     const width = Math.min(340, Math.max(280, window.innerWidth - 24))
-    const left = Math.min(
-      Math.max(12, rect.left + rect.width / 2 - width / 2),
-      window.innerWidth - width - 12,
-    )
-    setCoords({
+    const next: PopoverCoords = {
       top: rect.bottom + 8,
-      left,
+      left: Math.min(
+        Math.max(12, rect.left + rect.width / 2 - width / 2),
+        window.innerWidth - width - 12,
+      ),
       width,
-    })
-    const app = document.querySelector('.app')
-    setThemeVars(readThemeVars(app ?? trigger))
+    }
+    setCoords((prev) => (sameCoords(prev, next) ? prev : next))
   }, [])
 
   useLayoutEffect(() => {
@@ -111,10 +96,8 @@ export default function DocumentTitleControl({
   useEffect(() => {
     if (!open) return
     const frame = window.requestAnimationFrame(() => {
-      const input = inputRef.current
-      if (!input) return
-      input.focus()
-      input.select()
+      inputRef.current?.focus()
+      inputRef.current?.select()
     })
     return () => window.cancelAnimationFrame(frame)
   }, [open])
@@ -123,23 +106,33 @@ export default function DocumentTitleControl({
     if (!open) return
 
     const onPointerDown = (event: MouseEvent) => {
+      if (isSubmitting) return
       const target = event.target as Node | null
       if (!target) return
       if (popoverRef.current?.contains(target)) return
       if (triggerRef.current?.contains(target)) return
       close()
+      triggerRef.current?.focus()
     }
 
     const onKeyDown = (event: globalThis.KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault()
         event.stopPropagation()
+        if (isSubmitting) return
         close()
         triggerRef.current?.focus()
       }
     }
 
-    const onReposition = () => updateCoords()
+    let frame = 0
+    const onReposition = () => {
+      if (frame) return
+      frame = window.requestAnimationFrame(() => {
+        frame = 0
+        updateCoords()
+      })
+    }
 
     document.addEventListener('mousedown', onPointerDown)
     document.addEventListener('keydown', onKeyDown, true)
@@ -150,16 +143,17 @@ export default function DocumentTitleControl({
       document.removeEventListener('keydown', onKeyDown, true)
       window.removeEventListener('resize', onReposition)
       window.removeEventListener('scroll', onReposition, true)
+      if (frame) window.cancelAnimationFrame(frame)
     }
-  }, [open, close, updateCoords])
+  }, [open, close, updateCoords, isSubmitting])
 
   const submit = async (event?: FormEvent) => {
     event?.preventDefault()
     if (isSubmitting) return
     setIsSubmitting(true)
     try {
-      const result = await onRename(draftName)
-      if (result === false) {
+      const ok = await onRename(draftName)
+      if (!ok) {
         setIsSubmitting(false)
         inputRef.current?.focus()
         inputRef.current?.select()
@@ -167,7 +161,8 @@ export default function DocumentTitleControl({
       }
       close()
       triggerRef.current?.focus()
-    } catch {
+    } catch (err) {
+      console.error('Document rename failed:', err)
       setIsSubmitting(false)
       inputRef.current?.focus()
     }
@@ -182,22 +177,16 @@ export default function DocumentTitleControl({
 
   const popoverStyle: CSSProperties | undefined = coords
     ? {
-        ...themeVars,
+        ...(themeVars as CSSProperties),
         top: coords.top,
         left: coords.left,
         width: coords.width,
-        // Inline opaque fill so theme vars / cascade cannot leave the panel transparent.
-        backgroundColor:
-          (themeVars as Record<string, string>)['--app-bg'] ||
-          (themeVars as Record<string, string>)['--app-surface'] ||
-          '#ffffff',
-        backgroundImage: 'none',
-        opacity: 1,
+        backgroundColor: themeVars['--app-bg'] || themeVars['--app-surface'] || '#ffffff',
       }
     : undefined
 
   const popover =
-    open && coords && typeof document !== 'undefined'
+    open && coords
       ? createPortal(
           <div
             ref={popoverRef}

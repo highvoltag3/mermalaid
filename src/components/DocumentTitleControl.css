@@ -64,10 +64,7 @@
   transform: translateY(-1px);
 }
 
-/*
- * Portaled to document.body with theme vars inlined.
- * Solid opaque layer + own stacking context so editor chrome cannot show through.
- */
+/* Portaled to document.body; theme vars + opaque fill come from inline style. */
 .document-title-popover {
   position: fixed;
   z-index: 2147483000;
@@ -76,16 +73,12 @@
   border: 1px solid var(--app-border, #ccc);
   border-radius: 10px;
   color: var(--app-fg, #222);
-  /* Solid fill only. Avoid ::before with z-index:-1, it can paint under page chrome. */
-  background: var(--app-bg, #ffffff);
   background-color: var(--app-bg, #ffffff);
-  opacity: 1;
   box-shadow:
     0 0 0 1px color-mix(in srgb, var(--app-border, #ccc) 70%, transparent),
     0 14px 36px rgba(0, 0, 0, 0.45);
   isolation: isolate;
   transform: translateZ(0);
-  -webkit-font-smoothing: antialiased;
   -webkit-app-region: no-drag;
   app-region: no-drag;
 }
@@ -165,25 +158,4 @@
   color: var(--app-muted, #666);
   font-size: 11px;
   line-height: 1.35;
-}
-
-.app-titlebar {
-  position: relative;
-  z-index: 20;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 38px;
-  flex-shrink: 0;
-  overflow: visible;
-  border-bottom: 1px solid var(--app-border);
-  background-color: var(--app-surface);
-  user-select: none;
-}
-
-.app-titlebar--overlay {
-  -webkit-app-region: drag;
-  app-region: drag;
-  padding-left: 78px;
-  padding-right: 16px;
 }
