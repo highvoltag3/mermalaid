@@ -1,0 +1,198 @@
+.document-title-control {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: min(42vw, 320px);
+  z-index: 5;
+}
+
+.document-title-control--toolbar {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.document-title-control--toolbar .document-title-trigger,
+.document-title-control--toolbar .document-title-popover {
+  pointer-events: auto;
+}
+
+.document-title-control--overlay {
+  max-width: min(50vw, 360px);
+}
+
+.document-title-control--mobile {
+  max-width: min(50vw, 220px);
+  justify-content: flex-start;
+}
+
+.document-title-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  margin: 0;
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--app-fg);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
+.document-title-control--mobile .document-title-trigger {
+  padding: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--app-muted);
+}
+
+.document-title-trigger:hover {
+  background-color: color-mix(in srgb, var(--app-fg) 8%, transparent);
+  border-color: color-mix(in srgb, var(--app-border) 80%, transparent);
+}
+
+.document-title-trigger:focus-visible {
+  outline: 2px solid var(--app-accent);
+  outline-offset: 2px;
+}
+
+.document-title-trigger-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.document-title-trigger-chevron {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--app-muted);
+  transform: translateY(-1px);
+}
+
+.document-title-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(92vw, 280px);
+  padding: 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  background-color: var(--app-surface);
+  color: var(--app-fg);
+  box-shadow: 0 10px 28px color-mix(in srgb, #000 28%, transparent);
+  z-index: 1400;
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
+.document-title-control--mobile .document-title-popover {
+  left: 0;
+  transform: none;
+}
+
+.document-title-popover-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.document-title-popover-row {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+}
+
+.document-title-popover-key {
+  color: var(--app-muted);
+  font-weight: 600;
+}
+
+.document-title-popover-input {
+  width: 100%;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--app-border);
+  border-radius: 6px;
+  background-color: var(--app-bg);
+  color: var(--app-fg);
+  font-size: 13px;
+}
+
+.document-title-popover-input:focus {
+  outline: 2px solid var(--app-accent);
+  outline-offset: 1px;
+}
+
+.document-title-popover-status,
+.document-title-popover-where {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--app-fg);
+}
+
+.document-title-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background-color: var(--app-muted);
+}
+
+.document-title-status-dot.is-edited {
+  background-color: #e0a100;
+}
+
+.document-title-status-dot.is-saved {
+  background-color: color-mix(in srgb, var(--app-muted) 70%, var(--app-fg));
+}
+
+.document-title-popover-hint {
+  margin: 2px 0 0;
+  color: var(--app-muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.app-titlebar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 38px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--app-border);
+  background-color: var(--app-surface);
+  -webkit-app-region: drag;
+  app-region: drag;
+  user-select: none;
+}
+
+.app-titlebar .document-title-control {
+  z-index: 2;
+}
+
+/* Keep room for traffic lights when the overlay title bar is active. */
+.app-has-overlay-titlebar .toolbar {
+  padding-left: 16px;
+}
+
+.app-has-overlay-titlebar .toolbar-document-title-slot {
+  display: none;
+}

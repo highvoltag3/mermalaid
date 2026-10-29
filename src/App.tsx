@@ -28,6 +28,9 @@ import { isDiagramImportFileName } from './utils/diagramImportFiles'
 import {
   formatEditorDocumentTitle,
   getDocumentDisplayName,
+  getDocumentTitleStem,
+  isMacOsClient,
+  UNTITLED_DOCUMENT_NAME,
 } from './utils/documentTitle'
 import {
   clearUrlFragment,
@@ -190,12 +193,26 @@ function EditorView({ pendingRelease, onDismissPendingRelease, tauriUpdater }: R
     setDocumentName(name)
   }, [])
   const documentDisplayName = getDocumentDisplayName(documentPath, documentName)
+  const [savedContent, setSavedContent] = useState(DEFAULT_DIAGRAM)
+  const isDocumentEdited = code !== savedContent
   const appContentRef = useRef<HTMLDivElement>(null)
   const toolbarRef = useRef<ToolbarRef>(null)
   const agentBridge = useAgentBridge({ code, setCode, error })
   const { markSaved: markDocumentSaved } = useExternalFileWatch({ documentPath, code, setCode })
+  const markDocumentBaseline = useCallback(
+    (content: string) => {
+      setSavedContent(content)
+      markDocumentSaved(content)
+    },
+    [markDocumentSaved],
+  )
   const [showRevisionHistory, setShowRevisionHistory] = useState(false)
   const revisionHistory = useRevisionHistory({ code, onRestore: setCode })
+  const usesOverlayDocumentTitle = isTauri() && isMacOsClient()
+  const historyCheckpointDefault =
+    documentDisplayName === UNTITLED_DOCUMENT_NAME
+      ? undefined
+      : getDocumentTitleStem(documentDisplayName)
 
   /** Keep the browser tab (and Tauri window) title in sync with the open file. */
   useEffect(() => {
@@ -270,6 +287,7 @@ function EditorView({ pendingRelease, onDismissPendingRelease, tauriUpdater }: R
         if (cancelled) return
         setCode(state.code)
         setDocumentPath(null)
+        markDocumentBaseline(state.code)
         clearUrlFragment()
         showToast('Opened diagram from private link')
       } catch (e) {
@@ -284,7 +302,7 @@ function EditorView({ pendingRelease, onDismissPendingRelease, tauriUpdater }: R
     return () => {
       cancelled = true
     }
-  }, [location.hash, showToast])
+  }, [location.hash, showToast, markDocumentBaseline])
 
   /** Web: open a diagram from a public preview link (`/editor?c=…`). */
   useEffect(() => {
@@ -299,6 +317,7 @@ function EditorView({ pendingRelease, onDismissPendingRelease, tauriUpdater }: R
         if (cancelled) return
         setCode(source)
         setDocumentPath(null)
+        markDocumentBaseline(source)
         // Strip the param so it doesn't linger or re-trigger.
         window.history.replaceState(null, '', location.pathname)
         showToast('Opened diagram from shared link')
@@ -312,7 +331,7 @@ function EditorView({ pendingRelease, onDismissPendingRelease, tauriUpdater }: R
     return () => {
       cancelled = true
     }
-  }, [location.search, showToast])
+  }, [location.search, showToast, markDocumentBaseline])
 
   /** Finder / Explorer / argv: open the requested file instead of restoring draft (issue #41). */
   useMountEffect(() => {
@@ -325,6 +344,7 @@ function EditorView({ pendingRelease, onDismissPendingRelease, tauriUpdater }: R
         const state = await decodePrivateShareHash(hash)
         setCode(state.code)
         setDocumentPath(null)
+        markDocumentBaseline(state.code)
         clearUrlFragment()
         showToast('Opened diagram from private link')
         return 'loaded'
@@ -419,6 +439,7 @@ function EditorView({ pendingRelease, onDismissPendingRelease, tauriUpdater }: R
       const content = event.target?.result as string
       setCode(content)
       setOpenedDocumentName(file.name)
+      markDocumentBaseline(content)
     }
     reader.readAsText(file)
   }
@@ -435,7 +456,7 @@ function EditorView({ pendingRelease, onDismissPendingRelease, tauriUpdater }: R
   return (
     <AgentBridgeProvider value={agentBridge}>
     <div
-      className={`app ${isAppThemeDark(mermaidTheme) ? 'app-theme-dark' : 'app-theme-light'} ${isSmartphoneLayout ? 'app-mobile' : ''} ${isKeyboardOpen ? 'app-mobile-keyboard-open' : ''}`}
+      className={`app ${isAppThemeDark(mermaidTheme) ? 'app-theme-dark' : 'app-theme-light'} ${isSmartphoneLayout ? 'app-mobile' : ''} ${isKeyboardOpen ? 'app-mobile-keyboard-open' : ''} ${usesOverlayDocumentTitle ? 'app-has-overlay-titlebar' : ''}`}
       style={getAppThemeCssVars(mermaidTheme) as React.CSSProperties}
       onDrop={handleDrop}
       onDragOver={handleDragOver}
@@ -461,8 +482,10 @@ function EditorView({ pendingRelease, onDismissPendingRelease, tauriUpdater }: R
         documentPathRef={documentPathRef}
         setDocumentPath={setDocumentPath}
         setOpenedDocumentName={setOpenedDocumentName}
+        documentPath={documentPath}
         documentDisplayName={documentDisplayName}
-        onDocumentSaved={markDocumentSaved}
+        isDocumentEdited={isDocumentEdited}
+        onDocumentSaved={markDocumentBaseline}
         isMobile={isSmartphoneLayout}
         onHistoryOpen={() => setShowRevisionHistory(true)}
       />
@@ -543,6 +566,7 @@ function EditorView({ pendingRelease, onDismissPendingRelease, tauriUpdater }: R
         onDelete={revisionHistory.remove}
         onClear={revisionHistory.clear}
         onCreateCheckpoint={revisionHistory.createCheckpoint}
+        defaultCheckpointName={historyCheckpointDefault}
       />
     </div>
     </AgentBridgeProvider>

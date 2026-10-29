@@ -7,8 +7,8 @@ import {
   type MutableRefObject,
 } from 'react'
 import { isTauri } from '@tauri-apps/api/core'
-import { message, open } from '@tauri-apps/plugin-dialog'
-import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs'
+import { ask, message, open } from '@tauri-apps/plugin-dialog'
+import { exists, readTextFile, rename, writeTextFile } from '@tauri-apps/plugin-fs'
 import html2canvas from 'html2canvas'
 import { renderMermaidAscii, renderMermaid } from 'beautiful-mermaid'
 import { useTheme } from '../hooks/useTheme'
@@ -36,11 +36,17 @@ import {
 } from '../utils/mermalaidInfoText'
 import Settings from './Settings'
 import AgentBridgePanel from './AgentBridgePanel'
+import DocumentTitleControl from './DocumentTitleControl'
 import { NEW_DIAGRAM } from '../utils/sampleDiagrams'
 import { useAgentBridgeContext } from '../hooks/useAgentBridgeContext'
 import type { BridgeStatus } from '../agentBridge/bridgeClient'
 import { rebuildNativeAppMenu } from '../nativeAppMenu'
-import { UNTITLED_DOCUMENT_NAME } from '../utils/documentTitle'
+import {
+  isMacOsClient,
+  suggestedExportFileName,
+  suggestedSourceFileName,
+} from '../utils/documentTitle'
+import { planDocumentRename } from '../utils/documentRename'
 import { addRecentFile, recentFileLabel, removeRecentFile } from '../utils/recentFiles'
 import { copyPlainTextWhenReady, formatClipboardFailureMessage } from '../utils/copyToClipboard'
 import { saveBlob, saveFileKind, toastMessageForSaveResult, type SaveFileAcceptType, type SaveFileFilter } from '../utils/saveFile'
@@ -103,10 +109,41 @@ const MERMAID_ACCEPT_TYPES: SaveFileAcceptType[] = [
   },
 ]
 
-const SVG_EXPORT = saveFileKind('diagram.svg', 'SVG', 'svg', 'image/svg+xml')
-const PNG_EXPORT = saveFileKind('diagram.png', 'PNG', 'png', 'image/png')
-const ASCII_EXPORT = saveFileKind('diagram.txt', 'Text', 'txt', 'text/plain')
-const HTML_EXPORT = saveFileKind('diagrams.html', 'HTML', 'html', 'text/html')
+function svgExportOptions(documentDisplayName: string) {
+  return saveFileKind(
+    suggestedExportFileName(documentDisplayName, 'svg', 'diagram.svg'),
+    'SVG',
+    'svg',
+    'image/svg+xml',
+  )
+}
+
+function pngExportOptions(documentDisplayName: string) {
+  return saveFileKind(
+    suggestedExportFileName(documentDisplayName, 'png', 'diagram.png'),
+    'PNG',
+    'png',
+    'image/png',
+  )
+}
+
+function asciiExportOptions(documentDisplayName: string) {
+  return saveFileKind(
+    suggestedExportFileName(documentDisplayName, 'txt', 'diagram.txt'),
+    'Text',
+    'txt',
+    'text/plain',
+  )
+}
+
+function htmlExportOptions(documentDisplayName: string) {
+  return saveFileKind(
+    suggestedExportFileName(documentDisplayName, 'html', 'diagrams.html'),
+    'HTML',
+    'html',
+    'text/html',
+  )
+}
 
 const LICENSE_INFO_TEXT = `Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)
 
@@ -139,8 +176,12 @@ interface ToolbarProps {
   setDocumentPath: (path: string | null) => void
   /** Web open / drag-drop: remember the filename without a filesystem path. */
   setOpenedDocumentName: (name: string) => void
-  /** Basename (or Untitled) shown in the toolbar chrome. */
+  /** Absolute path when the open document is backed by a file (desktop). */
+  documentPath: string | null
+  /** Basename (or Untitled) shown in the document title control. */
   documentDisplayName: string
+  /** True when editor contents differ from the last saved/loaded baseline. */
+  isDocumentEdited: boolean
   /** Records content Mermalaid wrote to disk so its own save isn't seen as an external change. */
   onDocumentSaved?: (content: string) => void
   isMobile?: boolean
@@ -192,7 +233,9 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
   documentPathRef,
   setDocumentPath,
   setOpenedDocumentName,
+  documentPath,
   documentDisplayName,
+  isDocumentEdited,
   onDocumentSaved,
   isMobile = false,
   showMobileActions: showMobileActionsProp,
@@ -246,6 +289,7 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
     if (confirm('Create a new diagram? Unsaved changes will be lost.')) {
       setCode(NEW_DIAGRAM)
       setDocumentPath(null)
+      onDocumentSaved?.(NEW_DIAGRAM)
     }
   }
 
@@ -282,6 +326,7 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
       const content = await readTextFile(path)
       setCode(content)
       setDocumentPath(path)
+      onDocumentSaved?.(content)
       addRecentFile(path)
       await rebuildNativeAppMenu()
       showToast(`Loaded ${recentFileLabel(path)}`)
@@ -290,6 +335,53 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
       showToast('Could not read that file. It may have been moved or deleted.', 'error')
       removeRecentFile(path)
       await rebuildNativeAppMenu()
+    }
+  }
+
+  const handleRenameDocument = async (rawInput: string): Promise<boolean> => {
+    const plan = planDocumentRename({
+      rawInput,
+      documentPath: documentPathRef.current,
+      documentName: documentDisplayName,
+    })
+
+    switch (plan.kind) {
+      case 'noop':
+        return true
+      case 'display-only':
+        setOpenedDocumentName(plan.nextName)
+        showToast(`Named ${plan.nextName}`)
+        return true
+      case 'disk': {
+        if (!isTauri()) {
+          setOpenedDocumentName(plan.nextName)
+          return true
+        }
+        try {
+          if (await exists(plan.newPath)) {
+            const replace = await ask(
+              `"${plan.nextName}" already exists. Replace it?`,
+              { title: 'Rename', kind: 'warning' },
+            )
+            if (!replace) return false
+          }
+          await rename(plan.oldPath, plan.newPath)
+          removeRecentFile(plan.oldPath)
+          setDocumentPath(plan.newPath)
+          addRecentFile(plan.newPath)
+          await rebuildNativeAppMenu()
+          showToast(`Renamed to ${plan.nextName}`)
+          return true
+        } catch (err) {
+          console.error('Rename error:', err)
+          showToast('Could not rename that file.', 'error')
+          return false
+        }
+      }
+      default: {
+        const _exhaustive: never = plan
+        return _exhaustive
+      }
     }
   }
 
@@ -321,6 +413,7 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
         if (content) {
           setCode(content)
           setOpenedDocumentName(file.name)
+          onDocumentSaved?.(content)
           showToast(`Loaded ${file.name}`)
         } else {
           showToast('File appears to be empty.', 'error')
@@ -353,10 +446,7 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
   const handleSaveAs = async () => {
     try {
       // Prefer the open document basename for dialogs/downloads; keep Untitled → diagram.mmd.
-      const suggestedName =
-        documentDisplayName && documentDisplayName !== UNTITLED_DOCUMENT_NAME
-          ? documentDisplayName
-          : 'diagram.mmd'
+      const suggestedName = suggestedSourceFileName(documentDisplayName)
       const result = await saveBlob(new Blob([code], { type: 'text/plain' }), {
         suggestedName,
         defaultPath: documentPathRef.current ?? suggestedName,
@@ -483,7 +573,7 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
     try {
       const result = await saveBlob(
         new Blob([svgElement.outerHTML], { type: 'image/svg+xml' }),
-        SVG_EXPORT,
+        svgExportOptions(documentDisplayName),
       )
       const toastMsg = toastMessageForSaveResult(result, 'Exported')
       if (toastMsg) showToast(toastMsg)
@@ -519,7 +609,7 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
         return
       }
 
-      const result = await saveBlob(blob, PNG_EXPORT)
+      const result = await saveBlob(blob, pngExportOptions(documentDisplayName))
       const toastMsg = toastMessageForSaveResult(result, 'Exported')
       if (toastMsg) showToast(toastMsg)
     } catch (err) {
@@ -536,7 +626,10 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
     }
     const exportText = async (text: string) => {
       try {
-        const result = await saveBlob(new Blob([text], { type: 'text/plain' }), ASCII_EXPORT)
+        const result = await saveBlob(
+          new Blob([text], { type: 'text/plain' }),
+          asciiExportOptions(documentDisplayName),
+        )
         const toastMsg = toastMessageForSaveResult(result, 'Exported')
         if (toastMsg) showToast(toastMsg)
       } catch (err) {
@@ -750,7 +843,7 @@ ${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</di
 
     const blob = new Blob([html], { type: 'text/html' })
     try {
-      const result = await saveBlob(blob, HTML_EXPORT)
+      const result = await saveBlob(blob, htmlExportOptions(documentDisplayName))
       const toastMsg = toastMessageForSaveResult(result, `Exported ${svgs.length} diagrams as`)
       if (toastMsg) showToast(toastMsg)
     } catch (err) {
@@ -817,9 +910,13 @@ ${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</di
             />
             <div className="toolbar-mobile-title-stack">
               <div className="toolbar-mobile-title">Mermalaid</div>
-              <div className="toolbar-document-name" title={documentDisplayName}>
-                {documentDisplayName}
-              </div>
+              <DocumentTitleControl
+                placement="mobile"
+                documentDisplayName={documentDisplayName}
+                documentPath={documentPath}
+                isEdited={isDocumentEdited}
+                onRename={handleRenameDocument}
+              />
             </div>
           </div>
           {error && <span className="toolbar-mobile-error">Syntax error</span>}
@@ -1007,7 +1104,28 @@ ${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</di
         style={{ display: 'none' }}
       />
       {isMobile ? mobileToolbar : (
+        <>
+        {isTauri() && isMacOsClient() && (
+          <div className="app-titlebar" data-tauri-drag-region>
+            <DocumentTitleControl
+              placement="overlay"
+              documentDisplayName={documentDisplayName}
+              documentPath={documentPath}
+              isEdited={isDocumentEdited}
+              onRename={handleRenameDocument}
+            />
+          </div>
+        )}
         <div className="toolbar">
+          {!(isTauri() && isMacOsClient()) && (
+            <DocumentTitleControl
+              placement="toolbar"
+              documentDisplayName={documentDisplayName}
+              documentPath={documentPath}
+              isEdited={isDocumentEdited}
+              onRename={handleRenameDocument}
+            />
+          )}
           <div className="toolbar-section">
             <button type="button" onClick={handleNew} className="toolbar-btn" title="New (⌘N)">
               New
@@ -1021,9 +1139,6 @@ ${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</di
             <button type="button" onClick={onHistoryOpen} className="toolbar-btn" title="Revision History">
               History
             </button>
-            <span className="toolbar-document-name" title={documentDisplayName}>
-              {documentDisplayName}
-            </span>
           </div>
 
           <div className="toolbar-section">
@@ -1139,6 +1254,7 @@ ${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</di
             </a>
           </div>
         </div>
+        </>
       )}
       <Settings isOpen={showSettings} onClose={() => setShowSettings(false)} />
       <AgentBridgePanel isOpen={showAgentPanel} onClose={() => setShowAgentPanel(false)} />

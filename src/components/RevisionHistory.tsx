@@ -19,6 +19,8 @@ interface RevisionHistoryProps {
   onDelete: (id: string) => void
   onClear: () => void
   onCreateCheckpoint: (name?: string) => void
+  /** Prefills the checkpoint name prompt from the open document stem. */
+  defaultCheckpointName?: string
 }
 
 type ViewMode = 'list' | 'diff'
@@ -65,6 +67,7 @@ export default function RevisionHistory({
   onDelete,
   onClear,
   onCreateCheckpoint,
+  defaultCheckpointName,
 }: RevisionHistoryProps) {
   const { mermaidTheme } = useTheme()
   const isDark = isAppThemeDark(mermaidTheme)
@@ -158,8 +161,12 @@ export default function RevisionHistory({
               type="button"
               className="revision-history-btn revision-history-btn-primary"
               onClick={() => {
-                const name = prompt('Checkpoint name (optional):')
-                onCreateCheckpoint(name || undefined)
+                const name = prompt(
+                  'Checkpoint name (optional):',
+                  defaultCheckpointName ?? '',
+                )
+                if (name === null) return
+                onCreateCheckpoint(name.trim() || undefined)
               }}
               title="Save current state as a named checkpoint"
             >

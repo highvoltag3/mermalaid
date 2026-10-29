@@ -100,7 +100,7 @@ describe('App (web)', () => {
       </MemoryRouter>,
     )
     await waitFor(() => {
-      expect(container.querySelector('.toolbar-document-name')).toHaveTextContent('Untitled')
+      expect(container.querySelector('.document-title-trigger')).toHaveTextContent(/Untitled/)
       expect(document.title).toBe('Untitled - Mermalaid')
     })
   })
