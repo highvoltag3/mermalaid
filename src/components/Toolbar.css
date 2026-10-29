@@ -1,5 +1,4 @@
 .toolbar {
-  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -27,12 +26,6 @@
   font-size: 13px;
   color: var(--app-muted);
   user-select: none;
-}
-
-/* Left/right toolbar groups stay above the absolutely centered title. */
-.toolbar > .toolbar-section {
-  position: relative;
-  z-index: 1;
 }
 
 .toolbar-section:not(:last-child)::after {

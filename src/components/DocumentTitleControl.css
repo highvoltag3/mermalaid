@@ -7,19 +7,6 @@
   z-index: 5;
 }
 
-.document-title-control--toolbar {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-}
-
-.document-title-control--toolbar .document-title-trigger,
-.document-title-control--toolbar .document-title-popover {
-  pointer-events: auto;
-}
-
 .document-title-control--overlay {
   max-width: min(50vw, 360px);
 }
@@ -179,20 +166,17 @@
   flex-shrink: 0;
   border-bottom: 1px solid var(--app-border);
   background-color: var(--app-surface);
+  user-select: none;
+}
+
+.app-titlebar--overlay {
   -webkit-app-region: drag;
   app-region: drag;
-  user-select: none;
+  /* Leave room for macOS traffic lights when titleBarStyle is Overlay. */
+  padding-left: 78px;
+  padding-right: 16px;
 }
 
 .app-titlebar .document-title-control {
   z-index: 2;
-}
-
-/* Keep room for traffic lights when the overlay title bar is active. */
-.app-has-overlay-titlebar .toolbar {
-  padding-left: 16px;
-}
-
-.app-has-overlay-titlebar .toolbar-document-title-slot {
-  display: none;
 }

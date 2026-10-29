@@ -1105,27 +1105,19 @@ ${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</di
       />
       {isMobile ? mobileToolbar : (
         <>
-        {isTauri() && isMacOsClient() && (
-          <div className="app-titlebar" data-tauri-drag-region>
-            <DocumentTitleControl
-              placement="overlay"
-              documentDisplayName={documentDisplayName}
-              documentPath={documentPath}
-              isEdited={isDocumentEdited}
-              onRename={handleRenameDocument}
-            />
-          </div>
-        )}
+        <div
+          className={`app-titlebar ${isTauri() && isMacOsClient() ? 'app-titlebar--overlay' : ''}`}
+          data-tauri-drag-region={isTauri() && isMacOsClient() ? true : undefined}
+        >
+          <DocumentTitleControl
+            placement="overlay"
+            documentDisplayName={documentDisplayName}
+            documentPath={documentPath}
+            isEdited={isDocumentEdited}
+            onRename={handleRenameDocument}
+          />
+        </div>
         <div className="toolbar">
-          {!(isTauri() && isMacOsClient()) && (
-            <DocumentTitleControl
-              placement="toolbar"
-              documentDisplayName={documentDisplayName}
-              documentPath={documentPath}
-              isEdited={isDocumentEdited}
-              onRename={handleRenameDocument}
-            />
-          )}
           <div className="toolbar-section">
             <button type="button" onClick={handleNew} className="toolbar-btn" title="New (⌘N)">
               New

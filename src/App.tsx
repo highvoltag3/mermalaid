@@ -29,7 +29,6 @@ import {
   formatEditorDocumentTitle,
   getDocumentDisplayName,
   getDocumentTitleStem,
-  isMacOsClient,
   UNTITLED_DOCUMENT_NAME,
 } from './utils/documentTitle'
 import {
@@ -208,7 +207,6 @@ function EditorView({ pendingRelease, onDismissPendingRelease, tauriUpdater }: R
   )
   const [showRevisionHistory, setShowRevisionHistory] = useState(false)
   const revisionHistory = useRevisionHistory({ code, onRestore: setCode })
-  const usesOverlayDocumentTitle = isTauri() && isMacOsClient()
   const historyCheckpointDefault =
     documentDisplayName === UNTITLED_DOCUMENT_NAME
       ? undefined
@@ -456,7 +454,7 @@ function EditorView({ pendingRelease, onDismissPendingRelease, tauriUpdater }: R
   return (
     <AgentBridgeProvider value={agentBridge}>
     <div
-      className={`app ${isAppThemeDark(mermaidTheme) ? 'app-theme-dark' : 'app-theme-light'} ${isSmartphoneLayout ? 'app-mobile' : ''} ${isKeyboardOpen ? 'app-mobile-keyboard-open' : ''} ${usesOverlayDocumentTitle ? 'app-has-overlay-titlebar' : ''}`}
+      className={`app ${isAppThemeDark(mermaidTheme) ? 'app-theme-dark' : 'app-theme-light'} ${isSmartphoneLayout ? 'app-mobile' : ''} ${isKeyboardOpen ? 'app-mobile-keyboard-open' : ''}`}
       style={getAppThemeCssVars(mermaidTheme) as React.CSSProperties}
       onDrop={handleDrop}
       onDragOver={handleDragOver}

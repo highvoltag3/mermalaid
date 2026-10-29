@@ -18,7 +18,7 @@ describe('DocumentTitleControl', () => {
         documentPath={null}
         isEdited
         onRename={onRename}
-        placement="toolbar"
+        placement="overlay"
       />,
     )
 
