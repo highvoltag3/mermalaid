@@ -43,6 +43,8 @@
 }
 
 .app-titlebar--overlay {
+  /* Keep native macOS controls over the titlebar even when a banner is shown. */
+  order: -1;
   -webkit-app-region: drag;
   app-region: drag;
   padding-left: 78px;

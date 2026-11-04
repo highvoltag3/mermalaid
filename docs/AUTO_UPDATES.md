@@ -12,6 +12,8 @@ Mermalaid desktop supports automatic in-app updates through the Tauri updater pl
 
 The updater only runs in the desktop app. The web version shows a simpler banner linking to the GitHub releases page.
 
+On macOS desktop, update banners appear below the document titlebar so the native window controls remain unobstructed. Web and other desktop platforms retain their existing banner placement.
+
 ## Current Configuration
 
 The updater is fully configured:
