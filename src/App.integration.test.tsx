@@ -8,6 +8,7 @@ import * as updaterHook from './hooks/useUpdater'
 import * as privateUrlShare from './utils/privateUrlShare'
 import appCss from './App.css?inline'
 import toolbarCss from './components/Toolbar.css?inline'
+import desktopCapabilities from '../src-tauri/capabilities/default.json'
 
 vi.mock('@tauri-apps/api/core', () => ({
   isTauri: vi.fn(() => false),
@@ -109,6 +110,8 @@ describe('Desktop update banner layout', () => {
     expect(getComputedStyle(titlebar).flexShrink).toBe('0')
     expect(getComputedStyle(banner).order).not.toBe('-1')
     expect(titlebar).toHaveAttribute('data-tauri-drag-region', 'true')
+    expect(desktopCapabilities.windows).toContain('main')
+    expect(desktopCapabilities.permissions).toContain('core:window:allow-start-dragging')
 
     if (status === 'up-to-date') {
       screen.getByRole('button', { name: 'OK' }).click()
