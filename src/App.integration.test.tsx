@@ -2,12 +2,21 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
+import { isTauri } from '@tauri-apps/api/core'
 import App from './App'
+import * as updaterHook from './hooks/useUpdater'
 import * as privateUrlShare from './utils/privateUrlShare'
+import appCss from './App.css?inline'
+import toolbarCss from './components/Toolbar.css?inline'
+import desktopCapabilities from '../src-tauri/capabilities/default.json'
 
 vi.mock('@tauri-apps/api/core', () => ({
-  isTauri: () => false,
+  isTauri: vi.fn(() => false),
   invoke: async () => [] as string[],
+}))
+
+vi.mock('@tauri-apps/api/window', () => ({
+  getCurrentWindow: () => ({ setTitle: async () => {} }),
 }))
 
 vi.mock('@tauri-apps/api/event', () => ({
@@ -46,6 +55,90 @@ vi.mock('@monaco-editor/react', () => ({
     }),
   },
 }))
+
+describe('Desktop update banner layout', () => {
+  let styles: HTMLStyleElement
+  let updater: ReturnType<typeof updaterHook.useUpdater>
+
+  beforeEach(() => {
+    localStorage.clear()
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1280 })
+    styles = document.createElement('style')
+    styles.textContent = `${appCss}\n${toolbarCss}`
+    document.head.append(styles)
+    updater = {
+      status: 'up-to-date',
+      update: { version: '2.0.0', currentVersion: '1.9.2', body: null, date: null },
+      progress: { downloaded: 512, contentLength: 1024 },
+      error: 'Network unavailable',
+      checkForUpdates: vi.fn(),
+      downloadAndInstall: vi.fn(),
+      skipVersion: vi.fn(),
+      dismissUpdate: vi.fn(),
+    }
+    vi.spyOn(updaterHook, 'useUpdater').mockReturnValue(updater)
+  })
+
+  afterEach(() => {
+    cleanup()
+    styles.remove()
+    vi.mocked(isTauri).mockReturnValue(false)
+    vi.restoreAllMocks()
+  })
+
+  it.each([
+    'checking', 'up-to-date', 'disabled', 'error', 'available', 'downloading', 'ready',
+  ] as const)('keeps the macOS titlebar above the %s banner', (status) => {
+    vi.mocked(isTauri).mockReturnValue(true)
+    vi.spyOn(window.navigator, 'platform', 'get').mockReturnValue('MacIntel')
+    vi.mocked(updaterHook.useUpdater).mockReturnValue({ ...updater, status })
+    const { container } = render(
+      <MemoryRouter initialEntries={['/editor']}>
+        <App />
+      </MemoryRouter>,
+    )
+    const app = container.querySelector('.app')!
+    const titlebar = container.querySelector('.app-titlebar')!
+    const banner = container.querySelector('.update-banner')!
+
+    expect(titlebar.parentElement).toBe(app)
+    expect(banner.parentElement).toBe(app)
+    expect(getComputedStyle(app).display).toBe('flex')
+    expect(getComputedStyle(app).flexDirection).toBe('column')
+    expect(getComputedStyle(titlebar).order).toBe('-1')
+    expect(getComputedStyle(titlebar).height).toBe('38px')
+    expect(getComputedStyle(titlebar).flexShrink).toBe('0')
+    expect(getComputedStyle(banner).order).not.toBe('-1')
+    expect(titlebar).toHaveAttribute('data-tauri-drag-region', 'true')
+    expect(desktopCapabilities.windows).toContain('main')
+    expect(desktopCapabilities.permissions).toContain('core:window:allow-start-dragging')
+
+    if (status === 'up-to-date') {
+      screen.getByRole('button', { name: 'OK' }).click()
+      expect(updater.dismissUpdate).toHaveBeenCalledOnce()
+    }
+  })
+
+  it.each([
+    { desktop: false, platform: 'MacIntel', userAgent: 'Mac OS X' },
+    { desktop: true, platform: 'Win32', userAgent: 'Windows NT' },
+    { desktop: true, platform: 'Linux x86_64', userAgent: 'Linux' },
+  ])('preserves titlebar ordering for $platform (desktop: $desktop)', ({ desktop, platform, userAgent }) => {
+    vi.mocked(isTauri).mockReturnValue(desktop)
+    vi.spyOn(window.navigator, 'platform', 'get').mockReturnValue(platform)
+    vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue(userAgent)
+    const { container } = render(
+      <MemoryRouter initialEntries={['/editor']}>
+        <App />
+      </MemoryRouter>,
+    )
+    const titlebar = container.querySelector('.app-titlebar')!
+
+    expect(titlebar).not.toHaveClass('app-titlebar--overlay')
+    expect(getComputedStyle(titlebar).order).not.toBe('-1')
+    expect(titlebar).not.toHaveAttribute('data-tauri-drag-region')
+  })
+})
 
 describe('App (web)', () => {
   const setViewportWidth = (width: number) => {
