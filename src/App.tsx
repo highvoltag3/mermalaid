@@ -459,19 +459,19 @@ function EditorView({ pendingRelease, onDismissPendingRelease, tauriUpdater }: R
       onDrop={handleDrop}
       onDragOver={handleDragOver}
     >
-      {isTauri() ? (
-        <TauriUpdateBanner updater={tauriUpdater} variant="editor" />
-      ) : (
-        pendingRelease && (
-          <UpdateAvailableBanner
-            update={pendingRelease}
-            onDismiss={onDismissPendingRelease}
-            variant="editor"
-          />
-        )
-      )}
       <Toolbar
         ref={toolbarRef}
+        updateBanner={isTauri() ? (
+          <TauriUpdateBanner updater={tauriUpdater} variant="editor" />
+        ) : (
+          pendingRelease && (
+            <UpdateAvailableBanner
+              update={pendingRelease}
+              onDismiss={onDismissPendingRelease}
+              variant="editor"
+            />
+          )
+        )}
         code={code}
         setCode={setCode}
         error={error}

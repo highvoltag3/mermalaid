@@ -6,8 +6,6 @@ import { isTauri } from '@tauri-apps/api/core'
 import App from './App'
 import * as updaterHook from './hooks/useUpdater'
 import * as privateUrlShare from './utils/privateUrlShare'
-import appCss from './App.css?inline'
-import toolbarCss from './components/Toolbar.css?inline'
 import desktopCapabilities from '../src-tauri/capabilities/default.json'
 
 vi.mock('@tauri-apps/api/core', () => ({
@@ -56,16 +54,15 @@ vi.mock('@monaco-editor/react', () => ({
   },
 }))
 
+const precedes = (a: Element, b: Element) =>
+  Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING)
+
 describe('Desktop update banner layout', () => {
-  let styles: HTMLStyleElement
   let updater: ReturnType<typeof updaterHook.useUpdater>
 
   beforeEach(() => {
     localStorage.clear()
     Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1280 })
-    styles = document.createElement('style')
-    styles.textContent = `${appCss}\n${toolbarCss}`
-    document.head.append(styles)
     updater = {
       status: 'up-to-date',
       update: { version: '2.0.0', currentVersion: '1.9.2', body: null, date: null },
@@ -81,7 +78,6 @@ describe('Desktop update banner layout', () => {
 
   afterEach(() => {
     cleanup()
-    styles.remove()
     vi.mocked(isTauri).mockReturnValue(false)
     vi.restoreAllMocks()
   })
@@ -97,18 +93,11 @@ describe('Desktop update banner layout', () => {
         <App />
       </MemoryRouter>,
     )
-    const app = container.querySelector('.app')!
     const titlebar = container.querySelector('.app-titlebar')!
     const banner = container.querySelector('.update-banner')!
 
-    expect(titlebar.parentElement).toBe(app)
-    expect(banner.parentElement).toBe(app)
-    expect(getComputedStyle(app).display).toBe('flex')
-    expect(getComputedStyle(app).flexDirection).toBe('column')
-    expect(getComputedStyle(titlebar).order).toBe('-1')
-    expect(getComputedStyle(titlebar).height).toBe('38px')
-    expect(getComputedStyle(titlebar).flexShrink).toBe('0')
-    expect(getComputedStyle(banner).order).not.toBe('-1')
+    expect(titlebar).toHaveClass('app-titlebar--overlay')
+    expect(precedes(titlebar, banner)).toBe(true)
     expect(titlebar).toHaveAttribute('data-tauri-drag-region', 'true')
     expect(desktopCapabilities.windows).toContain('main')
     expect(desktopCapabilities.permissions).toContain('core:window:allow-start-dragging')
@@ -135,8 +124,27 @@ describe('Desktop update banner layout', () => {
     const titlebar = container.querySelector('.app-titlebar')!
 
     expect(titlebar).not.toHaveClass('app-titlebar--overlay')
-    expect(getComputedStyle(titlebar).order).not.toBe('-1')
     expect(titlebar).not.toHaveAttribute('data-tauri-drag-region')
+    if (desktop) {
+      expect(precedes(container.querySelector('.update-banner')!, titlebar)).toBe(true)
+    }
+  })
+
+  it('focuses the macOS document title before the update banner actions', async () => {
+    vi.mocked(isTauri).mockReturnValue(true)
+    vi.spyOn(window.navigator, 'platform', 'get').mockReturnValue('MacIntel')
+    vi.mocked(updaterHook.useUpdater).mockReturnValue({ ...updater, status: 'available' })
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter initialEntries={['/editor']}>
+        <App />
+      </MemoryRouter>,
+    )
+
+    await user.tab()
+    expect(screen.getByRole('button', { name: /^Rename / })).toHaveFocus()
+    await user.tab()
+    expect(screen.getByRole('button', { name: 'Update & Restart' })).toHaveFocus()
   })
 })
 

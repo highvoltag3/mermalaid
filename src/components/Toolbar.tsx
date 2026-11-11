@@ -5,6 +5,7 @@ import {
   useImperativeHandle,
   forwardRef,
   type MutableRefObject,
+  type ReactNode,
 } from 'react'
 import { isTauri } from '@tauri-apps/api/core'
 import { ask, message, open } from '@tauri-apps/plugin-dialog'
@@ -169,6 +170,8 @@ interface ToolbarProps {
   setShowMobileActions?: (open: boolean) => void
   /** Callback to open the revision history panel */
   onHistoryOpen?: () => void
+  /** Rendered below the macOS overlay titlebar (so it clears the window controls), above it elsewhere. */
+  updateBanner?: ReactNode
 }
 
 export interface ToolbarRef {
@@ -220,6 +223,7 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
   showMobileActions: showMobileActionsProp,
   setShowMobileActions: setShowMobileActionsProp,
   onHistoryOpen,
+  updateBanner,
 }, ref) => {
   const { mermaidTheme, setMermaidTheme } = useTheme()
   const { showToast } = useToast()
@@ -1090,6 +1094,8 @@ ${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</di
     </>
   )
 
+  const hasOverlayTitlebar = isTauri() && isMacOsClient()
+
   return (
     <>
       <input
@@ -1099,11 +1105,12 @@ ${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</di
         onChange={handleFileChange}
         style={{ display: 'none' }}
       />
-      {isMobile ? mobileToolbar : (
+      {isMobile ? <>{updateBanner}{mobileToolbar}</> : (
         <>
+        {!hasOverlayTitlebar && updateBanner}
         <div
-          className={`app-titlebar ${isTauri() && isMacOsClient() ? 'app-titlebar--overlay' : ''}`}
-          data-tauri-drag-region={isTauri() && isMacOsClient() ? true : undefined}
+          className={`app-titlebar ${hasOverlayTitlebar ? 'app-titlebar--overlay' : ''}`}
+          data-tauri-drag-region={hasOverlayTitlebar ? true : undefined}
         >
           <DocumentTitleControl
             placement="overlay"
@@ -1113,6 +1120,7 @@ ${svgs.map((svg, i) => `<div class="diagram"><h2>Diagram ${i + 1}</h2>${svg}</di
             onRename={handleRenameDocument}
           />
         </div>
+        {hasOverlayTitlebar && updateBanner}
         <div className="toolbar">
           <div className="toolbar-section">
             <button type="button" onClick={handleNew} className="toolbar-btn" title="New (⌘N)">
