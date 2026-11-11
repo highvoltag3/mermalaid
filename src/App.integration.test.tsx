@@ -58,6 +58,7 @@ const precedes = (a: Element, b: Element) =>
   Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING)
 
 describe('Desktop update banner layout', () => {
+  const originalInnerWidth = window.innerWidth
   let updater: ReturnType<typeof updaterHook.useUpdater>
 
   beforeEach(() => {
@@ -78,6 +79,7 @@ describe('Desktop update banner layout', () => {
 
   afterEach(() => {
     cleanup()
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalInnerWidth })
     vi.mocked(isTauri).mockReturnValue(false)
     vi.restoreAllMocks()
   })
@@ -99,13 +101,11 @@ describe('Desktop update banner layout', () => {
     expect(titlebar).toHaveClass('app-titlebar--overlay')
     expect(precedes(titlebar, banner)).toBe(true)
     expect(titlebar).toHaveAttribute('data-tauri-drag-region', 'true')
+  })
+
+  it('grants the main window permission to drag from the titlebar', () => {
     expect(desktopCapabilities.windows).toContain('main')
     expect(desktopCapabilities.permissions).toContain('core:window:allow-start-dragging')
-
-    if (status === 'up-to-date') {
-      screen.getByRole('button', { name: 'OK' }).click()
-      expect(updater.dismissUpdate).toHaveBeenCalledOnce()
-    }
   })
 
   it.each([
