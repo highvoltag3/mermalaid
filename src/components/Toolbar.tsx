@@ -170,7 +170,7 @@ interface ToolbarProps {
   setShowMobileActions?: (open: boolean) => void
   /** Callback to open the revision history panel */
   onHistoryOpen?: () => void
-  /** Rendered below the macOS overlay titlebar (so it clears the window controls), above it elsewhere. */
+  /** Rendered after the macOS overlay titlebar (so it clears the window controls), before the titlebar or mobile toolbar otherwise. */
   updateBanner?: ReactNode
 }
 

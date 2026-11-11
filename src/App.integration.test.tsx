@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { isTauri } from '@tauri-apps/api/core'
 import App from './App'
+import { useUpdateCheck } from './hooks/useUpdateCheck'
 import * as updaterHook from './hooks/useUpdater'
 import * as privateUrlShare from './utils/privateUrlShare'
 import desktopCapabilities from '../src-tauri/capabilities/default.json'
@@ -27,7 +28,7 @@ vi.mock('./nativeAppMenu', () => ({
 }))
 
 vi.mock('./hooks/useUpdateCheck', () => ({
-  useUpdateCheck: () => ({ update: null, dismiss: () => {} }),
+  useUpdateCheck: vi.fn(() => ({ update: null, dismiss: () => {} })),
 }))
 
 vi.mock('./utils/privateUrlShare', async () => {
@@ -66,13 +67,15 @@ const setViewportWidth = (width: number) => {
 const precedes = (a: Element, b: Element) =>
   Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING)
 
-describe('Desktop update banner layout', () => {
+describe('Update banner and titlebar layout', () => {
   const originalInnerWidth = window.innerWidth
+  const pendingRelease = { tag: 'v2.0.0', version: '2.0.0', releaseUrl: 'https://example.com', name: null }
   let updater: ReturnType<typeof updaterHook.useUpdater>
 
   beforeEach(() => {
     localStorage.clear()
     setViewportWidth(1280)
+    vi.mocked(useUpdateCheck).mockReturnValue({ update: pendingRelease, dismiss: vi.fn() })
     updater = {
       status: 'up-to-date',
       update: { version: '2.0.0', currentVersion: '1.9.2', body: null, date: null },
@@ -90,6 +93,7 @@ describe('Desktop update banner layout', () => {
     cleanup()
     setViewportWidth(originalInnerWidth)
     vi.mocked(isTauri).mockReturnValue(false)
+    vi.mocked(useUpdateCheck).mockReturnValue({ update: null, dismiss: () => {} })
     vi.restoreAllMocks()
   })
 
@@ -105,11 +109,12 @@ describe('Desktop update banner layout', () => {
       </MemoryRouter>,
     )
     const titlebar = container.querySelector('.app-titlebar')!
-    const banner = container.querySelector('.update-banner')
+    const banners = container.querySelectorAll('.update-banner')
 
     expect(titlebar).toHaveClass('app-titlebar--overlay')
-    expect(banner).toBeInTheDocument()
-    expect(precedes(titlebar, banner!)).toBe(true)
+    expect(banners).toHaveLength(1)
+    expect(precedes(titlebar, banners[0])).toBe(true)
+    expect(precedes(banners[0], container.querySelector('.toolbar')!)).toBe(true)
     expect(titlebar).toHaveAttribute('data-tauri-drag-region', 'true')
   })
 
@@ -122,7 +127,7 @@ describe('Desktop update banner layout', () => {
     { desktop: false, platform: 'MacIntel', userAgent: 'Mac OS X' },
     { desktop: true, platform: 'Win32', userAgent: 'Windows NT' },
     { desktop: true, platform: 'Linux x86_64', userAgent: 'Linux' },
-  ])('preserves titlebar ordering for $platform (desktop: $desktop)', ({ desktop, platform, userAgent }) => {
+  ])('keeps the banner above the standard titlebar for $platform (desktop: $desktop)', ({ desktop, platform, userAgent }) => {
     vi.mocked(isTauri).mockReturnValue(desktop)
     vi.spyOn(window.navigator, 'platform', 'get').mockReturnValue(platform)
     vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue(userAgent)
@@ -132,16 +137,26 @@ describe('Desktop update banner layout', () => {
       </MemoryRouter>,
     )
     const titlebar = container.querySelector('.app-titlebar')!
-    const banner = container.querySelector('.update-banner')
+    const banners = container.querySelectorAll('.update-banner')
 
     expect(titlebar).not.toHaveClass('app-titlebar--overlay')
     expect(titlebar).not.toHaveAttribute('data-tauri-drag-region')
-    if (desktop) {
-      expect(banner).toBeInTheDocument()
-      expect(precedes(banner!, titlebar)).toBe(true)
-    } else {
-      expect(banner).toBeNull()
-    }
+    expect(banners).toHaveLength(1)
+    expect(precedes(banners[0], titlebar)).toBe(true)
+  })
+
+  it('keeps the banner above the mobile toolbar', () => {
+    setViewportWidth(390)
+    const { container } = render(
+      <MemoryRouter initialEntries={['/editor']}>
+        <App />
+      </MemoryRouter>,
+    )
+    const banners = container.querySelectorAll('.update-banner')
+
+    expect(container.querySelector('.app-titlebar')).toBeNull()
+    expect(banners).toHaveLength(1)
+    expect(precedes(banners[0], container.querySelector('.toolbar-mobile')!)).toBe(true)
   })
 
   it('focuses the macOS document title before the update banner actions', async () => {
@@ -166,6 +181,7 @@ describe('App (web)', () => {
   beforeEach(() => {
     localStorage.clear()
     setViewportWidth(1280)
+    vi.mocked(isTauri).mockReturnValue(false)
     vi.restoreAllMocks()
   })
 
