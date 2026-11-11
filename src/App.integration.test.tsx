@@ -54,6 +54,15 @@ vi.mock('@monaco-editor/react', () => ({
   },
 }))
 
+const setViewportWidth = (width: number) => {
+  Object.defineProperty(window, 'innerWidth', {
+    configurable: true,
+    writable: true,
+    value: width,
+  })
+  window.dispatchEvent(new Event('resize'))
+}
+
 const precedes = (a: Element, b: Element) =>
   Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING)
 
@@ -63,7 +72,7 @@ describe('Desktop update banner layout', () => {
 
   beforeEach(() => {
     localStorage.clear()
-    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1280 })
+    setViewportWidth(1280)
     updater = {
       status: 'up-to-date',
       update: { version: '2.0.0', currentVersion: '1.9.2', body: null, date: null },
@@ -79,7 +88,7 @@ describe('Desktop update banner layout', () => {
 
   afterEach(() => {
     cleanup()
-    Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalInnerWidth })
+    setViewportWidth(originalInnerWidth)
     vi.mocked(isTauri).mockReturnValue(false)
     vi.restoreAllMocks()
   })
@@ -96,10 +105,11 @@ describe('Desktop update banner layout', () => {
       </MemoryRouter>,
     )
     const titlebar = container.querySelector('.app-titlebar')!
-    const banner = container.querySelector('.update-banner')!
+    const banner = container.querySelector('.update-banner')
 
     expect(titlebar).toHaveClass('app-titlebar--overlay')
-    expect(precedes(titlebar, banner)).toBe(true)
+    expect(banner).toBeInTheDocument()
+    expect(precedes(titlebar, banner!)).toBe(true)
     expect(titlebar).toHaveAttribute('data-tauri-drag-region', 'true')
   })
 
@@ -122,11 +132,15 @@ describe('Desktop update banner layout', () => {
       </MemoryRouter>,
     )
     const titlebar = container.querySelector('.app-titlebar')!
+    const banner = container.querySelector('.update-banner')
 
     expect(titlebar).not.toHaveClass('app-titlebar--overlay')
     expect(titlebar).not.toHaveAttribute('data-tauri-drag-region')
     if (desktop) {
-      expect(precedes(container.querySelector('.update-banner')!, titlebar)).toBe(true)
+      expect(banner).toBeInTheDocument()
+      expect(precedes(banner!, titlebar)).toBe(true)
+    } else {
+      expect(banner).toBeNull()
     }
   })
 
@@ -149,15 +163,6 @@ describe('Desktop update banner layout', () => {
 })
 
 describe('App (web)', () => {
-  const setViewportWidth = (width: number) => {
-    Object.defineProperty(window, 'innerWidth', {
-      configurable: true,
-      writable: true,
-      value: width,
-    })
-    window.dispatchEvent(new Event('resize'))
-  }
-
   beforeEach(() => {
     localStorage.clear()
     setViewportWidth(1280)
