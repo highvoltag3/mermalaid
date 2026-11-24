@@ -21,6 +21,7 @@ import {
   buildMermalaidAboutPreviewHtml,
   isMermaidAboutKeywordOnly,
 } from '../utils/mermalaidInfoText'
+import { formatPreviewErrorHtml } from '../utils/previewErrorHtml'
 import {
   MermaidAboutKeywordFallback,
   renderMermaidPreviewWithFallback,
@@ -282,7 +283,7 @@ export default function Preview({
           lastFallbackToastRef.current = null
           setError(errorMsg)
           if (renderIdRef.current === currentId && container) {
-            container.innerHTML = `<div class="error-preview">${errorMsg}</div>`
+            container.innerHTML = formatPreviewErrorHtml(errorMsg)
             setDiagramReady(false)
           }
         }
@@ -345,7 +346,9 @@ export default function Preview({
         lastFallbackToastRef.current = null
         setError(errorMsg)
         if (renderIdRef.current === currentId && container) {
-          container.innerHTML = `<div class="error-preview">${errorMsg}<div class="error-recovery-hint">Try creating a new diagram (New button) or opening a valid .mmd file.</div></div>`
+          container.innerHTML = formatPreviewErrorHtml(errorMsg, {
+            includeRecoveryHint: true,
+          })
           setDiagramReady(false)
         }
       }
