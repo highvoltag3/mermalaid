@@ -1,6 +1,7 @@
 import { getIdentifier, getTauriVersion, getVersion } from '@tauri-apps/api/app'
 import { isTauri } from '@tauri-apps/api/core'
 import packageJson from '../../package.json'
+import { escapeHtml } from './escapeHtml'
 
 /**
  * True when the diagram source is only the keyword `info` (case-insensitive).
@@ -21,14 +22,6 @@ export function isMermaidAboutKeywordOnly(diagramCode: string): boolean {
 function dependencyRange(name: keyof typeof packageJson.dependencies): string {
   const v = packageJson.dependencies?.[name]
   return typeof v === 'string' ? v : 'unknown'
-}
-
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
 }
 
 /** HTML fragment for preview pane (styles from Preview.css). */

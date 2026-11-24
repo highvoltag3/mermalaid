@@ -34,7 +34,8 @@ jobs:
         working-directory: mcp
 
   e2e:
-    runs-on: ubuntu-latest
+    # Playwright 1.59 does not support ubuntu26 (current ubuntu-latest).
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -48,7 +49,7 @@ jobs:
           CI: true
 
   e2e-preview:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5

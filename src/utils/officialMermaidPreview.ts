@@ -92,9 +92,10 @@ function buildPreviewConfig(
   return {
     startOnLoad: false,
     // User-authored diagrams often use <br/>, <i>, etc. in flowchart labels. `strict`
-    // sanitizes/rewrites HTML aggressively and breaks many real-world graphs; `loose`
-    // matches typical editor behavior (e.g. mermaid.live) for trusted local input.
-    securityLevel: 'loose',
+    // escapes HTML too aggressively for those. `antiscript` keeps label HTML while
+    // stripping scripts and blocking javascript: / click callbacks (unlike `loose`).
+    // Untrusted share links and opened files can reach this renderer.
+    securityLevel: 'antiscript',
     // Use Mermaid "base" when no explicit Mermaid theme is requested so we can
     // project the selected beautiful-mermaid palette into Mermaid variables.
     theme: yamlConfig?.theme
