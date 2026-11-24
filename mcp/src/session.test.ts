@@ -5,6 +5,7 @@ import {
   BridgeSession,
   BridgeTimeoutError,
 } from './session.js'
+import { PairingThrottle } from './pairingThrottle.js'
 import {
   MessageType,
   PROTOCOL_VERSION,
@@ -16,6 +17,7 @@ import type { EditorConnection } from './wsServer.js'
 class FakeConn implements EditorConnection {
   id = Math.random().toString(36).slice(2)
   origin: string | null = 'http://localhost:5173'
+  remoteAddress: string | null = '127.0.0.1'
   isAlive = true
   sent: ServerToEditorMessage[] = []
   closed: { code?: number; reason?: string } | null = null
@@ -107,6 +109,31 @@ describe('BridgeSession handshake', () => {
     s.handleMessage(bound, hello('TESTCODE'))
     s.handleMessage(stranger, stateMsg(1, 'graph TD'))
     expect(s.status().hasCachedState).toBe(false)
+  })
+
+  it('locks out pairing after repeated bad codes from a remote address', () => {
+    const s = new BridgeSession({
+      pairingCode: 'TESTCODE',
+      serverInfo: { name: 'mermalaid-mcp', version: 'test' },
+      heartbeatIntervalMs: 15_000,
+      timeouts: { getDiagramMs: 100, setDiagramMs: 100, validateMs: 100, renderSvgMs: 100, renderPngMs: 100 },
+      pairingThrottle: new PairingThrottle({ maxAttempts: 2, maxAttemptsLoopback: 2, lockoutMs: 60_000 }),
+    })
+    const c1 = new FakeConn()
+    c1.remoteAddress = '10.0.0.9'
+    s.handleMessage(c1, hello('WRONGCOD'))
+    expect((c1.last() as { reason: string }).reason).toBe('bad_pairing_code')
+
+    const c2 = new FakeConn()
+    c2.remoteAddress = '10.0.0.9'
+    s.handleMessage(c2, hello('WRONGCOD'))
+    expect((c2.last() as { reason: string }).reason).toBe('pairing_locked')
+
+    const c3 = new FakeConn()
+    c3.remoteAddress = '10.0.0.9'
+    s.handleMessage(c3, hello('TESTCODE'))
+    expect((c3.last() as { reason: string }).reason).toBe('pairing_locked')
+    expect(s.isPaired).toBe(false)
   })
 })
 

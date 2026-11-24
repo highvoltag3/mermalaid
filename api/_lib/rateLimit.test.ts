@@ -36,9 +36,9 @@ describe('isRateLimited', () => {
     expect(await isRateLimited(req())).toBe(false)
   })
 
-  it('fails open (returns false) when the SDK throws', async () => {
+  it('fails closed (returns true) when the SDK throws', async () => {
     process.env.VERCEL = '1'
     checkRateLimitMock.mockRejectedValue(new Error('boom'))
-    expect(await isRateLimited(req())).toBe(false)
+    expect(await isRateLimited(req())).toBe(true)
   })
 })

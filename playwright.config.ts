@@ -27,7 +27,7 @@ export default defineConfig({
         timeout: 180_000,
       }
     : {
-        // Avoid `host: true` from vite.config (networkInterfaces); keep E2E stable in CI/sandbox.
+        // Pin loopback explicitly (vite defaults to 127.0.0.1; keep E2E stable if DEV_HOST is set).
         command: `npm run dev -- --host 127.0.0.1 --port ${port} --strictPort`,
         url: baseURL,
         reuseExistingServer: !process.env.CI,

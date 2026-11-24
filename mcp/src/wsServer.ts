@@ -16,6 +16,8 @@ import {
 export interface EditorConnection {
   readonly id: string
   readonly origin: string | null
+  /** Remote socket address (for pairing throttle). Null when unknown. */
+  readonly remoteAddress: string | null
   /** Liveness flag toggled by the heartbeat; exposed so the session need not know about ws. */
   isAlive: boolean
   send(msg: ServerToEditorMessage): void
@@ -108,6 +110,7 @@ export class BridgeWsServer {
     const conn: EditorConnection = {
       id: randomUUID(),
       origin: (req.headers.origin as string | undefined) ?? null,
+      remoteAddress: req.socket.remoteAddress ?? null,
       isAlive: true,
       send: (msg) => {
         if (socket.readyState === socket.OPEN) socket.send(serializeBridgeMessage(msg))

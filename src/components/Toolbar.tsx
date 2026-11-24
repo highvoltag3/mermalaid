@@ -7,7 +7,7 @@ import {
   type MutableRefObject,
   type ReactNode,
 } from 'react'
-import { isTauri } from '@tauri-apps/api/core'
+import { invoke, isTauri } from '@tauri-apps/api/core'
 import { ask, message, open } from '@tauri-apps/plugin-dialog'
 import { exists, readTextFile, rename, writeTextFile } from '@tauri-apps/plugin-fs'
 import html2canvas from 'html2canvas'
@@ -303,9 +303,16 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
     }
   }
 
+  const unlockDocumentPath = async (path: string) => {
+    // Dialog picks already expand the fs scope. Recent files / Save / rename need
+    // an explicit unlock (extension-gated in Rust) now that `$HOME/**` is gone.
+    await invoke('allow_document_path', { path })
+  }
+
   const openPath = async (path: string) => {
     if (!isTauri()) return
     try {
+      await unlockDocumentPath(path)
       const content = await readTextFile(path)
       setCode(content)
       setDocumentPath(path)
@@ -348,6 +355,8 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
         const caseOnlyChange =
           plan.oldPath.toLowerCase() === plan.newPath.toLowerCase()
         try {
+          await unlockDocumentPath(plan.oldPath)
+          await unlockDocumentPath(plan.newPath)
           if (!caseOnlyChange && (await exists(plan.newPath))) {
             const replace = await ask(
               `"${plan.nextName}" already exists. Replace it?`,
@@ -425,12 +434,15 @@ const Toolbar = forwardRef<ToolbarRef, ToolbarProps>(({
   const handleSave = async () => {
     if (isTauri() && documentPathRef.current) {
       try {
+        await unlockDocumentPath(documentPathRef.current)
         await writeTextFile(documentPathRef.current, code)
         onDocumentSaved?.(code)
         showToast(`Saved ${recentFileLabel(documentPathRef.current)}`)
       } catch (err) {
         console.error('Save error:', err)
-        showToast('Could not save to that location.', 'error')
+        // Path may sit outside the static fs scope (e.g. unusual location). Save As
+        // uses the dialog plugin, which grants scope for the chosen path.
+        await handleSaveAs()
       }
       return
     }

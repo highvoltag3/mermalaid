@@ -17,6 +17,7 @@ import {
 } from './protocol.js'
 import type { BridgeTimeouts } from './config.js'
 import { pairingCodesMatch } from './pairing.js'
+import { PairingThrottle } from './pairingThrottle.js'
 import type { EditorConnection } from './wsServer.js'
 
 export class BridgeNotConnectedError extends Error {
@@ -87,6 +88,8 @@ export interface SessionOptions {
   serverInfo: { name: string; version: string }
   heartbeatIntervalMs: number
   timeouts: BridgeTimeouts
+  /** Optional override for tests. */
+  pairingThrottle?: PairingThrottle
 }
 
 /**
@@ -101,8 +104,11 @@ export class BridgeSession {
   private readonly pending = new Map<string, Pending>()
   private waiters: Waiter[] = []
   private readonly stateChangeListeners: Array<() => void> = []
+  private readonly pairingThrottle: PairingThrottle
 
-  constructor(private readonly opts: SessionOptions) {}
+  constructor(private readonly opts: SessionOptions) {
+    this.pairingThrottle = opts.pairingThrottle ?? new PairingThrottle()
+  }
 
   get isPaired(): boolean {
     return this.editor !== null
@@ -171,10 +177,34 @@ export class BridgeSession {
       this.rejectConn(conn, 'version_mismatch', `Unsupported protocol version ${msg.v}; server speaks ${PROTOCOL_VERSION}.`)
       return
     }
+
+    const throttle = this.pairingThrottle.check(conn.remoteAddress)
+    if (!throttle.allowed) {
+      const seconds = Math.max(1, Math.ceil((throttle.retryAfterMs ?? 0) / 1000))
+      this.rejectConn(
+        conn,
+        'pairing_locked',
+        `Too many failed pairing attempts. Try again in about ${seconds}s.`,
+      )
+      return
+    }
+
     if (!msg.pairingCode || !pairingCodesMatch(msg.pairingCode, this.opts.pairingCode)) {
+      const after = this.pairingThrottle.recordFailure(conn.remoteAddress)
+      if (!after.allowed) {
+        const seconds = Math.max(1, Math.ceil((after.retryAfterMs ?? 0) / 1000))
+        this.rejectConn(
+          conn,
+          'pairing_locked',
+          `Too many failed pairing attempts. Try again in about ${seconds}s.`,
+        )
+        return
+      }
       this.rejectConn(conn, 'bad_pairing_code', 'Invalid pairing code.')
       return
     }
+
+    this.pairingThrottle.recordSuccess(conn.remoteAddress)
 
     // Newest-wins supersede: an existing editor is bumped in favor of the new one.
     if (this.editor && this.editor !== conn) {

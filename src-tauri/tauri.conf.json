@@ -40,7 +40,37 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": {
+        "default-src": "'self' customprotocol: asset:",
+        "script-src": "'self'",
+        "style-src": "'self' 'unsafe-inline' https://fonts.googleapis.com",
+        "font-src": "'self' https://fonts.gstatic.com data:",
+        "img-src": "'self' asset: http://asset.localhost blob: data: https:",
+        "connect-src": "'self' ipc: http://ipc.localhost https://ipc.localhost https://mermalaid.com https://www.mermalaid.com https://api.openai.com https://api.github.com ws://127.0.0.1:* ws://localhost:*",
+        "worker-src": "'self' blob:",
+        "child-src": "'self' blob:",
+        "object-src": "'none'",
+        "base-uri": "'self'",
+        "form-action": "'self'",
+        "frame-ancestors": "'none'",
+        "frame-src": "'none'"
+      },
+      "dangerousDisableAssetCspModification": ["style-src"],
+      "devCsp": {
+        "default-src": "'self' customprotocol: asset:",
+        "script-src": "'self' 'unsafe-eval' 'unsafe-inline'",
+        "style-src": "'self' 'unsafe-inline' https://fonts.googleapis.com",
+        "font-src": "'self' https://fonts.gstatic.com data:",
+        "img-src": "'self' asset: http://asset.localhost blob: data: https:",
+        "connect-src": "'self' ipc: http://ipc.localhost https://ipc.localhost https://mermalaid.com https://www.mermalaid.com https://api.openai.com https://api.github.com ws://127.0.0.1:* ws://localhost:* ws://localhost:5173 http://localhost:5173 http://127.0.0.1:5173",
+        "worker-src": "'self' blob:",
+        "child-src": "'self' blob:",
+        "object-src": "'none'",
+        "base-uri": "'self'",
+        "form-action": "'self'",
+        "frame-ancestors": "'none'",
+        "frame-src": "'none'"
+      }
     }
   },
   "bundle": {

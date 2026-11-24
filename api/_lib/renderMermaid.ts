@@ -31,7 +31,15 @@ const THEME_BACKGROUND: Record<ServerMermaidTheme, string> = {
 const RENDER_TIMEOUT_MS = 25_000
 
 /** Installed Mermaid version — keep in sync with package.json for the CDN fallback. */
-const MERMAID_VERSION = '11.15.0'
+const MERMAID_VERSION = '12.2.0'
+
+/**
+ * Subresource integrity for the pinned CDN fallback of `mermaid.min.js`.
+ * Recompute after bumping MERMAID_VERSION:
+ *   node -e "const c=require('crypto');const fs=require('fs');const b=fs.readFileSync('node_modules/mermaid/dist/mermaid.min.js');console.log('sha384-'+c.createHash('sha384').update(b).digest('base64'))"
+ */
+export const MERMAID_UMD_INTEGRITY =
+  'sha384-8xUhuLNMjW/cI2Dacg3DR4WliYznvIg0LVG1stctThKD/YVrJFI9TNCFxft5NYgp'
 
 /**
  * Read + cache the self-contained Mermaid UMD bundle (once per cold start).
@@ -39,11 +47,24 @@ const MERMAID_VERSION = '11.15.0'
  * Primary path: the locally-installed `mermaid/dist/mermaid.min.js` — fully
  * offline, diagram content never leaves the function. If that file isn't
  * present in the deployed bundle (serverless file-tracing can miss files read
- * via fs), fall back to fetching the *library* from a pinned CDN. Only the
- * library JS is fetched — the user's diagram is still rendered in-process and
- * never sent anywhere.
+ * via fs), fall back to fetching the *library* from a pinned CDN and verifying
+ * its SHA-384 against MERMAID_UMD_INTEGRITY. Only the library JS is fetched —
+ * the user's diagram is still rendered in-process and never sent anywhere.
  */
 let mermaidSource: string | null = null
+
+/** Exported for unit tests. */
+export async function verifyMermaidIntegrity(
+  source: string | Buffer,
+  expected: string = MERMAID_UMD_INTEGRITY,
+): Promise<boolean> {
+  const { createHash } = await import('node:crypto')
+  const match = /^sha384-(.+)$/.exec(expected)
+  if (!match) return false
+  const actual = createHash('sha384').update(source).digest('base64')
+  return actual === match[1]
+}
+
 async function getMermaidSource(): Promise<string> {
   if (mermaidSource !== null) return mermaidSource
 
@@ -62,12 +83,41 @@ async function getMermaidSource(): Promise<string> {
   if (!res.ok) {
     throw new Error(`Could not load the Mermaid library (HTTP ${res.status} from ${url})`)
   }
-  mermaidSource = await res.text()
+  const source = await res.text()
+  // Custom MERMAID_UMD_URL skips the pinned hash (operator-supplied). Default CDN must match.
+  if (!process.env.MERMAID_UMD_URL) {
+    if (!(await verifyMermaidIntegrity(source))) {
+      throw new Error(
+        `Mermaid CDN payload failed integrity check (${MERMAID_UMD_INTEGRITY}). Refusing to load.`,
+      )
+    }
+  }
+  mermaidSource = source
   return mermaidSource
 }
 
 function isServerless(): boolean {
   return Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME)
+}
+
+/** Exported for unit tests. */
+export function localChromiumArgs(
+  env: NodeJS.ProcessEnv = process.env,
+): string[] {
+  // Prefer the Chromium sandbox locally. Opt into --no-sandbox only when the
+  // environment cannot use user namespaces (common in CI containers). Serverless
+  // uses @sparticuz/chromium.args, which already include --no-sandbox because
+  // Lambda/Vercel require it.
+  const wantNoSandbox =
+    env.PUPPETEER_NO_SANDBOX === '1' ||
+    env.PUPPETEER_NO_SANDBOX === 'true' ||
+    env.CI === 'true' ||
+    env.CI === '1'
+  const args = ['--disable-gpu', '--disable-dev-shm-usage']
+  if (wantNoSandbox) {
+    args.unshift('--no-sandbox', '--disable-setuid-sandbox')
+  }
+  return args
 }
 
 async function resolveLaunchOptions(): Promise<LaunchOptions> {
@@ -92,12 +142,7 @@ async function resolveLaunchOptions(): Promise<LaunchOptions> {
   // already open with the default profile (otherwise the launch hangs).
   const userDataDir = mkdtempSync(join(tmpdir(), 'mermalaid-chrome-'))
   return {
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-gpu',
-      '--disable-dev-shm-usage',
-    ],
+    args: localChromiumArgs(),
     defaultViewport: baseViewport,
     executablePath,
     headless: true,
