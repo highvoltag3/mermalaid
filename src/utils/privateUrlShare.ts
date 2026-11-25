@@ -7,7 +7,7 @@ import { isTauri } from '@tauri-apps/api/core'
 import { bytesToBase64Url, base64UrlToBytes } from './base64url'
 
 /** Web origin used in shared URLs when running in Tauri (`tauri://` is not openable in browsers). */
-const DESKTOP_DEFAULT_SHARE_ORIGIN = 'https://mermalaid.com'
+const DESKTOP_DEFAULT_SHARE_ORIGIN = 'https://www.mermalaid.com'
 
 export const PRIVATE_SHARE_URL_PREFIX = '#v1.'
 export const PRIVATE_SHARE_PAYLOAD_PREFIX = 'v1.'
