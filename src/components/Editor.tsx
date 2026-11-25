@@ -4,9 +4,10 @@ import { useTheme } from '../hooks/useTheme'
 import { isAppThemeDark } from '../utils/mermaidThemes'
 import { MERMLAID_EDITOR_AUTOSAVE_DEBOUNCE_MS } from '../constants/mermalaidTiming'
 import type { MermaidBlock } from '../utils/mermaidCodeBlock'
+import '../monaco/setup'
 import './Editor.css'
 
-// Register Mermaid language
+// Register Mermaid language (Monaco is bundled locally via ../monaco/setup)
 loader.init().then((monaco) => {
   monaco.languages.register({ id: 'mermaid' })
   

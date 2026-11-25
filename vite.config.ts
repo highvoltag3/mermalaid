@@ -27,6 +27,21 @@ export default defineConfig({
     emptyOutDir: true,
     sourcemap: false,
     minify: 'esbuild',
+    rollupOptions: {
+      output: {
+        // Keep Monaco in its own chunk so the main editor route stays leaner.
+        manualChunks(id) {
+          if (id.includes('node_modules/monaco-editor')) return 'monaco-editor'
+          return undefined
+        },
+      },
+    },
+  },
+  worker: {
+    format: 'es',
+  },
+  optimizeDeps: {
+    include: ['monaco-editor'],
   },
   // Expose environment variables to the client
   // Variables prefixed with VITE_ will be available via import.meta.env

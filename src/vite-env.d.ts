@@ -13,8 +13,15 @@ interface ImportMetaEnv {
   // Feature Flags
   readonly VITE_ENABLE_AI_FIXER?: string
 
-  /** Public web origin for private share links in the desktop app (default: mermalaid.com). */
+  /** Public web origin for private share links in the desktop app (default: www.mermalaid.com). */
   readonly VITE_PUBLIC_SHARE_BASE_URL?: string
+}
+
+declare module '*?worker' {
+  const workerConstructor: {
+    new (): Worker
+  }
+  export default workerConstructor
 }
 
 interface ImportMeta {

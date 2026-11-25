@@ -29,7 +29,13 @@ function json(
   })
 }
 
-export default async function handler(req: Request): Promise<Response> {
+/**
+ * Vercel's Node runtime expects the Web Standard `default.fetch` export. A bare
+ * `export default async function (req: Request)` is treated as the legacy
+ * Node `(req, res)` shape, so `req.headers.get` throws and every invocation
+ * returns FUNCTION_INVOCATION_FAILED.
+ */
+async function handler(req: Request): Promise<Response> {
   const origin = req.headers.get('Origin')
   const cors = corsHeadersForSignOrigin(origin, process.env, req.url)
 
@@ -64,3 +70,5 @@ export default async function handler(req: Request): Promise<Response> {
 
   return json({ s: signPreview(c, theme) }, 200, cors)
 }
+
+export default Object.assign(handler, { fetch: handler })

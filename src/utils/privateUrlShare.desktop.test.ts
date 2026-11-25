@@ -12,7 +12,7 @@ describe('privateUrlShare (Tauri mock)', () => {
     try {
       history.replaceState(null, '', '/editor')
       const url = buildPrivateShareUrl('#v1.abc')
-      expect(url).toBe('https://mermalaid.com/editor#v1.abc')
+      expect(url).toBe('https://www.mermalaid.com/editor#v1.abc')
       expect(url).not.toMatch(/^tauri:/)
     } finally {
       history.replaceState(null, '', prev || '/')

@@ -19,13 +19,20 @@ function bumpStrokeWidth(current: string | null): string | null {
  * Increase stroke-width on flowchart / sequence link paths that are thinner
  * than {@link MIN_STROKE_WIDTH}. Leaves thicker stylized edges alone.
  */
+function parseSvgRoot(svgMarkup: string): Element | null {
+  const asXml = new DOMParser().parseFromString(svgMarkup, 'image/svg+xml')
+  if (!asXml.querySelector('parsererror')) {
+    const root = asXml.documentElement
+    if (root && root.nodeName.toLowerCase() === 'svg') return root
+  }
+  return new DOMParser().parseFromString(svgMarkup, 'text/html').querySelector('svg')
+}
+
 export function boostMermaidEdgeStrokes(svgMarkup: string): string {
   if (!svgMarkup || !svgMarkup.toLowerCase().includes('<svg')) return svgMarkup
 
-  const doc = new DOMParser().parseFromString(svgMarkup, 'image/svg+xml')
-  const svg = doc.documentElement
-  if (!svg || svg.nodeName.toLowerCase() !== 'svg') return svgMarkup
-  if (doc.querySelector('parsererror')) return svgMarkup
+  const svg = parseSvgRoot(svgMarkup)
+  if (!svg) return svgMarkup
 
   const selectors = [
     '.edgePath path',

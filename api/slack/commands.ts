@@ -10,7 +10,7 @@ import { openView } from '../_lib/slackApi.js'
 import { buildRenderModal } from '../_lib/modal.js'
 import { json, withVerifiedSlack } from '../_lib/http.js'
 
-export default withVerifiedSlack(async ({ env, params }) => {
+const handler = withVerifiedSlack(async ({ env, params }) => {
   const triggerId = params.get('trigger_id')
   const channelId = params.get('channel_id') ?? ''
   const inlineCode = (params.get('text') ?? '').trim()
@@ -38,3 +38,5 @@ export default withVerifiedSlack(async ({ env, params }) => {
   // Empty 200 → no visible slash-command message; the modal is already open.
   return new Response(null, { status: 200 })
 })
+
+export default Object.assign(handler, { fetch: handler })

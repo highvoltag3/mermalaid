@@ -42,7 +42,7 @@ function diagramTitle(source: string): string {
   return kind ? `Mermaid ${kind}` : 'Mermaid diagram'
 }
 
-export default async function handler(req: Request): Promise<Response> {
+async function handler(req: Request): Promise<Response> {
   const url = new URL(req.url)
   const c = url.searchParams.get('c')
   const themeParam = url.searchParams.get('t') ?? url.searchParams.get('theme') ?? ''
@@ -123,3 +123,5 @@ export default async function handler(req: Request): Promise<Response> {
     },
   })
 }
+
+export default Object.assign(handler, { fetch: handler })
