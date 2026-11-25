@@ -1,6 +1,6 @@
 {
   "name": "mermalaid",
-  "version": "1.9.5",
+  "version": "1.9.6",
   "type": "module",
   "license": "CC-BY-NC-SA-4.0",
   "engines": {
@@ -43,7 +43,7 @@
     "@tauri-apps/plugin-fs": "^2.4.5",
     "@tauri-apps/plugin-opener": "^2.5.3",
     "@tauri-apps/plugin-process": "^2.4.0",
-    "@tauri-apps/plugin-updater": "^2.14.0",
+    "@tauri-apps/plugin-updater": "^2.14.1",
     "@vercel/analytics": "^2.0.1",
     "@vercel/firewall": "^1.2.1",
     "@vercel/functions": "^2.2.13",
