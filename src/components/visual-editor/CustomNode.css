@@ -178,6 +178,30 @@
   user-select: none;
 }
 
+/*
+ * Keep labels readable on custom fills (visual editor only).
+ * Prefer CSS contrast-color() against --ve-node-fill; fall back to white +
+ * mix-blend-mode: difference. Skip when the Mermaid style set an explicit color.
+ */
+.visual-node.has-custom-fill:not(.has-explicit-text-color) .node-label,
+.visual-node.has-custom-fill:not(.has-explicit-text-color) .node-edit-input {
+  color: #ffffff;
+  mix-blend-mode: difference;
+}
+
+@supports (color: contrast-color(red)) {
+  .visual-node.has-custom-fill:not(.has-explicit-text-color) .node-label,
+  .visual-node.has-custom-fill:not(.has-explicit-text-color) .node-edit-input {
+    mix-blend-mode: normal;
+    color: contrast-color(var(--ve-node-fill, Canvas));
+  }
+}
+
+.visual-node.has-explicit-text-color .node-label,
+.visual-node.has-explicit-text-color .node-edit-input {
+  mix-blend-mode: normal;
+}
+
 /* Inline edit input */
 .node-edit-input {
   border: none;
@@ -191,10 +215,6 @@
   border-bottom: 2px solid #4a9eff;
   pointer-events: all;
   min-width: 40px;
-}
-
-.node-edit-input.dark {
-  color: #d4d4d4;
 }
 
 /* Handles - hidden by default, shown on hover/select */

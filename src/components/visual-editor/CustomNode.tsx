@@ -1,8 +1,9 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, type CSSProperties } from 'react'
 import { Handle, Position, NodeToolbar } from '@xyflow/react'
 import { normalizeMermaidColor, type MermaidNode } from '../../utils/mermaidParser'
 import { useTheme } from '../../hooks/useTheme'
 import { isAppThemeDark } from '../../utils/mermaidThemes'
+import { parseStyleExtraTextColor } from './parseStyleExtraTextColor'
 import './CustomNode.css'
 
 export interface CustomNodeData {
@@ -141,6 +142,8 @@ export default function CustomNode({ data, selected }: { data: CustomNodeData; s
   const defaultStroke = isDark ? '#555555' : '#dddddd'
   const fillValue = toColorInputValue(data.fill, defaultFill)
   const strokeValue = toColorInputValue(data.stroke, defaultStroke)
+  const explicitTextColor = parseStyleExtraTextColor(data.styleExtra)
+  const hasCustomFill = Boolean(data.fill)
 
   const clipPathShapes = new Set([
     'diamond',
@@ -150,6 +153,21 @@ export default function CustomNode({ data, selected }: { data: CustomNodeData; s
     'trapezoid',
     'trapezoidAlt',
   ])
+
+  const nodeStyle: CSSProperties = {
+    ...(data.fill
+      ? {
+          backgroundColor: data.fill,
+          // Feed fill to CSS contrast-color() / blend fallback in CustomNode.css
+          ['--ve-node-fill' as string]: data.fill,
+        }
+      : {}),
+    ...(data.stroke && !clipPathShapes.has(data.shape) ? { borderColor: data.stroke } : {}),
+    ...(data.stroke && clipPathShapes.has(data.shape)
+      ? { filter: `drop-shadow(0 0 0 ${data.stroke}) drop-shadow(0 0 2px ${data.stroke})` }
+      : {}),
+    ...(explicitTextColor ? { color: explicitTextColor } : {}),
+  }
 
   return (
     <>
@@ -252,14 +270,18 @@ export default function CustomNode({ data, selected }: { data: CustomNodeData; s
       )}
 
       <div
-        className={`visual-node ${getShapeClass()} ${isDark ? 'dark' : ''} ${selected ? 'selected' : ''} ${data.fill || data.stroke ? 'has-custom-color' : ''}`}
-        style={{
-          ...(data.fill ? { backgroundColor: data.fill } : {}),
-          ...(data.stroke && !clipPathShapes.has(data.shape) ? { borderColor: data.stroke } : {}),
-          ...(data.stroke && clipPathShapes.has(data.shape)
-            ? { filter: `drop-shadow(0 0 0 ${data.stroke}) drop-shadow(0 0 2px ${data.stroke})` }
-            : {}),
-        }}
+        className={[
+          'visual-node',
+          getShapeClass(),
+          isDark ? 'dark' : '',
+          selected ? 'selected' : '',
+          data.fill || data.stroke ? 'has-custom-color' : '',
+          hasCustomFill ? 'has-custom-fill' : '',
+          explicitTextColor ? 'has-explicit-text-color' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+        style={nodeStyle}
         onDoubleClick={(e) => {
           e.stopPropagation()
           data.onStartEditing?.(data.id)
