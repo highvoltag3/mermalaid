@@ -27,6 +27,7 @@ import {
   renderMermaidPreviewWithFallback,
 } from '../utils/renderMermaidPreviewWithFallback'
 import { MERMLAID_PREVIEW_DEBOUNCE_MS } from '../constants/mermalaidTiming'
+import { normalizePreviewSvgDimensions } from '../utils/normalizePreviewSvgDimensions'
 import VisualEditor from './VisualEditor'
 import './Preview.css'
 
@@ -109,30 +110,6 @@ function fitPreviewToScreen(
     api.setTransform(positionX, positionY, clamped, 200)
   }
   requestAnimationFrame(run)
-}
-
-function normalizePreviewSvgDimensions(svgMarkup: string): string {
-  const doc = new DOMParser().parseFromString(svgMarkup, 'image/svg+xml')
-  const svg = doc.documentElement
-  if (!svg || svg.nodeName.toLowerCase() !== 'svg') return svgMarkup
-
-  const viewBox = svg.getAttribute('viewBox')
-  if (!viewBox) return svgMarkup
-
-  const [, , width, height] = viewBox
-    .trim()
-    .split(/\s+/)
-    .map(Number)
-  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
-    return svgMarkup
-  }
-
-  svg.setAttribute('width', String(width))
-  svg.setAttribute('height', String(height))
-  svg.style.maxWidth = 'none'
-  svg.style.width = `${width}px`
-  svg.style.height = `${height}px`
-  return svg.outerHTML
 }
 
 function PreviewZoomToolbar({
