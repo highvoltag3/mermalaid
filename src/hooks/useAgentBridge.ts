@@ -113,7 +113,9 @@ export function useAgentBridge({ code, setCode, error }: UseAgentBridgeParams): 
       toast(
         nextDetail?.reason === 'bad_pairing_code'
           ? 'Pairing failed: incorrect code'
-          : `Agent bridge rejected the connection${nextDetail?.message ? `: ${nextDetail.message}` : ''}`,
+          : nextDetail?.reason === 'pairing_locked'
+            ? 'Too many failed pairing attempts, try again later'
+            : `Agent bridge rejected the connection${nextDetail?.message ? `: ${nextDetail.message}` : ''}`,
         'error',
       )
     } else if (next === 'superseded') {

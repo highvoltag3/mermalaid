@@ -61,8 +61,8 @@ claude mcp add mermalaid -- node /absolute/path/to/mermalaid/mcp/dist/index.js
 ## Security model
 
 Loopback bind + a fresh per-session pairing code (required before any tool touches the diagram) +
-an Origin allowlist on the WebSocket handshake. Designed for a single local user. See the guide
-for details.
+an Origin allowlist on the WebSocket handshake + per-address pairing lockout after repeated
+failures (stricter off loopback). Designed for a single local user. See the guide for details.
 
 ## License
 

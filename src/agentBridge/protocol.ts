@@ -45,6 +45,7 @@ export type RejectReason =
   | 'origin_not_allowed'
   | 'version_mismatch'
   | 'server_busy'
+  | 'pairing_locked'
   | 'malformed_hello'
 
 /** Fields shared by every message. */

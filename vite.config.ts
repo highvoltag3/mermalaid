@@ -5,13 +5,22 @@ import react from '@vitejs/plugin-react'
 /** Set `DEV_HTTPS=1` (see `npm run dev:https`) for HTTPS so LAN URLs are a secure context (Web Crypto / private links). */
 const useDevHttps = process.env.DEV_HTTPS === '1'
 
+/**
+ * Dev server binds to localhost by default. Opt into LAN with `DEV_HOST=1`
+ * (or `vite --host`) when you intentionally want phones/other machines to connect.
+ */
+const bindLan =
+  process.env.DEV_HOST === '1' ||
+  process.env.DEV_HOST === 'true' ||
+  process.env.DEV_HOST === '0.0.0.0'
+
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react(), ...(useDevHttps ? [basicSsl()] : [])],
   base: '/',
   server: {
     port: parseInt(process.env.PORT || '5173'),
-    host: true,
+    host: bindLan ? true : '127.0.0.1',
   },
   build: {
     outDir: 'dist',

@@ -101,6 +101,10 @@ The editor dials `ws://127.0.0.1:7337` by default. Override with `VITE_AGENT_BRI
 
 ## Security
 
+Pairing attempts are throttled per remote address (stricter off loopback) and
+temporarily locked out after repeated failures, so a non-loopback `--host`
+bind cannot be brute-forced cheaply.
+
 The bridge is designed for a single local user:
 
 - **Loopback only.** The WebSocket binds `127.0.0.1`; remote machines cannot reach it.

@@ -61,7 +61,7 @@ function throwIfWebCryptoUnavailableForPrivateShare(): void {
   if (typeof window !== 'undefined' && window.isSecureContext === false) {
     throw new PrivateShareError(
       'unsupported',
-      'Private links need a secure page. Browsers disable Web Crypto on plain HTTP for LAN IPs (http://192.168…). Use http://localhost:5173 on this machine, serve HTTPS (e.g. vite --host with TLS), or use your HTTPS deployment.',
+      'Private links need a secure page. Browsers disable Web Crypto on plain HTTP for LAN IPs (http://192.168…). Use http://localhost:5173 on this machine, serve HTTPS (e.g. DEV_HOST=1 with TLS), or use your HTTPS deployment.',
     )
   }
 

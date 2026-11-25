@@ -85,6 +85,12 @@ export default function AgentBridgePanel({ isOpen, onClose }: AgentBridgePanelPr
                 time the server restarts) and try again.
               </p>
             )}
+            {status === 'rejected' && detail?.reason === 'pairing_locked' && (
+              <p className="agent-error-note">
+                {detail.message ??
+                  'Too many failed pairing attempts. Wait a bit, then try again with the current code.'}
+              </p>
+            )}
             {status === 'superseded' && (
               <p className="agent-error-note">
                 Another Mermalaid tab or window connected to the agent. Only one editor can be live

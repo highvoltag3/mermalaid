@@ -154,8 +154,10 @@ signing. Then:
 ([`@vercel/firewall`](https://vercel.com/docs/vercel-firewall/vercel-waf/rate-limiting-sdk),
 see [`api/_lib/rateLimit.ts`](../api/_lib/rateLimit.ts)) — no datastore. Because
 the check runs inside the function, it only counts cache **misses** (actual
-renders), and it **fails open** (does nothing off Vercel, in local dev, or
-before the rule exists), so nothing breaks by default.
+renders). Off Vercel (local dev / tests) it no-ops. **On Vercel it fails
+closed**: if the SDK throws or the Firewall rule is missing, requests are
+rejected with 429 so a misconfigured deploy cannot open the expensive render
+path. Create the rule before enabling signed-link traffic in production.
 
 To turn it on, create the matching Firewall rule once (works on Hobby, which
 allows one rate-limit rule):

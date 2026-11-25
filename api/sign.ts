@@ -6,37 +6,48 @@
  * enabled (PREVIEW_LINK_SECRET set); otherwise returns 503 and the client
  * builds an unsigned link.
  *
- * Permissive CORS so the desktop app can sign against the hosted origin.
+ * Origin-checked + tight CORS: only the Mermalaid editor (hosted web, Tauri
+ * webview, optional env allowlist) may mint signatures. See signOrigin.ts.
  */
 import { decodePublicDiagram, PublicShareDecodeError } from './_lib/publicShare.js'
 import { isServerMermaidTheme } from './_lib/serverThemes.js'
 import { signPreview, isSigningEnabled } from './_lib/previewSigning.js'
 import { isRateLimited } from './_lib/rateLimit.js'
+import { corsHeadersForSignOrigin } from './_lib/signOrigin.js'
 
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
-}
-
-function json(body: unknown, status = 200): Response {
+function json(
+  body: unknown,
+  status: number,
+  cors: Record<string, string> | null,
+): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { 'Content-Type': 'application/json; charset=utf-8', ...CORS },
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      ...(cors ?? {}),
+    },
   })
 }
 
 export default async function handler(req: Request): Promise<Response> {
-  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS })
-  if (req.method !== 'POST') return json({ error: 'method_not_allowed' }, 405)
-  if (!isSigningEnabled()) return json({ error: 'signing_disabled' }, 503)
-  if (await isRateLimited(req)) return json({ error: 'rate_limited' }, 429)
+  const origin = req.headers.get('Origin')
+  const cors = corsHeadersForSignOrigin(origin, process.env, req.url)
+
+  if (req.method === 'OPTIONS') {
+    if (!cors) return new Response(null, { status: 403 })
+    return new Response(null, { status: 204, headers: cors })
+  }
+
+  if (!cors) return json({ error: 'origin_not_allowed' }, 403, null)
+  if (req.method !== 'POST') return json({ error: 'method_not_allowed' }, 405, cors)
+  if (!isSigningEnabled()) return json({ error: 'signing_disabled' }, 503, cors)
+  if (await isRateLimited(req)) return json({ error: 'rate_limited' }, 429, cors)
 
   let body: { c?: unknown; t?: unknown }
   try {
     body = (await req.json()) as { c?: unknown; t?: unknown }
   } catch {
-    return json({ error: 'bad_json' }, 400)
+    return json({ error: 'bad_json' }, 400, cors)
   }
 
   const c = typeof body.c === 'string' ? body.c : ''
@@ -47,9 +58,9 @@ export default async function handler(req: Request): Promise<Response> {
   try {
     decodePublicDiagram(c)
   } catch (err) {
-    if (err instanceof PublicShareDecodeError) return json({ error: 'invalid_diagram' }, 400)
+    if (err instanceof PublicShareDecodeError) return json({ error: 'invalid_diagram' }, 400, cors)
     throw err
   }
 
-  return json({ s: signPreview(c, theme) })
+  return json({ s: signPreview(c, theme) }, 200, cors)
 }

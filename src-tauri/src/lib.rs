@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
 use tauri::{Emitter, Manager, RunEvent};
@@ -6,10 +6,40 @@ use tauri_plugin_fs::FsExt;
 
 struct OpenFileQueue(Mutex<Vec<String>>);
 
+/// Diagram/text extensions the editor opens and saves. Used to expand the fs
+/// scope for recent-file / Save paths without granting blanket `$HOME/**` write.
+const DOCUMENT_EXTENSIONS: &[&str] = &["mmd", "md", "markdown", "txt"];
+
+fn is_document_path(path: &Path) -> bool {
+    path.extension()
+        .and_then(|ext| ext.to_str())
+        .map(|ext| {
+            DOCUMENT_EXTENSIONS
+                .iter()
+                .any(|allowed| ext.eq_ignore_ascii_case(allowed))
+        })
+        .unwrap_or(false)
+}
+
 #[tauri::command]
 fn take_open_files(queue: tauri::State<'_, OpenFileQueue>) -> Vec<String> {
     let mut guard = queue.0.lock().unwrap_or_else(|e| e.into_inner());
     std::mem::take(&mut *guard)
+}
+
+/// Expand the runtime fs scope for a user-chosen diagram path (recent files,
+/// Save after a Finder/Explorer open). Dialog picks already grant scope.
+/// Extension-gated so a compromised webview cannot unlock arbitrary paths.
+#[tauri::command]
+fn allow_document_path(app: tauri::AppHandle, path: String) -> Result<(), String> {
+    let path = PathBuf::from(path);
+    if !is_document_path(&path) {
+        return Err("Only .mmd, .md, .markdown, or .txt paths can be unlocked.".into());
+    }
+    app.fs_scope()
+        .allow_file(&path)
+        .map_err(|err| err.to_string())?;
+    Ok(())
 }
 
 fn enqueue_open_paths(app: &tauri::AppHandle, paths: Vec<PathBuf>) {
@@ -77,7 +107,7 @@ pub fn run() {
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
-        .invoke_handler(tauri::generate_handler![take_open_files])
+        .invoke_handler(tauri::generate_handler![take_open_files, allow_document_path])
         .setup(|app| {
             #[cfg(any(target_os = "windows", target_os = "linux"))]
             {
@@ -108,8 +138,18 @@ pub fn run() {
 
 #[cfg(test)]
 mod tests {
-    use super::argv_entry_to_path;
-    use std::path::PathBuf;
+    use super::{argv_entry_to_path, is_document_path};
+    use std::path::{Path, PathBuf};
+
+    #[test]
+    fn document_path_allows_editor_extensions_only() {
+        assert!(is_document_path(Path::new("/tmp/flow.mmd")));
+        assert!(is_document_path(Path::new("/tmp/notes.MD")));
+        assert!(is_document_path(Path::new(r"C:\Users\a\doc.markdown")));
+        assert!(is_document_path(Path::new("/tmp/plain.txt")));
+        assert!(!is_document_path(Path::new("/tmp/evil.plist")));
+        assert!(!is_document_path(Path::new("/tmp/noext")));
+    }
 
     #[test]
     fn windows_drive_letter_path_is_kept_as_a_path() {

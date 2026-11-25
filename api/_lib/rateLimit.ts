@@ -6,8 +6,9 @@
  * dashboard (see slack/README.md). It runs inside the function, so it only
  * counts cache MISSES (actual renders), not cached unfurls.
  *
- * Fails open: off Vercel (local dev), or if the SDK errors / the rule doesn't
- * exist yet, it never blocks legitimate traffic.
+ * On Vercel, fails closed: if the SDK throws or the rule is missing, the
+ * request is treated as limited so a misconfigured deploy cannot open the
+ * expensive render path. Off Vercel (local dev / unit tests) it no-ops.
  */
 
 /** Shared rate-limit rule ID (Hobby allows a single rule, so both endpoints share it). */
@@ -28,8 +29,8 @@ export async function isRateLimited(
       rateLimitKey ? { request, rateLimitKey } : { request },
     )
     return rateLimited
-  } catch {
-    // Never block real users because the limiter had a problem.
-    return false
+  } catch (err) {
+    console.error('[mermalaid] rate limit check failed (failing closed):', err)
+    return true
   }
 }
