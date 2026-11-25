@@ -39,6 +39,8 @@ vi.mock('./utils/privateUrlShare', async () => {
   }
 })
 
+vi.mock('./monaco/setup', () => ({}))
+
 vi.mock('@monaco-editor/react', () => ({
   __esModule: true,
   default: function MonacoEditorMock({ value }: { value?: string }) {
