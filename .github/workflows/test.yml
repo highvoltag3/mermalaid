@@ -16,6 +16,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run test
+      - run: npm run test:api-handlers
 
   mcp:
     runs-on: ubuntu-latest

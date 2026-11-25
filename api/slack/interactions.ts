@@ -17,7 +17,7 @@ import { json, text, runBackground, withVerifiedSlack } from '../_lib/http.js'
 /** Upper bound on submitted diagram source — a cheap guard against abuse. */
 const MAX_CODE_LENGTH = 12_000
 
-export default withVerifiedSlack(async ({ env, params }) => {
+const handler = withVerifiedSlack(async ({ env, params }) => {
   const payloadRaw = params.get('payload')
   if (!payloadRaw) return text('Missing payload', 400)
 
@@ -67,3 +67,5 @@ export default withVerifiedSlack(async ({ env, params }) => {
 
   return new Response(null, { status: 200 })
 })
+
+export default Object.assign(handler, { fetch: handler })

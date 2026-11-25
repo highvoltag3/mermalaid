@@ -18,6 +18,18 @@ const post = (body: unknown, origin = 'https://mermalaid.com') =>
   })
 
 describe('sign handler', () => {
+  it('exposes the Web Standard fetch export Vercel invokes', async () => {
+    expect(typeof handler.fetch).toBe('function')
+    const res = await handler.fetch(
+      new Request('https://mermalaid.com/api/sign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}',
+      }),
+    )
+    expect(res.status).toBe(403)
+  })
+
   it('returns 503 when signing is disabled', async () => {
     delete process.env.PREVIEW_LINK_SECRET
     const res = await handler(post({ c: enc('graph TD; A-->B'), t: 'dark' }))

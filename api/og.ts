@@ -14,7 +14,7 @@ import { decodePublicDiagram } from './_lib/publicShare.js'
 import { verifyPreview } from './_lib/previewSigning.js'
 import { isRateLimited } from './_lib/rateLimit.js'
 
-export default async function handler(req: Request): Promise<Response> {
+async function handler(req: Request): Promise<Response> {
   if (req.method !== 'GET') return new Response('Method Not Allowed', { status: 405 })
 
   const url = new URL(req.url)
@@ -55,3 +55,5 @@ export default async function handler(req: Request): Promise<Response> {
     return fallback()
   }
 }
+
+export default Object.assign(handler, { fetch: handler })
